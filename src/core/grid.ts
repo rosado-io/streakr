@@ -24,21 +24,29 @@ export function buildCalendarGrid(days: ContributionDay[], options?: GridOptions
   const startDate = options?.startDate ?? days[0].date;
   const endDate = options?.endDate ?? days[days.length - 1].date;
 
+  // Filter days to the selected range
+  const inRange = days.filter((d) => d.date >= startDate && d.date <= endDate);
+
   // Build a lookup map for O(1) access by date
   const dayMap = new Map<string, ContributionDay>();
-  for (const d of days) {
+  for (const d of inRange) {
     dayMap.set(d.date, d);
   }
 
-  // Calculate intensity thresholds from the data
-  const maxCount = Math.max(...days.map((d) => d.count), 0);
+  // Calculate intensity thresholds from the filtered data
+  const maxCount = inRange.reduce((max, d) => Math.max(max, d.count), 0);
   const thresholds = computeThresholds(maxCount);
 
-  // Generate the grid
+  // Generate the grid (UTC-safe)
   const [sY, sM, sD] = startDate.split("-").map(Number);
   const [eY, eM, eD] = endDate.split("-").map(Number);
   const current = new Date(Date.UTC(sY, sM - 1, sD));
   const end = new Date(Date.UTC(eY, eM - 1, eD));
+
+  // Guard against inverted date ranges
+  if (current > end) {
+    return { weeks: [], totalContributions: 0 };
+  }
 
   const weeks: (CalendarCell | null)[][] = [];
   let currentWeek: (CalendarCell | null)[] = [];
