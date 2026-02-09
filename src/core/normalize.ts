@@ -28,7 +28,7 @@ export function normalizeEventsToDaily(
     if (existing) {
       existing.count += event.count;
       if (event.sources) {
-        if (!existing.sources) existing.sources = {};
+        existing.sources ??= {};
         for (const [source, count] of Object.entries(event.sources)) {
           existing.sources[source] = (existing.sources[source] ?? 0) + count;
         }
@@ -47,10 +47,12 @@ export function normalizeEventsToDaily(
   const startDate = dates[0];
   const endDate = dates[dates.length - 1];
 
-  // Step 3: Fill gaps — iterate day by day from start to end
+  // Step 3: Fill gaps — iterate day by day from start to end (UTC-safe)
   const result: ContributionDay[] = [];
-  const current = new Date(startDate + "T00:00:00");
-  const end = new Date(endDate + "T00:00:00");
+  const [startY, startM, startD] = startDate.split("-").map(Number);
+  const [endY, endM, endD] = endDate.split("-").map(Number);
+  const current = new Date(Date.UTC(startY, startM - 1, startD));
+  const end = new Date(Date.UTC(endY, endM - 1, endD));
 
   while (current <= end) {
     const dateStr = current.toISOString().slice(0, 10);
@@ -58,7 +60,7 @@ export function normalizeEventsToDaily(
 
     result.push(day ?? { date: dateStr, count: 0 });
 
-    current.setDate(current.getDate() + 1);
+    current.setUTCDate(current.getUTCDate() + 1);
   }
 
   return result;
