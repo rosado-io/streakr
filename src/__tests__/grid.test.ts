@@ -171,18 +171,12 @@ describe("buildCalendarGrid", () => {
 
   it("scales intensity levels to the filtered range, not all input", () => {
     // Full input has max=100, but filtered range (Jun 12-18) max=5
-    const input = [
-      day("2025-06-10", 100),
-      day("2025-06-15", 5),
-      day("2025-06-20", 50),
-    ];
+    const input = [day("2025-06-10", 100), day("2025-06-15", 5), day("2025-06-20", 50)];
     const result = buildCalendarGrid(input, {
       startDate: "2025-06-12",
       endDate: "2025-06-18",
     });
-    const cells = result.weeks
-      .flat()
-      .filter((c): c is CalendarCell => c !== null);
+    const cells = result.weeks.flat().filter((c): c is CalendarCell => c !== null);
     // Jun 15 count=5 should be level 4 (max in range), not level 1 (if max were 100)
     const jun15 = cells.find((c) => c.date === "2025-06-15");
     expect(jun15?.level).toBe(4);
