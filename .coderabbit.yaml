@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  collapse_walkthrough: true
+  auto_review:
+    enabled: true
+    drafts: false
+  path_instructions:
+    - path: "src/core/**"
+      instructions: "Core algorithms — pay attention to correctness, edge cases, and performance."
+    - path: "src/providers/**"
+      instructions: "Provider implementations — verify error handling, rate limiting, and API contract compliance."
+    - path: "src/render/**"
+      instructions: "SVG rendering — ensure accessibility, valid SVG output, and theme consistency."
+chat:
+  auto_reply: true
