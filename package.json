@@ -1,0 +1,62 @@
+{
+  "name": "streakr",
+  "version": "0.1.0",
+  "description": "The universal Git contribution calendar. Aggregate activity from GitHub, GitLab, and more into one beautiful, framework-agnostic heatmap.",
+  "type": "module",
+  "main": "./dist/streakr.cjs.js",
+  "module": "./dist/streakr.es.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/streakr.es.js"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/streakr.cjs.js"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format": "prettier --write 'src/**/*.ts'",
+    "format:check": "prettier --check 'src/**/*.ts'",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "contribution",
+    "heatmap",
+    "streak",
+    "github",
+    "gitlab",
+    "calendar",
+    "svg",
+    "git"
+  ],
+  "author": "Eduardo Rosado",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rosado-io/streakr.git"
+  },
+  "sideEffects": false,
+  "packageManager": "pnpm@10.12.2",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^25.2.2",
+    "eslint": "^10.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.54.0",
+    "vite": "^7.3.1",
+    "vite-plugin-dts": "^4.5.4"
+  }
+}
