@@ -153,7 +153,9 @@ describe("GitHubProvider", () => {
       fetch: fetchMock,
     });
 
-    await expect(provider.fetchEvents(baseParams)).rejects.toThrow('GitHub user "octocat" not found');
+    await expect(provider.fetchEvents(baseParams)).rejects.toThrow(
+      'GitHub user "octocat" not found',
+    );
   });
 
   it("throws on non-OK HTTP response", async () => {
