@@ -90,7 +90,7 @@ describe("GitLabProvider", () => {
   });
 
   it("follows Link header pagination to collect all events", async () => {
-    const page1Url = "https://gitlab.com/api/v4/users/42/events?per_page=100";
+    const _page1Url = "https://gitlab.com/api/v4/users/42/events?per_page=100";
     const page2Url = "https://gitlab.com/api/v4/users/42/events?page=2&per_page=100";
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {

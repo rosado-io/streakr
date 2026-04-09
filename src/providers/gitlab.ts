@@ -81,7 +81,7 @@ export class GitLabProvider implements Provider {
       throw new Error(`GitLab user "${username}" not found`);
     }
 
-    return users[0]!.id;
+    return (users[0] as GitLabUser).id;
   }
 
   private async fetchAllEvents(userId: number, start: string, end: string): Promise<GitLabEvent[]> {
@@ -127,7 +127,7 @@ function nextPageUrl(headers: Headers): string | null {
 
   for (const part of link.split(",")) {
     const match = /<([^>]+)>;\s*rel="next"/.exec(part);
-    if (match) return match[1]!;
+    if (match) return match[1] ?? null;
   }
 
   return null;
