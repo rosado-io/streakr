@@ -18,7 +18,7 @@ function buildFetchMock(
     if (!entry) throw new Error(`Unexpected fetch URL: ${url}`);
     return new Response(JSON.stringify(entry.body), {
       status: 200,
-      headers: entry.headers,
+      ...(entry.headers ? { headers: entry.headers } : {}),
     });
   });
 }
@@ -90,7 +90,6 @@ describe("GitLabProvider", () => {
   });
 
   it("follows Link header pagination to collect all events", async () => {
-    const _page1Url = "https://gitlab.com/api/v4/users/42/events?per_page=100";
     const page2Url = "https://gitlab.com/api/v4/users/42/events?page=2&per_page=100";
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
