@@ -112,9 +112,7 @@ export class GitLabProvider implements Provider {
     if (!response.ok) {
       const errorBody = (await response.text()).trim();
       const statusText = response.statusText || "Request failed";
-      throw new Error(
-        `GitLab API request failed (${response.status} ${statusText}): ${errorBody}`,
-      );
+      throw new Error(`GitLab API request failed (${response.status} ${statusText}): ${errorBody}`);
     }
 
     return response;

@@ -101,20 +101,16 @@ describe("GitLabProvider", () => {
       }
 
       if (url === page2Url) {
-        return new Response(
-          JSON.stringify([{ created_at: "2025-06-03T08:00:00.000Z" }]),
-          { status: 200 },
-        );
+        return new Response(JSON.stringify([{ created_at: "2025-06-03T08:00:00.000Z" }]), {
+          status: 200,
+        });
       }
 
       // First events page — has a next link
-      return new Response(
-        JSON.stringify([{ created_at: "2025-06-01T10:00:00.000Z" }]),
-        {
-          status: 200,
-          headers: { link: `<${page2Url}>; rel="next"` },
-        },
-      );
+      return new Response(JSON.stringify([{ created_at: "2025-06-01T10:00:00.000Z" }]), {
+        status: 200,
+        headers: { link: `<${page2Url}>; rel="next"` },
+      });
     });
 
     const provider = new GitLabProvider({ token: "glpat_test", fetch: fetchMock });
@@ -129,9 +125,7 @@ describe("GitLabProvider", () => {
   });
 
   it("throws when GitLab user is not found", async () => {
-    const fetchMock = buildFetchMock([
-      { match: "/api/v4/users?username=", body: [] },
-    ]);
+    const fetchMock = buildFetchMock([{ match: "/api/v4/users?username=", body: [] }]);
 
     const provider = new GitLabProvider({ token: "glpat_test", fetch: fetchMock });
     await expect(provider.fetchEvents(baseParams)).rejects.toThrow(
