@@ -6,6 +6,8 @@ export { buildCalendarGrid } from "./core/grid";
 // Providers
 export type { Provider } from "./providers/types";
 export { aggregate } from "./providers/aggregator";
+export { GitHubProvider } from "./providers/github";
+export type { GitHubProviderOptions } from "./providers/github";
 
 // Render
 export { renderSvgCalendar } from "./render/svg";
