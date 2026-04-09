@@ -133,7 +133,9 @@ export class GitHubProvider implements Provider {
       const rateLimitSuffix = rateLimit
         ? ` (rateLimit remaining=${rateLimit.remaining}, resetAt=${rateLimit.resetAt})`
         : "";
-      throw new Error(`GitHub GraphQL error: ${errors.map((e) => e.message).join("; ")}${rateLimitSuffix}`);
+      throw new Error(
+        `GitHub GraphQL error: ${errors.map((e) => e.message).join("; ")}${rateLimitSuffix}`,
+      );
     }
 
     const user = payload.data?.user;
