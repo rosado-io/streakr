@@ -85,12 +85,10 @@ export function createCssVarTheme(options: CssVarThemeOptions = {}): Theme {
   };
 }
 
-function buildScale(
-  prefix: string,
-  key: string,
-  fallback: ThemeColorScale,
-): ThemeColorScale {
-  return fallback.map((value, index) => cssVar(prefix, `${key}-${index}`, value)) as ThemeColorScale;
+function buildScale(prefix: string, key: string, fallback: ThemeColorScale): ThemeColorScale {
+  return fallback.map((value, index) =>
+    cssVar(prefix, `${key}-${index}`, value),
+  ) as ThemeColorScale;
 }
 
 function cssVar(prefix: string, name: string, fallback: string): string {

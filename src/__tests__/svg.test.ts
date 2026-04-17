@@ -117,7 +117,7 @@ describe("renderSvgCalendar", () => {
     expect(container.innerHTML).toContain("prefers-color-scheme: dark");
     expect(container.innerHTML).toContain('class="streakr-cell"');
     expect(container.innerHTML).toContain('class="streakr-background"');
-    expect(container.innerHTML).toContain('color-scheme:light dark;');
+    expect(container.innerHTML).toContain("color-scheme:light dark;");
   });
 
   it("clears container when grid is empty", () => {
