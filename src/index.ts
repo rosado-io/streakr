@@ -13,7 +13,7 @@ export type { GitLabProviderOptions } from "./providers/gitlab";
 
 // Render
 export { renderSvgCalendar } from "./render/svg";
-export { themes } from "./render/themes";
+export { themes, createCssVarTheme } from "./render/themes";
 
 // Types
 export type {
@@ -23,5 +23,7 @@ export type {
   GridOptions,
   StreakResult,
   Theme,
+  ThemeColorScale,
+  ThemeColorScheme,
   FetchParams,
 } from "./types";
