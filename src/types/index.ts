@@ -46,16 +46,36 @@ export interface CalendarGrid {
   totalContributions: number;
 }
 
+/** Fixed 5-step color scale used by the renderer. */
+export type ThemeColorScale = [string, string, string, string, string];
+
+/** Supported color-scheme modes for theme resolution. */
+export type ThemeColorScheme = "light" | "dark" | "system";
+
 /** Theme configuration for the heatmap renderer. */
 export interface Theme {
   /** 5 colors for levels 0-4: [empty, low, medium, high, max] */
-  colors: [string, string, string, string, string];
+  colors: ThemeColorScale;
+  /** Optional dark-mode colors used when `colorScheme` is `system` */
+  darkColors?: ThemeColorScale;
   /** Background color */
   background?: string;
+  /** Optional dark-mode background used when `colorScheme` is `system` */
+  darkBackground?: string;
   /** Text/label color */
   textColor?: string;
+  /** Optional dark-mode text color used when `colorScheme` is `system` */
+  darkTextColor?: string;
   /** Border radius for cells in pixels */
   borderRadius?: number;
+  /** Width/height of each heatmap cell in pixels */
+  cellSize?: number;
+  /** Space between cells in pixels */
+  gap?: number;
+  /** Outer SVG padding in pixels */
+  padding?: number;
+  /** Theme mode resolution strategy */
+  colorScheme?: ThemeColorScheme;
 }
 
 /** Parameters for fetching events from a provider. */
