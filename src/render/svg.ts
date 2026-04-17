@@ -37,10 +37,7 @@ export function renderSvgCalendar(
     resolvedTheme.padding * 2 +
     weeks * resolvedTheme.cellSize +
     Math.max(0, weeks - 1) * resolvedTheme.gap;
-  const height =
-    resolvedTheme.padding * 2 +
-    7 * resolvedTheme.cellSize +
-    6 * resolvedTheme.gap;
+  const height = resolvedTheme.padding * 2 + 7 * resolvedTheme.cellSize + 6 * resolvedTheme.gap;
 
   const rects: string[] = [];
 
@@ -70,7 +67,7 @@ export function renderSvgCalendar(
 
   const inlineSvgStyle =
     resolvedTheme.colorScheme === "system"
-      ? 'display:block;color-scheme:light dark;'
+      ? "display:block;color-scheme:light dark;"
       : `display:block;background:${escapeXml(resolvedTheme.background)};color:${escapeXml(
           resolvedTheme.textColor,
         )};`;
@@ -136,8 +133,7 @@ function buildPaletteRules(
 ): string {
   const levelRules = colors
     .map(
-      (fill, level) =>
-        `${selector} .streakr-cell[data-level="${level}"]{fill:${escapeCss(fill)};}`,
+      (fill, level) => `${selector} .streakr-cell[data-level="${level}"]{fill:${escapeCss(fill)};}`,
     )
     .join("");
 
