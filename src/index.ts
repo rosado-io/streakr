@@ -13,17 +13,22 @@ export type { GitLabProviderOptions } from "./providers/gitlab";
 
 // Render
 export { renderSvgCalendar } from "./render/svg";
+export { renderContributionWidget } from "./render/widget";
 export { themes, createCssVarTheme } from "./render/themes";
 
 // Types
 export type {
   ContributionDay,
+  ContributionMetric,
   CalendarGrid,
   CalendarCell,
+  ContributionWidgetOptions,
   GridOptions,
   StreakResult,
   Theme,
   ThemeColorScale,
   ThemeColorScheme,
   FetchParams,
+  WidgetSize,
+  WidgetStatsPosition,
 } from "./types";
