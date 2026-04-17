@@ -31,9 +31,5 @@ export function computeStreaks(days: ContributionDay[]): StreakResult {
     }
   }
 
-  // currentStreak is the streak at the end of the array (most recent day).
-  // If the last day has count 0, currentStreak is 0.
-  const currentStreak = currentRun;
-
-  return { total, bestStreak, currentStreak };
+  return { total, bestStreak, currentStreak: currentRun };
 }
