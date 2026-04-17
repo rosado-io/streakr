@@ -3,13 +3,18 @@ import type { Theme, ThemeColorScale, ThemeColorScheme } from "../types";
 const DEFAULT_CELL_SIZE = 12;
 const DEFAULT_GAP = 3;
 const DEFAULT_PADDING = 12;
+const DEFAULT_BORDER_RADIUS = 2;
+const DEFAULT_LIGHT_BACKGROUND = "#ffffff";
+const DEFAULT_LIGHT_TEXT = "#24292e";
+const DEFAULT_DARK_BACKGROUND = "#0d1117";
+const DEFAULT_DARK_TEXT = "#c9d1d9";
 
 /** Classic green theme (GitHub-style). */
 const classicGreen: Theme = {
   colors: ["#ebedf0", "#9be9a8", "#40c463", "#30a14e", "#216e39"],
-  background: "#ffffff",
-  textColor: "#24292e",
-  borderRadius: 2,
+  background: DEFAULT_LIGHT_BACKGROUND,
+  textColor: DEFAULT_LIGHT_TEXT,
+  borderRadius: DEFAULT_BORDER_RADIUS,
   cellSize: DEFAULT_CELL_SIZE,
   gap: DEFAULT_GAP,
   padding: DEFAULT_PADDING,
@@ -19,9 +24,9 @@ const classicGreen: Theme = {
 /** Dark theme. */
 const dark: Theme = {
   colors: ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"],
-  background: "#0d1117",
-  textColor: "#c9d1d9",
-  borderRadius: 2,
+  background: DEFAULT_DARK_BACKGROUND,
+  textColor: DEFAULT_DARK_TEXT,
+  borderRadius: DEFAULT_BORDER_RADIUS,
   cellSize: DEFAULT_CELL_SIZE,
   gap: DEFAULT_GAP,
   padding: DEFAULT_PADDING,
@@ -32,11 +37,11 @@ const dark: Theme = {
 const system: Theme = {
   colors: classicGreen.colors,
   darkColors: dark.colors,
-  background: classicGreen.background,
-  darkBackground: dark.background,
-  textColor: classicGreen.textColor,
-  darkTextColor: dark.textColor,
-  borderRadius: 2,
+  background: classicGreen.background ?? DEFAULT_LIGHT_BACKGROUND,
+  darkBackground: dark.background ?? DEFAULT_DARK_BACKGROUND,
+  textColor: classicGreen.textColor ?? DEFAULT_LIGHT_TEXT,
+  darkTextColor: dark.textColor ?? DEFAULT_DARK_TEXT,
+  borderRadius: DEFAULT_BORDER_RADIUS,
   cellSize: DEFAULT_CELL_SIZE,
   gap: DEFAULT_GAP,
   padding: DEFAULT_PADDING,
@@ -74,10 +79,14 @@ export function createCssVarTheme(options: CssVarThemeOptions = {}): Theme {
     colors: buildScale(prefix, "level", fallback.colors),
     darkColors: buildScale(prefix, "level-dark", darkFallback.colors),
     background: cssVar(prefix, "background", fallback.background ?? "#ffffff"),
-    darkBackground: cssVar(prefix, "background-dark", darkFallback.background ?? "#0d1117"),
-    textColor: cssVar(prefix, "text", fallback.textColor ?? "#24292e"),
-    darkTextColor: cssVar(prefix, "text-dark", darkFallback.textColor ?? "#c9d1d9"),
-    borderRadius: fallback.borderRadius ?? DEFAULT_GAP,
+    darkBackground: cssVar(
+      prefix,
+      "background-dark",
+      darkFallback.background ?? DEFAULT_DARK_BACKGROUND,
+    ),
+    textColor: cssVar(prefix, "text", fallback.textColor ?? DEFAULT_LIGHT_TEXT),
+    darkTextColor: cssVar(prefix, "text-dark", darkFallback.textColor ?? DEFAULT_DARK_TEXT),
+    borderRadius: fallback.borderRadius ?? DEFAULT_BORDER_RADIUS,
     cellSize: fallback.cellSize ?? DEFAULT_CELL_SIZE,
     gap: fallback.gap ?? DEFAULT_GAP,
     padding: fallback.padding ?? DEFAULT_PADDING,
