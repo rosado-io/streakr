@@ -90,7 +90,7 @@ describe("renderSvgCalendar", () => {
     });
 
     expect(container.innerHTML).toContain('width="32"');
-    expect(container.innerHTML).toContain('height="128"');
+    expect(container.innerHTML).toContain('height="140"');
     expect(container.innerHTML).toContain('x="8"');
     expect(container.innerHTML).toContain('y="8"');
     expect(container.innerHTML).toContain('width="16" height="16"');
