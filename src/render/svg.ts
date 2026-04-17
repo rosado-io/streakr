@@ -1,21 +1,7 @@
-import type { CalendarGrid, Theme, ThemeColorScale, ThemeColorScheme } from "../types";
-import { themes } from "./themes";
+import type { CalendarGrid, Theme, ThemeColorScale } from "../types";
+import { type ResolvedTheme, resolveTheme, escapeCss, escapeHtml, clampLevel } from "./shared";
 
 let renderSequence = 0;
-
-interface ResolvedTheme {
-  colors: ThemeColorScale;
-  darkColors: ThemeColorScale;
-  background: string;
-  darkBackground: string;
-  textColor: string;
-  darkTextColor: string;
-  borderRadius: number;
-  cellSize: number;
-  gap: number;
-  padding: number;
-  colorScheme: ThemeColorScheme;
-}
 
 /**
  * Renders a heatmap calendar as SVG inside the given container.
@@ -30,14 +16,12 @@ export function renderSvgCalendar(
     return;
   }
 
-  const resolvedTheme = resolveTheme(theme);
+  const resolved = resolveTheme(theme);
   const svgId = `streakr-svg-${++renderSequence}`;
   const weeks = model.weeks.length;
   const width =
-    resolvedTheme.padding * 2 +
-    weeks * resolvedTheme.cellSize +
-    Math.max(0, weeks - 1) * resolvedTheme.gap;
-  const height = resolvedTheme.padding * 2 + 7 * resolvedTheme.cellSize + 6 * resolvedTheme.gap;
+    resolved.padding * 2 + weeks * resolved.cellSize + Math.max(0, weeks - 1) * resolved.gap;
+  const height = resolved.padding * 2 + 7 * resolved.cellSize + 6 * resolved.gap;
 
   const rects: string[] = [];
 
@@ -47,69 +31,41 @@ export function renderSvgCalendar(
       const cell = week[dayIndex];
       if (!cell) continue;
 
-      const x = resolvedTheme.padding + weekIndex * (resolvedTheme.cellSize + resolvedTheme.gap);
-      const y = resolvedTheme.padding + dayIndex * (resolvedTheme.cellSize + resolvedTheme.gap);
-      const fill = resolvedTheme.colors[clampLevel(cell.level)];
+      const x = resolved.padding + weekIndex * (resolved.cellSize + resolved.gap);
+      const y = resolved.padding + dayIndex * (resolved.cellSize + resolved.gap);
+      const fill = resolved.colors[clampLevel(cell.level)];
       const title = `${cell.date}: ${cell.count} contribution${cell.count === 1 ? "" : "s"}`;
 
-      if (resolvedTheme.colorScheme === "system") {
+      if (resolved.colorScheme === "system") {
         rects.push(
-          `<rect class="streakr-cell" x="${x}" y="${y}" width="${resolvedTheme.cellSize}" height="${resolvedTheme.cellSize}" rx="${resolvedTheme.borderRadius}" data-date="${escapeXml(cell.date)}" data-count="${cell.count}" data-level="${clampLevel(cell.level)}"><title>${escapeXml(title)}</title></rect>`,
+          `<rect class="streakr-cell" x="${x}" y="${y}" width="${resolved.cellSize}" height="${resolved.cellSize}" rx="${resolved.borderRadius}" data-date="${escapeHtml(cell.date)}" data-count="${cell.count}" data-level="${clampLevel(cell.level)}"><title>${escapeHtml(title)}</title></rect>`,
         );
         continue;
       }
 
       rects.push(
-        `<rect x="${x}" y="${y}" width="${resolvedTheme.cellSize}" height="${resolvedTheme.cellSize}" rx="${resolvedTheme.borderRadius}" fill="${escapeXml(fill)}" style="fill:${escapeXml(fill)};" data-date="${escapeXml(cell.date)}" data-count="${cell.count}" data-level="${clampLevel(cell.level)}"><title>${escapeXml(title)}</title></rect>`,
+        `<rect x="${x}" y="${y}" width="${resolved.cellSize}" height="${resolved.cellSize}" rx="${resolved.borderRadius}" fill="${escapeHtml(fill)}" style="fill:${escapeHtml(fill)};" data-date="${escapeHtml(cell.date)}" data-count="${cell.count}" data-level="${clampLevel(cell.level)}"><title>${escapeHtml(title)}</title></rect>`,
       );
     }
   }
 
   const inlineSvgStyle =
-    resolvedTheme.colorScheme === "system"
+    resolved.colorScheme === "system"
       ? "display:block;color-scheme:light dark;"
-      : `display:block;background:${escapeXml(resolvedTheme.background)};color:${escapeXml(
-          resolvedTheme.textColor,
-        )};`;
+      : `display:block;background:${escapeHtml(resolved.background)};color:${escapeHtml(resolved.textColor)};`;
 
   const backgroundRect =
-    resolvedTheme.colorScheme === "system"
+    resolved.colorScheme === "system"
       ? `<rect class="streakr-background" x="0" y="0" width="${width}" height="${height}" />`
-      : `<rect x="0" y="0" width="${width}" height="${height}" fill="${escapeXml(
-          resolvedTheme.background,
-        )}" style="fill:${escapeXml(resolvedTheme.background)};" />`;
+      : `<rect x="0" y="0" width="${width}" height="${height}" fill="${escapeHtml(resolved.background)}" style="fill:${escapeHtml(resolved.background)};" />`;
 
   container.innerHTML = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Contribution heatmap" data-streakr-id="${svgId}" style="${inlineSvgStyle}">`,
-    resolvedTheme.colorScheme === "system" ? buildSystemThemeStyle(svgId, resolvedTheme) : "",
+    resolved.colorScheme === "system" ? buildSystemThemeStyle(svgId, resolved) : "",
     backgroundRect,
     ...rects,
     "</svg>",
   ].join("");
-}
-
-function resolveTheme(theme?: Theme): ResolvedTheme {
-  const base =
-    theme?.colorScheme === "dark"
-      ? themes.dark
-      : theme?.colorScheme === "system"
-        ? themes.system
-        : themes.classicGreen;
-  const darkBase = themes.dark;
-
-  return {
-    colors: theme?.colors ?? base.colors,
-    darkColors: theme?.darkColors ?? darkBase.colors,
-    background: theme?.background ?? base.background ?? "#ffffff",
-    darkBackground: theme?.darkBackground ?? darkBase.background ?? "#0d1117",
-    textColor: theme?.textColor ?? base.textColor ?? "#24292e",
-    darkTextColor: theme?.darkTextColor ?? darkBase.textColor ?? "#c9d1d9",
-    borderRadius: theme?.borderRadius ?? base.borderRadius ?? 2,
-    cellSize: theme?.cellSize ?? base.cellSize ?? 12,
-    gap: theme?.gap ?? base.gap ?? 3,
-    padding: theme?.padding ?? base.padding ?? 12,
-    colorScheme: theme?.colorScheme ?? base.colorScheme ?? "light",
-  };
 }
 
 function buildSystemThemeStyle(svgId: string, theme: ResolvedTheme): string {
@@ -140,23 +96,4 @@ function buildPaletteRules(
   return `${selector}{background:${escapeCss(background)};color:${escapeCss(
     textColor,
   )};}${selector} .streakr-background{fill:${escapeCss(background)};}${levelRules}`;
-}
-
-function clampLevel(level: number): 0 | 1 | 2 | 3 | 4 {
-  if (level <= 0) return 0;
-  if (level >= 4) return 4;
-  return level as 0 | 1 | 2 | 3;
-}
-
-function escapeCss(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-}
-
-function escapeXml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
 }

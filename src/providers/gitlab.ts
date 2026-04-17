@@ -1,9 +1,8 @@
-import { normalizeEventsToDaily } from "../core/normalize";
 import type { ContributionDay, FetchParams } from "../types";
 import type { Provider } from "./types";
+import { validateInputDates, toCanonicalDays } from "./validation";
 
 const GITLAB_BASE_URL = "https://gitlab.com";
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const EVENTS_PER_PAGE = 100;
 
 type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
@@ -129,29 +128,4 @@ function nextPageUrl(headers: Headers): string | null {
   }
 
   return null;
-}
-
-function validateInputDates(start: string, end: string): void {
-  if (!isValidDate(start)) throw new Error(`Invalid start date "${start}" (expected YYYY-MM-DD)`);
-  if (!isValidDate(end)) throw new Error(`Invalid end date "${end}" (expected YYYY-MM-DD)`);
-  if (start > end) throw new Error(`Invalid range: start "${start}" must be <= end "${end}"`);
-}
-
-function isValidDate(value: string): boolean {
-  if (!DATE_RE.test(value)) return false;
-  const parsed = new Date(`${value}T00:00:00Z`);
-  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
-}
-
-function toCanonicalDays(days: ContributionDay[], start: string, end: string): ContributionDay[] {
-  if (days.length > 0) return normalizeEventsToDaily(days);
-
-  if (start === end) {
-    return normalizeEventsToDaily([{ date: start, count: 0 }]);
-  }
-
-  return normalizeEventsToDaily([
-    { date: start, count: 0 },
-    { date: end, count: 0 },
-  ]);
 }
