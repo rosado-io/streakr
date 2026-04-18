@@ -15,10 +15,17 @@ export function isValidDate(value: string): boolean {
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 }
 
-export function toCanonicalDays(days: ContributionDay[], start: string, end: string): ContributionDay[] {
+export function toCanonicalDays(
+  days: ContributionDay[],
+  start: string,
+  end: string,
+): ContributionDay[] {
   if (days.length > 0) return normalizeEventsToDaily(days);
 
   return start === end
     ? normalizeEventsToDaily([{ date: start, count: 0 }])
-    : normalizeEventsToDaily([{ date: start, count: 0 }, { date: end, count: 0 }]);
+    : normalizeEventsToDaily([
+        { date: start, count: 0 },
+        { date: end, count: 0 },
+      ]);
 }

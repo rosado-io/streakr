@@ -80,11 +80,7 @@ export function buildCalendarGrid(days: ContributionDay[], options?: GridOptions
  */
 function computeThresholds(maxCount: number): [number, number, number] {
   if (maxCount === 0) return [0, 0, 0];
-  return [
-    Math.ceil(maxCount * 0.25),
-    Math.ceil(maxCount * 0.5),
-    Math.ceil(maxCount * 0.75),
-  ];
+  return [Math.ceil(maxCount * 0.25), Math.ceil(maxCount * 0.5), Math.ceil(maxCount * 0.75)];
 }
 
 /**
