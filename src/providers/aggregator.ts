@@ -34,7 +34,6 @@ export async function aggregate(
     const providerName = providers[i].name;
 
     for (const day of result.value) {
-      // Tag each day with its source provider
       const sources: Record<string, number> = {
         ...day.sources,
         [providerName]: (day.sources?.[providerName] ?? 0) + day.count,
