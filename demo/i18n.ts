@@ -52,8 +52,7 @@ const en: Messages = {
   badgePrivacy: "Privacy-first",
   snapshotTitle: "Snapshot",
   snapshotStrong: (total) => `${total} contributions in the last 30 days`,
-  snapshotCadenceSuffix: (activeDays) =>
-    `across ${activeDays} active days in this sample window.`,
+  snapshotCadenceSuffix: (activeDays) => `across ${activeDays} active days in this sample window.`,
   snapshotPeak: (date, count) => `Peak day: ${date} · ${count}`,
   snapshotGithub: (n) => `GitHub share: ${n}`,
   snapshotGitlab: (n) => `GitLab share: ${n}`,

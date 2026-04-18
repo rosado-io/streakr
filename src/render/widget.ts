@@ -1,8 +1,4 @@
-import type {
-  ContributionWidgetOptions,
-  ThemeColorScale,
-  WidgetSize,
-} from "../types";
+import type { ContributionWidgetOptions, ThemeColorScale, WidgetSize } from "../types";
 import { renderSvgCalendar } from "./svg";
 import { resolveTheme, escapeCss, escapeHtml } from "./shared";
 
@@ -88,14 +84,28 @@ export function renderContributionWidget(
 function buildWidgetStyles(
   widgetId: string,
   size: WidgetSize,
-  theme: { colors: ThemeColorScale; darkColors: ThemeColorScale; background: string; darkBackground: string; textColor: string; darkTextColor: string; colorScheme: string },
+  theme: {
+    colors: ThemeColorScale;
+    darkColors: ThemeColorScale;
+    background: string;
+    darkBackground: string;
+    textColor: string;
+    darkTextColor: string;
+    colorScheme: string;
+  },
   statsPosition: "left" | "right",
 ): string {
   const config = WIDGET_SIZES[size];
   const selector = `[data-streakr-widget="${escapeCss(widgetId)}"]`;
   const palette =
     theme.colorScheme === "dark"
-      ? buildPaletteRules(selector, theme.darkColors, theme.darkBackground, theme.darkTextColor, true)
+      ? buildPaletteRules(
+          selector,
+          theme.darkColors,
+          theme.darkBackground,
+          theme.darkTextColor,
+          true,
+        )
       : buildPaletteRules(selector, theme.colors, theme.background, theme.textColor, false);
   const systemPalette =
     theme.colorScheme === "system"
@@ -112,8 +122,7 @@ function buildWidgetStyles(
       ? `${config.statsWidth}px minmax(0, 1fr)`
       : `minmax(0, 1fr) ${config.statsWidth}px`;
 
-  const widgetMaxWidth =
-    config.calendarWidth + config.padding * 2 + config.gap + config.statsWidth;
+  const widgetMaxWidth = config.calendarWidth + config.padding * 2 + config.gap + config.statsWidth;
 
   return [
     `${selector}{display:block;color-scheme:${theme.colorScheme === "system" ? "light dark" : theme.colorScheme};}`,

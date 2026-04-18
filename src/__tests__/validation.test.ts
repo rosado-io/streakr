@@ -47,11 +47,7 @@ describe("validateInputDates", () => {
 
 describe("toCanonicalDays", () => {
   it("normalizes non-empty days", () => {
-    const result = toCanonicalDays(
-      [{ date: "2025-06-15", count: 3 }],
-      "2025-06-15",
-      "2025-06-15",
-    );
+    const result = toCanonicalDays([{ date: "2025-06-15", count: 3 }], "2025-06-15", "2025-06-15");
     expect(result).toHaveLength(1);
     expect(result[0].count).toBe(3);
   });

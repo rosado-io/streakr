@@ -67,8 +67,6 @@ if (!themeSelect || !sizeSelect || !localeSelect || !calendarTarget) {
 // ─── i18n ─────────────────────────────────────────────────────────────────────
 let currentLocale: Locale = detectLocale();
 
-
-
 function applyLocale(locale: Locale): void {
   currentLocale = locale;
   localStorage.setItem("streakr-locale", locale);
@@ -85,7 +83,10 @@ function applyLocale(locale: Locale): void {
   applyText("badgePrivacy", msg.badgePrivacy);
   applyText("snapshotTitle", msg.snapshotTitle);
   applyText("snapshotStrong", msg.snapshotStrong(recent30Total));
-  applyText("snapshotCadence", `${describeCadence(days, msg)} ${msg.snapshotCadenceSuffix(activeDays)}`);
+  applyText(
+    "snapshotCadence",
+    `${describeCadence(days, msg)} ${msg.snapshotCadenceSuffix(activeDays)}`,
+  );
   applyText("snapshotPeak", msg.snapshotPeak(peakDay.date, peakDay.count));
   applyText("snapshotGithub", msg.snapshotGithub(providerTotals.github));
   applyText("snapshotGitlab", msg.snapshotGitlab(providerTotals.gitlab));
@@ -110,14 +111,21 @@ function applyLocale(locale: Locale): void {
   document.documentElement.lang = locale;
 }
 
-
-
 // ─── Widget rendering ─────────────────────────────────────────────────────────
 function buildMetrics(msg: Messages): ContributionMetric[] {
   return [
-    { label: msg.snapshotTitle === "Snapshot" ? "Total Contributions" : "Contribuciones totales", value: streaks.total },
-    { label: msg.snapshotTitle === "Snapshot" ? "Best Streak" : "Mejor racha", value: `${streaks.bestStreak} days` },
-    { label: msg.snapshotTitle === "Snapshot" ? "Current Streak" : "Racha actual", value: `${streaks.currentStreak} days` },
+    {
+      label: msg.snapshotTitle === "Snapshot" ? "Total Contributions" : "Contribuciones totales",
+      value: streaks.total,
+    },
+    {
+      label: msg.snapshotTitle === "Snapshot" ? "Best Streak" : "Mejor racha",
+      value: `${streaks.bestStreak} days`,
+    },
+    {
+      label: msg.snapshotTitle === "Snapshot" ? "Current Streak" : "Racha actual",
+      value: `${streaks.currentStreak} days`,
+    },
     { label: msg.snapshotTitle === "Snapshot" ? "Active Days" : "Días activos", value: activeDays },
   ];
 }
@@ -154,5 +162,3 @@ localeSelect.value = currentLocale;
 
 applyLocale(currentLocale);
 paintFromControls();
-
-
