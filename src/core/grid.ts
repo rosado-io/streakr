@@ -19,31 +19,23 @@ export function buildCalendarGrid(days: ContributionDay[], options?: GridOptions
   }
 
   const weekStartsOn = options?.weekStartsOn ?? 0;
-
-  // Determine date range
   const startDate = options?.startDate ?? days[0].date;
   const endDate = options?.endDate ?? days[days.length - 1].date;
-
-  // Filter days to the selected range
   const inRange = days.filter((d) => d.date >= startDate && d.date <= endDate);
 
-  // Build a lookup map for O(1) access by date
   const dayMap = new Map<string, ContributionDay>();
   for (const d of inRange) {
     dayMap.set(d.date, d);
   }
 
-  // Calculate intensity thresholds from the filtered data
   const maxCount = inRange.reduce((max, d) => Math.max(max, d.count), 0);
   const thresholds = computeThresholds(maxCount);
 
-  // Generate the grid (UTC-safe)
   const [sY, sM, sD] = startDate.split("-").map(Number);
   const [eY, eM, eD] = endDate.split("-").map(Number);
   const current = new Date(Date.UTC(sY, sM - 1, sD));
   const end = new Date(Date.UTC(eY, eM - 1, eD));
 
-  // Guard against inverted date ranges
   if (current > end) {
     return { weeks: [], totalContributions: 0 };
   }
@@ -52,7 +44,6 @@ export function buildCalendarGrid(days: ContributionDay[], options?: GridOptions
   let currentWeek: (CalendarCell | null)[] = [];
   let totalContributions = 0;
 
-  // Pad the first week with nulls for days before startDate
   const firstDayOfWeek = adjustedDayOfWeek(current.getUTCDay(), weekStartsOn);
   for (let i = 0; i < firstDayOfWeek; i++) {
     currentWeek.push(null);
@@ -60,14 +51,12 @@ export function buildCalendarGrid(days: ContributionDay[], options?: GridOptions
 
   while (current <= end) {
     const dateStr = current.toISOString().slice(0, 10);
-    const dayData = dayMap.get(dateStr);
-    const count = dayData?.count ?? 0;
+    const count = dayMap.get(dateStr)?.count ?? 0;
     const level = countToLevel(count, thresholds);
 
     currentWeek.push({ date: dateStr, count, level });
     totalContributions += count;
 
-    // If we've filled 7 days, push the week and start a new one
     if (currentWeek.length === 7) {
       weeks.push(currentWeek);
       currentWeek = [];
@@ -76,7 +65,6 @@ export function buildCalendarGrid(days: ContributionDay[], options?: GridOptions
     current.setUTCDate(current.getUTCDate() + 1);
   }
 
-  // Push the final partial week (padded with nulls)
   if (currentWeek.length > 0) {
     while (currentWeek.length < 7) {
       currentWeek.push(null);
@@ -89,15 +77,10 @@ export function buildCalendarGrid(days: ContributionDay[], options?: GridOptions
 
 /**
  * Computes quartile-based thresholds for mapping counts to levels 0–4.
- * Level 0 is always count = 0.
- * Levels 1–4 split the remaining range into roughly equal quartiles.
  */
 function computeThresholds(maxCount: number): [number, number, number] {
   if (maxCount === 0) return [0, 0, 0];
-  const q1 = Math.ceil(maxCount * 0.25);
-  const q2 = Math.ceil(maxCount * 0.5);
-  const q3 = Math.ceil(maxCount * 0.75);
-  return [q1, q2, q3];
+  return [Math.ceil(maxCount * 0.25), Math.ceil(maxCount * 0.5), Math.ceil(maxCount * 0.75)];
 }
 
 /**
@@ -113,7 +96,6 @@ function countToLevel(count: number, [q1, q2, q3]: [number, number, number]): nu
 
 /**
  * Adjusts a UTC day-of-week (0=Sun…6=Sat) relative to the configured week start.
- * Returns the offset within the week (0–6).
  */
 function adjustedDayOfWeek(utcDay: number, weekStartsOn: number): number {
   return (utcDay - weekStartsOn + 7) % 7;

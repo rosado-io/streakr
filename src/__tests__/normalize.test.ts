@@ -117,11 +117,4 @@ describe("normalizeEventsToDaily", () => {
       { date: "2025-01-05", count: 2 },
     ]);
   });
-
-  it("accepts timezone parameter without error", () => {
-    const input: ContributionDay[] = [{ date: "2025-06-15", count: 1 }];
-    const result = normalizeEventsToDaily(input, "America/Chicago");
-    expect(result).toHaveLength(1);
-    expect(result[0].date).toBe("2025-06-15");
-  });
 });

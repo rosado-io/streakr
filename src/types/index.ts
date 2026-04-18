@@ -78,6 +78,34 @@ export interface Theme {
   colorScheme?: ThemeColorScheme;
 }
 
+/** A single summary metric rendered alongside the heatmap. */
+export interface ContributionMetric {
+  /** Metric label, for example "Best Streak" */
+  label: string;
+  /** Metric value shown prominently */
+  value: string | number;
+}
+
+/** Supported widget sizes for the composite renderer. */
+export type WidgetSize = "sm" | "md" | "lg";
+
+/** Position of the summary metrics relative to the heatmap. */
+export type WidgetStatsPosition = "left" | "right";
+
+/** Options for rendering the composite streak widget. */
+export interface ContributionWidgetOptions {
+  /** Calendar grid produced by `buildCalendarGrid` */
+  grid: CalendarGrid;
+  /** Summary metrics shown next to the heatmap */
+  metrics: ContributionMetric[];
+  /** Optional theme forwarded to the renderer */
+  theme?: Theme;
+  /** Visual size preset */
+  size?: WidgetSize;
+  /** Metrics position relative to the heatmap */
+  statsPosition?: WidgetStatsPosition;
+}
+
 /** Parameters for fetching events from a provider. */
 export interface FetchParams {
   /** Username to fetch events for */
