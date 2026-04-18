@@ -23,31 +23,7 @@ export function renderSvgCalendar(
     resolved.padding * 2 + weeks * resolved.cellSize + Math.max(0, weeks - 1) * resolved.gap;
   const height = resolved.padding * 2 + 7 * resolved.cellSize + 6 * resolved.gap;
 
-  const rects: string[] = [];
-
-  for (let weekIndex = 0; weekIndex < model.weeks.length; weekIndex++) {
-    const week = model.weeks[weekIndex];
-    for (let dayIndex = 0; dayIndex < week.length; dayIndex++) {
-      const cell = week[dayIndex];
-      if (!cell) continue;
-
-      const x = resolved.padding + weekIndex * (resolved.cellSize + resolved.gap);
-      const y = resolved.padding + dayIndex * (resolved.cellSize + resolved.gap);
-      const fill = resolved.colors[clampLevel(cell.level)];
-      const title = `${cell.date}: ${cell.count} contribution${cell.count === 1 ? "" : "s"}`;
-
-      if (resolved.colorScheme === "system") {
-        rects.push(
-          `<rect class="streakr-cell" x="${x}" y="${y}" width="${resolved.cellSize}" height="${resolved.cellSize}" rx="${resolved.borderRadius}" data-date="${escapeHtml(cell.date)}" data-count="${cell.count}" data-level="${clampLevel(cell.level)}"><title>${escapeHtml(title)}</title></rect>`,
-        );
-        continue;
-      }
-
-      rects.push(
-        `<rect x="${x}" y="${y}" width="${resolved.cellSize}" height="${resolved.cellSize}" rx="${resolved.borderRadius}" fill="${escapeHtml(fill)}" style="fill:${escapeHtml(fill)};" data-date="${escapeHtml(cell.date)}" data-count="${cell.count}" data-level="${clampLevel(cell.level)}"><title>${escapeHtml(title)}</title></rect>`,
-      );
-    }
-  }
+  const rects = buildCellRects(model, resolved);
 
   const inlineSvgStyle =
     resolved.colorScheme === "system"
@@ -96,4 +72,35 @@ function buildPaletteRules(
   return `${selector}{background:${escapeCss(background)};color:${escapeCss(
     textColor,
   )};}${selector} .streakr-background{fill:${escapeCss(background)};}${levelRules}`;
+}
+
+function buildCellRects(model: CalendarGrid, resolved: ResolvedTheme): string[] {
+  const rects: string[] = [];
+  for (let weekIndex = 0; weekIndex < model.weeks.length; weekIndex++) {
+    const week = model.weeks[weekIndex];
+    for (let dayIndex = 0; dayIndex < week.length; dayIndex++) {
+      const cell = week[dayIndex];
+      if (!cell) continue;
+
+      const x = resolved.padding + weekIndex * (resolved.cellSize + resolved.gap);
+      const y = resolved.padding + dayIndex * (resolved.cellSize + resolved.gap);
+      const fill = resolved.colors[clampLevel(cell.level)];
+      const title = `${cell.date}: ${cell.count} contribution${cell.count === 1 ? "" : "s"}`;
+      const level = clampLevel(cell.level);
+      const dateHtml = escapeHtml(cell.date);
+      const titleHtml = escapeHtml(title);
+
+      if (resolved.colorScheme === "system") {
+        rects.push(
+          `<rect class="streakr-cell" x="${x}" y="${y}" width="${resolved.cellSize}" height="${resolved.cellSize}" rx="${resolved.borderRadius}" data-date="${dateHtml}" data-count="${cell.count}" data-level="${level}"><title>${titleHtml}</title></rect>`,
+        );
+      } else {
+        const fillHtml = escapeHtml(fill);
+        rects.push(
+          `<rect x="${x}" y="${y}" width="${resolved.cellSize}" height="${resolved.cellSize}" rx="${resolved.borderRadius}" fill="${fillHtml}" style="fill:${fillHtml};" data-date="${dateHtml}" data-count="${cell.count}" data-level="${level}"><title>${titleHtml}</title></rect>`,
+        );
+      }
+    }
+  }
+  return rects;
 }

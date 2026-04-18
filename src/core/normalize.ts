@@ -18,24 +18,25 @@ export function normalizeEventsToDaily(events: ContributionDay[]): ContributionD
 
   for (const event of events) {
     const existing = merged.get(event.date);
-    if (existing) {
-      existing.count += event.count;
-      if (event.sources) {
-        existing.sources ??= {};
-        for (const [source, count] of Object.entries(event.sources)) {
-          existing.sources[source] = (existing.sources[source] ?? 0) + count;
-        }
-      }
-    } else {
+    if (!existing) {
       merged.set(event.date, {
         date: event.date,
         count: event.count,
         ...(event.sources ? { sources: { ...event.sources } } : {}),
       });
+      continue;
+    }
+
+    existing.count += event.count;
+    if (event.sources) {
+      existing.sources ??= {};
+      for (const [source, count] of Object.entries(event.sources)) {
+        existing.sources[source] = (existing.sources[source] ?? 0) + count;
+      }
     }
   }
 
-  const dates = [...merged.keys()].sort();
+  const dates = [...merged.keys()].sort((a, b) => a.localeCompare(b));
   const startDate = dates[0];
   const endDate = dates[dates.length - 1];
 

@@ -5,12 +5,11 @@ import {
   createCssVarTheme,
   renderContributionWidget,
   themes,
-  type ContributionDay,
   type ContributionMetric,
   type Theme,
   type WidgetSize,
 } from "../src/index";
-import { locales, localeMeta, type Locale, type Messages } from "./i18n";
+import { locales, type Locale, type Messages } from "./i18n";
 import { formatRange } from "./utils/dates";
 import { generateMockSeries } from "./utils/mockData";
 import { describeCadence } from "./utils/i18nHelpers";
@@ -51,20 +50,17 @@ const themeOptions: Record<ThemeOption, Theme> = {
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("App root not found");
 
-// ─── Initial shell ────────────────────────────────────────────────────────────
 app.innerHTML = getShellHtml();
 
-// ─── Controls ─────────────────────────────────────────────────────────────────
-const themeSelect = document.querySelector<HTMLSelectElement>("#theme-select")!;
-const sizeSelect = document.querySelector<HTMLSelectElement>("#size-select")!;
-const localeSelect = document.querySelector<HTMLSelectElement>("#locale-select")!;
-const calendarTarget = document.querySelector<HTMLDivElement>("#calendar-target")!;
+const themeSelect = document.querySelector<HTMLSelectElement>("#theme-select");
+const sizeSelect = document.querySelector<HTMLSelectElement>("#size-select");
+const localeSelect = document.querySelector<HTMLSelectElement>("#locale-select");
+const calendarTarget = document.querySelector<HTMLDivElement>("#calendar-target");
 
 if (!themeSelect || !sizeSelect || !localeSelect || !calendarTarget) {
   throw new Error("Demo controls not found");
 }
 
-// ─── i18n ─────────────────────────────────────────────────────────────────────
 let currentLocale: Locale = detectLocale();
 
 function applyLocale(locale: Locale): void {
@@ -72,7 +68,6 @@ function applyLocale(locale: Locale): void {
   localStorage.setItem("streakr-locale", locale);
   const msg = locales[locale];
 
-  // Plain text nodes
   applyText("eyebrow", msg.eyebrow);
   applyText("heroHeading", msg.heroHeading);
   applyText("labelTheme", msg.labelTheme);
@@ -96,10 +91,8 @@ function applyLocale(locale: Locale): void {
   applyText("legendLess", msg.legendLess);
   applyText("legendMore", msg.legendMore);
 
-  // HTML nodes
   applyHtml("heroParagraph", msg.heroParagraph);
 
-  // <select> options
   applyOptionText(themeSelect, "classic", msg.optionClassicGreen);
   applyOptionText(themeSelect, "dark", msg.optionDark);
   applyOptionText(themeSelect, "system", msg.optionSystem);
@@ -111,7 +104,6 @@ function applyLocale(locale: Locale): void {
   document.documentElement.lang = locale;
 }
 
-// ─── Widget rendering ─────────────────────────────────────────────────────────
 function buildMetrics(msg: Messages): ContributionMetric[] {
   return [
     {
@@ -147,7 +139,6 @@ function paintFromControls(): void {
   paint(themeSelect.value as ThemeOption, sizeSelect.value as WidgetSize);
 }
 
-// ─── Event listeners ──────────────────────────────────────────────────────────
 themeSelect.addEventListener("change", paintFromControls);
 sizeSelect.addEventListener("change", paintFromControls);
 localeSelect.addEventListener("change", () => {
@@ -155,7 +146,6 @@ localeSelect.addEventListener("change", () => {
   paintFromControls();
 });
 
-// ─── Bootstrap ────────────────────────────────────────────────────────────────
 themeSelect.value = "dark";
 sizeSelect.value = "lg";
 localeSelect.value = currentLocale;
