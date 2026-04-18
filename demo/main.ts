@@ -29,7 +29,7 @@ const grid = buildCalendarGrid(days, {
 
 const activeDays = days.filter((day) => day.count > 0).length;
 const recent30Total = days.slice(-30).reduce((sum, day) => sum + day.count, 0);
-const peakDay = days.reduce((best, day) => (day.count > best.count ? day : best), days[0]!);
+const peakDay = days.reduce((best, day) => (day.count > best.count ? day : best), days[0]);
 const providerTotals = days.reduce(
   (totals, day) => {
     totals.github += day.sources?.github ?? 0;
@@ -38,7 +38,7 @@ const providerTotals = days.reduce(
   },
   { github: 0, gitlab: 0 },
 );
-const rangeLabel = formatRange(days[0]!.date, days[days.length - 1]!.date);
+const rangeLabel = formatRange(days[0].date, days[days.length - 1].date);
 
 const themeOptions: Record<ThemeOption, Theme> = {
   classic: themes.classicGreen,
