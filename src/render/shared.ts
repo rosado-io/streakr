@@ -40,7 +40,7 @@ export function resolveTheme(theme?: Theme): ResolvedTheme {
 }
 
 export function escapeCss(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  return value.replace(/\\/g, String.raw`\\`).replace(/"/g, String.raw`\"`);
 }
 
 export function escapeHtml(value: string): string {
