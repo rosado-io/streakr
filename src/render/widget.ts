@@ -69,7 +69,10 @@ export function renderContributionWidget(
     ),
     "</aside>",
   ].join("");
-  const calendarHtml = `<div class="streakr-widget__calendar">${temp.innerHTML}</div>`;
+  const legendHtml = options.legend
+    ? `<div class="streakr-widget__legend" aria-label="Contribution intensity legend"><span>${escapeHtml(options.legend.less)}</span><div class="streakr-widget__legend-scale">${[0, 1, 2, 3, 4].map((l) => `<i class="streakr-widget__legend-box" style="background:var(--streakr-level-${l})"></i>`).join("")}</div><span>${escapeHtml(options.legend.more)}</span></div>`
+    : "";
+  const calendarHtml = `<div class="streakr-widget__calendar">${temp.innerHTML}${legendHtml}</div>`;
   const content =
     statsPosition === "left" ? `${statsHtml}${calendarHtml}` : `${calendarHtml}${statsHtml}`;
 
@@ -130,12 +133,15 @@ function buildWidgetStyles(
     palette,
     systemPalette,
     `${selector} .streakr-widget__layout{display:grid;grid-template-columns:${columns};gap:${config.gap}px;align-items:stretch;max-width:${widgetMaxWidth}px;margin:0 auto;}`,
-    `${selector} .streakr-widget__calendar{min-width:0;padding:${config.padding}px;border-radius:${config.radius}px;border:1px solid var(--streakr-widget-border);background:var(--streakr-widget-surface);box-shadow:var(--streakr-widget-shadow);display:flex;align-items:center;}`,
+    `${selector} .streakr-widget__calendar{min-width:0;padding:${config.padding}px;border-radius:${config.radius}px;border:1px solid var(--streakr-widget-border);background:var(--streakr-widget-surface);display:flex;flex-direction:column;justify-content:center;}`,
     `${selector} .streakr-widget__calendar svg{display:block;width:100%;height:auto;}`,
     `${selector} .streakr-widget__stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:${Math.max(10, config.gap - 2)}px;align-content:stretch;}`,
-    `${selector} .streakr-widget__metric{padding:${config.padding}px;border-radius:${config.metricRadius}px;border:1px solid var(--streakr-widget-border);background:var(--streakr-widget-card);box-shadow:var(--streakr-widget-shadow);}`,
+    `${selector} .streakr-widget__metric{padding:${config.padding}px;border-radius:${config.metricRadius}px;border:1px solid var(--streakr-widget-border);background:var(--streakr-widget-card);}`,
     `${selector} .streakr-widget__metric-label{display:block;color:var(--streakr-widget-muted);font-size:${config.labelSize};line-height:1.3;}`,
     `${selector} .streakr-widget__metric-value{display:block;margin-top:4px;color:var(--streakr-widget-ink);font-size:${config.valueSize};font-weight:700;line-height:1;}`,
+    `${selector} .streakr-widget__legend{display:flex;align-items:center;gap:8px;margin-top:10px;color:var(--streakr-widget-muted);font-size:0.82rem;align-self:flex-end;}`,
+    `${selector} .streakr-widget__legend-scale{display:inline-flex;gap:4px;}`,
+    `${selector} .streakr-widget__legend-box{width:12px;height:12px;border-radius:3px;}`,
     `@media (max-width: 920px){${selector} .streakr-widget__layout{grid-template-columns:1fr;max-width:none;}${selector} .streakr-widget__calendar svg{width:auto;min-width:fit-content;}${selector} .streakr-widget__calendar{overflow-x:auto;}}`,
     `@media (max-width: 620px){${selector} .streakr-widget__stats{grid-template-columns:1fr 1fr;}${selector} .streakr-widget__metric-value{font-size:1.7rem;}}`,
   ].join("");
@@ -156,11 +162,10 @@ function buildPaletteRules(
   const card = dark
     ? "linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0)), rgba(7, 12, 26, 0.78)"
     : "linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.68)), rgba(255, 255, 255, 0.8)";
-  const shadow = dark ? "0 24px 60px rgba(2, 6, 23, 0.46)" : "0 24px 50px rgba(72, 98, 187, 0.12)";
 
   return `${selector}{--streakr-widget-accent:${escapeCss(
     colors[4],
   )};--streakr-widget-soft:${escapeCss(colors[1])};--streakr-widget-background:${escapeCss(
     background,
-  )};--streakr-widget-ink:${escapeCss(textColor)};--streakr-widget-muted:${muted};--streakr-widget-border:${border};--streakr-widget-surface:${surface};--streakr-widget-card:${card};--streakr-widget-shadow:${shadow};}`;
+  )};--streakr-widget-ink:${escapeCss(textColor)};--streakr-widget-muted:${muted};--streakr-widget-border:${border};--streakr-widget-surface:${surface};--streakr-widget-card:${card};--streakr-level-0:${escapeCss(colors[0])};--streakr-level-1:${escapeCss(colors[1])};--streakr-level-2:${escapeCss(colors[2])};--streakr-level-3:${escapeCss(colors[3])};--streakr-level-4:${escapeCss(colors[4])};}`;
 }

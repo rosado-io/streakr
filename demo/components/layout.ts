@@ -58,17 +58,6 @@ export function getShellHtml(): string {
           <h2 data-i18n="calendarHeading"></h2>
           <p class="calendar-subtitle" data-i18n="calendarSubtitle"></p>
         </div>
-        <div class="legend" aria-label="Contribution intensity legend">
-          <span data-i18n="legendLess"></span>
-          <div class="legend-scale">
-            <i class="legend-box level-0"></i>
-            <i class="legend-box level-1"></i>
-            <i class="legend-box level-2"></i>
-            <i class="legend-box level-3"></i>
-            <i class="legend-box level-4"></i>
-          </div>
-          <span data-i18n="legendMore"></span>
-        </div>
       </div>
       <div class="calendar-frame">
         <div id="calendar-target" class="calendar-target" aria-live="polite"></div>

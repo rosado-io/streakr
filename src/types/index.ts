@@ -92,6 +92,14 @@ export type WidgetSize = "sm" | "md" | "lg";
 /** Position of the summary metrics relative to the heatmap. */
 export type WidgetStatsPosition = "left" | "right";
 
+/** Labels for the contribution intensity legend rendered inside the widget. */
+export interface WidgetLegend {
+  /** Label for the low end of the scale, e.g. "Less" */
+  less: string;
+  /** Label for the high end of the scale, e.g. "More" */
+  more: string;
+}
+
 /** Options for rendering the composite streak widget. */
 export interface ContributionWidgetOptions {
   /** Calendar grid produced by `buildCalendarGrid` */
@@ -104,6 +112,8 @@ export interface ContributionWidgetOptions {
   size?: WidgetSize;
   /** Metrics position relative to the heatmap */
   statsPosition?: WidgetStatsPosition;
+  /** If provided, renders a color-scale legend below the heatmap using the active theme colors */
+  legend?: WidgetLegend;
 }
 
 /** Parameters for fetching events from a provider. */
