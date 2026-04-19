@@ -88,8 +88,6 @@ function applyLocale(locale: Locale): void {
   applyText("sectionLabel", msg.sectionLabel);
   applyText("calendarHeading", msg.calendarHeading);
   applyText("calendarSubtitle", msg.calendarSubtitle(rangeLabel));
-  applyText("legendLess", msg.legendLess);
-  applyText("legendMore", msg.legendMore);
 
   applyHtml("heroParagraph", msg.heroParagraph);
 
@@ -131,6 +129,7 @@ function paint(themeKey: ThemeOption, size: WidgetSize): void {
     theme,
     size,
     statsPosition: "right",
+    legend: { less: msg.legendLess, more: msg.legendMore },
   });
   document.body.dataset.theme = themeKey;
 }

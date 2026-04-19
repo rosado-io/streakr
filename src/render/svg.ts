@@ -28,12 +28,12 @@ export function renderSvgCalendar(
   const inlineSvgStyle =
     resolved.colorScheme === "system"
       ? "display:block;color-scheme:light dark;"
-      : `display:block;background:${escapeHtml(resolved.background)};color:${escapeHtml(resolved.textColor)};`;
+      : `display:block;color:${escapeHtml(resolved.textColor)};`;
 
   const backgroundRect =
     resolved.colorScheme === "system"
-      ? `<rect class="streakr-background" x="0" y="0" width="${width}" height="${height}" />`
-      : `<rect x="0" y="0" width="${width}" height="${height}" fill="${escapeHtml(resolved.background)}" style="fill:${escapeHtml(resolved.background)};" />`;
+      ? `<rect class="streakr-background" x="0" y="0" width="${width}" height="${height}" rx="12" />`
+      : `<rect x="0" y="0" width="${width}" height="${height}" rx="12" fill="${escapeHtml(resolved.background)}" style="fill:${escapeHtml(resolved.background)};" />`;
 
   container.innerHTML = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Contribution heatmap" data-streakr-id="${svgId}" style="${inlineSvgStyle}">`,
@@ -69,7 +69,7 @@ function buildPaletteRules(
     )
     .join("");
 
-  return `${selector}{background:${escapeCss(background)};color:${escapeCss(
+  return `${selector}{color:${escapeCss(
     textColor,
   )};}${selector} .streakr-background{fill:${escapeCss(background)};}${levelRules}`;
 }
