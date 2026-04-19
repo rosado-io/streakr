@@ -70,7 +70,7 @@ export function renderContributionWidget(
     "</aside>",
   ].join("");
   const legendHtml = options.legend
-    ? `<div class="streakr-widget__legend" aria-label="Contribution intensity legend"><span>${escapeHtml(options.legend.less)}</span><div class="streakr-widget__legend-scale">${[0, 1, 2, 3, 4].map((l) => `<i class="streakr-widget__legend-box" style="background:var(--streakr-level-${l})"></i>`).join("")}</div><span>${escapeHtml(options.legend.more)}</span></div>`
+    ? `<div class="streakr-widget__legend"><span>${escapeHtml(options.legend.less)}</span><div class="streakr-widget__legend-scale" aria-hidden="true">${[0, 1, 2, 3, 4].map((l) => `<i class="streakr-widget__legend-box" style="background:var(--streakr-level-${l})"></i>`).join("")}</div><span>${escapeHtml(options.legend.more)}</span></div>`
     : "";
   const calendarHtml = `<div class="streakr-widget__calendar">${temp.innerHTML}${legendHtml}</div>`;
   const content =
