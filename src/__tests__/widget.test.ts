@@ -124,4 +124,52 @@ describe("renderContributionWidget", () => {
     expect(container.innerHTML).toContain("@media (max-width: 920px)");
     expect(container.innerHTML).toContain("@media (max-width: 620px)");
   });
+
+  it("renders legend when option is provided", () => {
+    const container = createContainer();
+
+    renderContributionWidget(container, {
+      grid,
+      metrics,
+      legend: { less: "Less", more: "More" },
+    });
+
+    expect(container.innerHTML).toContain("streakr-widget__legend");
+    expect(container.innerHTML).toContain("Less");
+    expect(container.innerHTML).toContain("More");
+    expect(container.innerHTML).toContain("streakr-widget__legend-scale");
+    expect(container.innerHTML).toContain("var(--streakr-level-0)");
+    expect(container.innerHTML).toContain("var(--streakr-level-4)");
+  });
+
+  it("does not render legend element when option is omitted", () => {
+    const container = createContainer();
+
+    renderContributionWidget(container, { grid, metrics });
+
+    expect(container.innerHTML).not.toContain('class="streakr-widget__legend"');
+  });
+
+  it("escapes HTML in legend labels", () => {
+    const container = createContainer();
+
+    renderContributionWidget(container, {
+      grid,
+      metrics,
+      legend: { less: "<Less>", more: '"More"' },
+    });
+
+    expect(container.innerHTML).not.toContain("<Less>");
+    expect(container.innerHTML).toContain("&lt;Less&gt;");
+    expect(container.innerHTML).toContain("&quot;More&quot;");
+  });
+
+  it("exposes level CSS variables in palette", () => {
+    const container = createContainer();
+
+    renderContributionWidget(container, { grid, metrics });
+
+    expect(container.innerHTML).toContain("--streakr-level-0:");
+    expect(container.innerHTML).toContain("--streakr-level-4:");
+  });
 });

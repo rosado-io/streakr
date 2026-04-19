@@ -68,9 +68,8 @@ describe("renderSvgCalendar", () => {
 
     expect(container.innerHTML).toContain('fill="#3ea6ff"');
     expect(container.innerHTML).toContain('rx="6"');
-    expect(container.innerHTML).toContain(
-      'style="display:block;background:#111111;color:#fafafa;"',
-    );
+    expect(container.innerHTML).toContain('style="display:block;color:#fafafa;"');
+    expect(container.innerHTML).toContain('fill="#111111"');
   });
 
   it("supports configurable spacing values from the theme", () => {
