@@ -21,6 +21,12 @@ jobs:
         with:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
 
+      - name: Auto-merge release PR
+        if: ${{ steps.release.outputs.pr }}
+        run: gh pr merge ${{ steps.release.outputs.pr }} --merge --auto
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+
   publish:
     name: Publish to npm
     needs: release-please
