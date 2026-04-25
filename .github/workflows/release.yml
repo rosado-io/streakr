@@ -23,7 +23,7 @@ jobs:
 
       - name: Auto-merge release PR
         if: ${{ steps.release.outputs.pr }}
-        run: gh pr merge ${{ steps.release.outputs.pr }} --merge --auto
+        run: gh pr merge ${{ fromJSON(steps.release.outputs.pr).number }} --merge --auto
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
 
