@@ -39,6 +39,13 @@ let widgetSequence = 0;
 
 /**
  * Renders a composite widget with summary metrics and the SVG heatmap.
+ *
+ * Replaces the container's current contents with a responsive widget that
+ * includes generated styles scoped by a unique `data-streakr-widget` attribute.
+ * Empty grids or empty metrics clear the container.
+ *
+ * @param container - DOM element that will receive the widget markup.
+ * @param options - Grid, metrics, theme, size, layout, and legend options.
  */
 export function renderContributionWidget(
   container: HTMLElement,

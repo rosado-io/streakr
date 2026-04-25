@@ -69,6 +69,13 @@ export interface CssVarThemeOptions {
 /**
  * Creates a theme backed by CSS custom properties so host apps can skin the
  * heatmap without rebuilding the SVG.
+ *
+ * Generated values use `var(--<prefix>-..., <fallback>)` entries for the
+ * five intensity levels, background, and text color.
+ *
+ * @param options - CSS variable prefix, fallback themes, and color-scheme mode.
+ * @returns Theme object that can be passed to `renderSvgCalendar` or
+ * `renderContributionWidget`.
  */
 export function createCssVarTheme(options: CssVarThemeOptions = {}): Theme {
   const prefix = sanitizePrefix(options.prefix ?? "streakr");
