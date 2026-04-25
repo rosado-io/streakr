@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/rosado-io/streakr/compare/streakr-v0.1.1...streakr-v0.1.2) (2026-04-25)
+
+
+### 📖 Documentation
+
+* add quickstart and provider docs ([#54](https://github.com/rosado-io/streakr/issues/54)) ([a682d4e](https://github.com/rosado-io/streakr/commit/a682d4ed9c3140568541b76c1202036e7f205b9a))
+
 ## [0.1.1](https://github.com/rosado-io/streakr/compare/streakr-v0.1.0...streakr-v0.1.1) (2026-04-20)
 
 
