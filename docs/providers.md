@@ -20,7 +20,7 @@ All provider fetches use `{ user, start, end }`, where dates must be in
 `contributionsCollection.contributionCalendar` field.
 
 ```ts
-import { GitHubProvider } from "streakr";
+import { GitHubProvider } from "@rosado-io/streakr";
 
 const github = new GitHubProvider({
   token: process.env.GITHUB_TOKEN!,
@@ -79,7 +79,7 @@ For heavy usage:
 `/api/v4/users/:id/events`.
 
 ```ts
-import { GitLabProvider } from "streakr";
+import { GitLabProvider } from "@rosado-io/streakr";
 
 const gitlab = new GitLabProvider({
   token: process.env.GITLAB_TOKEN!,
@@ -145,7 +145,7 @@ For heavy usage:
 Use `aggregate()` to fetch from multiple providers concurrently:
 
 ```ts
-import { aggregate, GitHubProvider, GitLabProvider, normalizeEventsToDaily } from "streakr";
+import { aggregate, GitHubProvider, GitLabProvider, normalizeEventsToDaily } from "@rosado-io/streakr";
 
 const raw = await aggregate(
   [
@@ -167,7 +167,7 @@ that succeeded.
 Implement the `Provider` interface to connect another source:
 
 ```ts
-import type { ContributionDay, FetchParams, Provider } from "streakr";
+import type { ContributionDay, FetchParams, Provider } from "@rosado-io/streakr";
 
 class MyProvider implements Provider {
   readonly name = "my-provider";

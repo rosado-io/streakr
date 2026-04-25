@@ -13,7 +13,7 @@ can bring your own data source.
 Install from npm:
 
 ```sh
-npm install streakr
+npm install @rosado-io/streakr
 ```
 
 Or use it directly in the browser through an ESM CDN:
@@ -25,7 +25,7 @@ Or use it directly in the browser through an ESM CDN:
     computeStreaks,
     normalizeEventsToDaily,
     renderContributionWidget,
-  } from "https://esm.sh/streakr";
+  } from "https://esm.sh/@rosado-io/streakr";
 </script>
 ```
 
@@ -42,7 +42,7 @@ import {
   buildCalendarGrid,
   renderContributionWidget,
   themes,
-} from "streakr";
+} from "@rosado-io/streakr";
 
 const provider = new GitHubProvider({
   token: process.env.GITHUB_TOKEN!,
@@ -82,7 +82,7 @@ renderContributionWidget(document.querySelector<HTMLElement>("#streakr")!, {
     normalizeEventsToDaily,
     renderContributionWidget,
     themes,
-  } from "https://esm.sh/streakr";
+  } from "https://esm.sh/@rosado-io/streakr";
 
   const days = normalizeEventsToDaily([
     { date: "2025-06-01", count: 2 },
@@ -108,8 +108,8 @@ renderContributionWidget(document.querySelector<HTMLElement>("#streakr")!, {
 
 ```tsx
 import { useEffect, useRef } from "react";
-import { buildCalendarGrid, renderContributionWidget, themes } from "streakr";
-import type { ContributionDay } from "streakr";
+import { buildCalendarGrid, renderContributionWidget, themes } from "@rosado-io/streakr";
+import type { ContributionDay } from "@rosado-io/streakr";
 
 export function StreakrWidget({ days }: { days: ContributionDay[] }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -132,8 +132,8 @@ export function StreakrWidget({ days }: { days: ContributionDay[] }) {
 ```vue
 <script setup lang="ts">
 import { onMounted, ref, watch } from "vue";
-import { buildCalendarGrid, renderContributionWidget, themes } from "streakr";
-import type { ContributionDay } from "streakr";
+import { buildCalendarGrid, renderContributionWidget, themes } from "@rosado-io/streakr";
+import type { ContributionDay } from "@rosado-io/streakr";
 
 const props = defineProps<{ days: ContributionDay[] }>();
 const el = ref<HTMLElement | null>(null);
@@ -161,8 +161,8 @@ watch(() => props.days, render, { deep: true });
 ```svelte
 <script lang="ts">
   import { afterUpdate, onMount } from "svelte";
-  import { buildCalendarGrid, renderContributionWidget, themes } from "streakr";
-  import type { ContributionDay } from "streakr";
+  import { buildCalendarGrid, renderContributionWidget, themes } from "@rosado-io/streakr";
+  import type { ContributionDay } from "@rosado-io/streakr";
 
   export let days: ContributionDay[] = [];
   let el: HTMLElement;
@@ -187,7 +187,7 @@ watch(() => props.days, render, { deep: true });
 Streakr includes first-party providers for GitHub and GitLab.
 
 ```ts
-import { GitHubProvider, GitLabProvider, aggregate } from "streakr";
+import { GitHubProvider, GitLabProvider, aggregate } from "@rosado-io/streakr";
 
 const raw = await aggregate(
   [
@@ -228,7 +228,7 @@ The package exports TypeScript types for provider contracts, contribution days,
 calendar grids, themes, widget options, and fetch parameters.
 
 ```ts
-import type { ContributionDay, Provider, Theme } from "streakr";
+import type { ContributionDay, Provider, Theme } from "@rosado-io/streakr";
 ```
 
 ## Privacy
