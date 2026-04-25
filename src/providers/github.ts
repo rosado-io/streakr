@@ -75,7 +75,11 @@ export interface GitHubProviderOptions {
 /**
  * GitHub provider using GraphQL `contributionsCollection`.
  *
- * Requires a GitHub PAT in `token`.
+ * Fetches contribution-calendar counts for a GitHub user and returns a
+ * canonical, gap-free daily series for the requested date range.
+ *
+ * Requires a GitHub Personal Access Token in `token`. For private contribution
+ * visibility, the token must be able to read the relevant private repositories.
  */
 export class GitHubProvider implements Provider {
   public readonly name = "github";
@@ -84,6 +88,12 @@ export class GitHubProvider implements Provider {
   private readonly endpoint: string;
   private readonly fetchImpl: FetchLike;
 
+  /**
+   * Creates a GitHub contribution provider.
+   *
+   * @param options - Authentication, endpoint, and optional fetch override.
+   * @throws Error when `options.token` is empty.
+   */
   public constructor(options: GitHubProviderOptions) {
     const token = options.token.trim();
     if (token.length === 0) {
@@ -95,6 +105,14 @@ export class GitHubProvider implements Provider {
     this.fetchImpl = options.fetch ?? fetch;
   }
 
+  /**
+   * Fetches contribution counts for a GitHub username.
+   *
+   * @param params - Username and inclusive date range in `YYYY-MM-DD` format.
+   * @returns A canonical daily series spanning `params.start` through `params.end`.
+   * @throws Error when the date range is invalid, the user is missing, GitHub
+   * returns GraphQL errors, or the HTTP request fails.
+   */
   public async fetchEvents(params: FetchParams): Promise<ContributionDay[]> {
     validateInputDates(params.start, params.end);
 
