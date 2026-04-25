@@ -5,6 +5,13 @@ let renderSequence = 0;
 
 /**
  * Renders a heatmap calendar as SVG inside the given container.
+ *
+ * Replaces the container's current contents with an inline SVG. Empty grids
+ * clear the container.
+ *
+ * @param container - DOM element that will receive the SVG markup.
+ * @param model - Calendar grid produced by `buildCalendarGrid`.
+ * @param theme - Optional visual theme. Defaults to `themes.classicGreen`.
  */
 export function renderSvgCalendar(
   container: HTMLElement,

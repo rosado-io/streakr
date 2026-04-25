@@ -29,7 +29,8 @@ export interface GitLabProviderOptions {
  * GitLab provider using the REST Events API.
  *
  * Supports gitlab.com and self-hosted instances via `baseUrl`.
- * Requires a GitLab PAT with `read_user` and `read_api` scopes in `token`.
+ * Requires a GitLab Personal Access Token with `read_user` and `read_api`
+ * scopes in `token`.
  */
 export class GitLabProvider implements Provider {
   public readonly name = "gitlab";
@@ -38,6 +39,12 @@ export class GitLabProvider implements Provider {
   private readonly baseUrl: string;
   private readonly fetchImpl: FetchLike;
 
+  /**
+   * Creates a GitLab contribution provider.
+   *
+   * @param options - Authentication, base URL, and optional fetch override.
+   * @throws Error when `options.token` is empty.
+   */
   public constructor(options: GitLabProviderOptions) {
     const token = options.token.trim();
     if (token.length === 0) {
@@ -49,6 +56,14 @@ export class GitLabProvider implements Provider {
     this.fetchImpl = options.fetch ?? fetch;
   }
 
+  /**
+   * Fetches event-derived contribution counts for a GitLab username.
+   *
+   * @param params - Username and inclusive date range in `YYYY-MM-DD` format.
+   * @returns A canonical daily series spanning `params.start` through `params.end`.
+   * @throws Error when the date range is invalid, the user is missing, or a
+   * GitLab API request fails.
+   */
   public async fetchEvents(params: FetchParams): Promise<ContributionDay[]> {
     validateInputDates(params.start, params.end);
 
