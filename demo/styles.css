@@ -208,7 +208,7 @@ select {
 
 .calendar-subtitle {
   max-width: 60ch;
-  margin: clamp(6px, 0.8vh, 10px) 0 0;
+  margin: clamp(6px, 0.8vh, 10px) 0 clamp(12px, 1.6vh, 18px);
   font-size: clamp(0.82rem, 0.88vw, 0.94rem);
   line-height: 1.5;
   color: var(--muted);
