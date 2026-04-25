@@ -9,7 +9,7 @@ permissions:
   security-events: write
 
 jobs:
-  quality:
+  ci:
     name: Lint, Test & Build
     if: ${{ !startsWith(github.head_ref, 'release-please--') }}
     runs-on: ubuntu-latest
@@ -69,3 +69,11 @@ jobs:
         with:
           sarif_file: results.sarif
           category: .github/workflows/semgrep.yml:semgrep
+
+  sonarcloud_dummy:
+    name: SonarCloud
+    needs: ci
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "SonarCloud scan is now integrated into the 'Lint, Test & Build' job."
