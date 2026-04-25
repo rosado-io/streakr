@@ -67,7 +67,6 @@
     "overrides": {
       "postcss": ">=8.5.10",
       "lodash": ">=4.18.0",
-      "ajv": ">=8.18.0",
       "minimatch": ">=10.2.3"
     }
   }
