@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/rosado-io/streakr/compare/streakr-v0.1.2...streakr-v0.1.3) (2026-04-25)
+
+
+### 🐛 Bug Fixes
+
+* scope package as @rosado-io/streakr, optimize CI, and auto-merge releases ([#58](https://github.com/rosado-io/streakr/issues/58)) ([b523ad3](https://github.com/rosado-io/streakr/commit/b523ad3d5e6766c9452874117bc71bd5c0641cdc))
+
 ## [0.1.2](https://github.com/rosado-io/streakr/compare/streakr-v0.1.1...streakr-v0.1.2) (2026-04-25)
 
 
