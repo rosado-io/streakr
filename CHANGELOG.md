@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.4 (2026-04-25)
+
+## What's Changed
+* fix(ci): fix auto-merge, upgrade actions, add npm environment by @rosado-io in https://github.com/rosado-io/streakr/pull/60
+
+
+**Full Changelog**: https://github.com/rosado-io/streakr/compare/streakr-v0.1.3...streakr-v0.1.4
+
 ## [0.1.3](https://github.com/rosado-io/streakr/compare/streakr-v0.1.2...streakr-v0.1.3) (2026-04-25)
 
 
