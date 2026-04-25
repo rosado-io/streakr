@@ -62,5 +62,13 @@
     "vite": "^8.0.8",
     "vite-plugin-dts": "^4.5.4",
     "vitest": "^4.0.18"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss": ">=8.5.10",
+      "lodash": ">=4.18.0",
+      "ajv": ">=8.18.0",
+      "minimatch": ">=10.2.3"
+    }
   }
 }
