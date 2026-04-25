@@ -44,7 +44,7 @@ jobs:
         run: pnpm build
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@v7
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -54,7 +54,7 @@ jobs:
     if: ${{ !startsWith(github.head_ref, 'release-please--') }}
     runs-on: ubuntu-latest
     container:
-      image: semgrep/semgrep
+      image: semgrep/semgrep:1.161.0
     steps:
       - uses: actions/checkout@v6
 
@@ -68,6 +68,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: results.sarif
+          # Intentionally using the old file path to maintain history continuity with previous Semgrep uploads
           category: .github/workflows/semgrep.yml:semgrep
 
   sonarcloud_dummy:
@@ -76,4 +77,10 @@ jobs:
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
-      - run: echo "SonarCloud scan is now integrated into the 'Lint, Test & Build' job."
+      - name: Report SonarCloud Status
+        run: |
+          if [ "${{ needs.ci.result }}" != "success" ]; then
+            echo "CI job failed. Marking dummy SonarCloud check as failed."
+            exit 1
+          fi
+          echo "SonarCloud scan succeeded in the 'Lint, Test & Build' job."
