@@ -13,5 +13,5 @@
 ## How does it solve it?
 <!-- Provide a brief technical explanation of how you implemented the solution. -->
 
-## Comments, Screenshots, or Additional Info (Optional)
+## Additional Info (Optional)
 <!-- Add any extra context, UI screenshots, logs, or references here. -->
