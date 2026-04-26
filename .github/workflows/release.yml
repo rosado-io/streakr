@@ -14,9 +14,6 @@ jobs:
   release:
     name: Semantic Release
     runs-on: ubuntu-latest
-    environment:
-      name: npm
-      url: https://www.npmjs.com/package/@rosado-io/streakr
     outputs:
       released: ${{ steps.semantic.outputs.new_release_published }}
     steps:
