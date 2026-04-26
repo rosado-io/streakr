@@ -1,5 +1,6 @@
 {
   "branches": ["main"],
+  "tagFormat": "streakr-v${version}",
   "plugins": [
     [
       "@semantic-release/commit-analyzer",
@@ -10,7 +11,10 @@
     [
       "@semantic-release/release-notes-generator",
       {
-        "preset": "conventionalcommits"
+        "preset": "conventionalcommits",
+        "writerOpts": {
+          "commitPartial": "* {{header}} ([`{{shortHash}}`]({{#if @root.host}}{{@root.host}}/{{/if}}{{@root.owner}}/{{@root.repository}}/commit/{{hash}})) by **{{authorName}}**\n"
+        }
       }
     ],
     [
