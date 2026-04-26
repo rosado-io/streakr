@@ -1,6 +1,5 @@
 {
   "branches": ["main"],
-  "tagFormat": "streakr-v${version}",
   "plugins": [
     [
       "@semantic-release/commit-analyzer",
