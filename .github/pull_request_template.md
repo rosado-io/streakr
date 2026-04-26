@@ -1,11 +1,5 @@
-## Description
-
-<!-- Describe the changes in this PR and why they are necessary. Provide context. -->
-
 ## Type of Change
-
 <!-- Check the box that applies: -->
-
 - [ ] 🐛 Bug Fix
 - [ ] ✨ New Feature
 - [ ] 🚀 Performance Improvement
@@ -13,12 +7,11 @@
 - [ ] 🔧 Chore (Refactor, CI, Dependencies, etc.)
 - [ ] 💥 BREAKING CHANGE
 
-## Checklist
+## What does this PR solve?
+<!-- Describe the problem or the original issue that this PR addresses. -->
 
-- [ ] My code follows the style guidelines of this project.
-- [ ] I have performed a self-review of my code.
-- [ ] I have commented my code, particularly in hard-to-understand areas.
-- [ ] I have made corresponding changes to the documentation (if applicable).
-- [ ] My changes generate no new warnings.
-- [ ] I have added tests that prove my fix is effective or that my feature works.
-- [ ] Existing E2E tests and unit tests pass locally with my changes.
+## How does it solve it?
+<!-- Provide a brief technical explanation of how you implemented the solution. -->
+
+## Comments, Screenshots, or Additional Info (Optional)
+<!-- Add any extra context, UI screenshots, logs, or references here. -->
