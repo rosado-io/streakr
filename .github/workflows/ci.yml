@@ -66,4 +66,5 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: results.sarif
-          category: semgrep
+          # Intentionally using the old file path to maintain history continuity with previous Semgrep uploads
+          category: .github/workflows/semgrep.yml:semgrep
