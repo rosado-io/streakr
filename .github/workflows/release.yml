@@ -6,44 +6,29 @@ on:
 
 permissions:
   contents: write
+  issues: write
   pull-requests: write
+  id-token: write
 
 jobs:
-  release-please:
-    name: Release Please
-    runs-on: ubuntu-latest
-    outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
-    steps:
-      - uses: googleapis/release-please-action@v5
-        id: release
-        with:
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-
-      - name: Auto-merge release PR
-        if: ${{ steps.release.outputs.pr }}
-        run: gh pr merge ${{ fromJSON(steps.release.outputs.pr).number }} --merge --auto
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-
-  publish:
-    name: Publish to npm
-    needs: release-please
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+  release:
+    name: Semantic Release
     runs-on: ubuntu-latest
     environment:
       name: npm
       url: https://www.npmjs.com/package/@rosado-io/streakr
-    permissions:
-      contents: read
-      id-token: write
+    outputs:
+      released: ${{ steps.semantic.outputs.new_release_published }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
-      - uses: pnpm/action-setup@v6
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
@@ -55,18 +40,18 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Publish to npm
-        shell: bash
-        run: |
-          set -euo pipefail
-          package_name="$(node --print "JSON.parse(require('node:fs').readFileSync('package.json', 'utf8')).name")"
-          package_version="$(node --print "JSON.parse(require('node:fs').readFileSync('package.json', 'utf8')).version")"
-
-          if npm view "${package_name}@${package_version}" version --registry=https://registry.npmjs.org/ >/dev/null 2>&1; then
-            echo "${package_name}@${package_version} is already published to npm; skipping."
-            exit 0
-          fi
-
-          pnpm publish --no-git-checks --provenance --access public
+      - name: Semantic release
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v6
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        with:
+          extra_plugins: |
+            @semantic-release/changelog
+            @semantic-release/git
+            conventional-changelog-conventionalcommits
