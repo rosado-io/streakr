@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.5 (2026-04-26)
+
+## What's Changed
+* ci: consolidate workflows and skip release-please PRs by @rosado-io in https://github.com/rosado-io/streakr/pull/62
+* chore(deps): bump postcss from 8.5.9 to 8.5.10 in the npm_and_yarn group across 1 directory by @dependabot[bot] in https://github.com/rosado-io/streakr/pull/63
+
+
+**Full Changelog**: https://github.com/rosado-io/streakr/compare/streakr-v0.1.4...streakr-v0.1.5
+
 ## 0.1.4 (2026-04-25)
 
 ## What's Changed
