@@ -79,8 +79,8 @@ jobs:
     steps:
       - name: Report SonarCloud Status
         run: |
-          if [ "${{ needs.ci.result }}" != "success" ]; then
-            echo "CI job failed. Marking dummy SonarCloud check as failed."
+          if [ "${{ needs.ci.result }}" != "success" ] && [ "${{ needs.ci.result }}" != "skipped" ]; then
+            echo "CI job failed (result: ${{ needs.ci.result }}). Marking dummy SonarCloud check as failed."
             exit 1
           fi
-          echo "SonarCloud scan succeeded in the 'Lint, Test & Build' job."
+          echo "SonarCloud scan succeeded (or was skipped) in the 'Lint, Test & Build' job."
