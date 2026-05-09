@@ -46,76 +46,6 @@ export interface CalendarGrid {
   totalContributions: number;
 }
 
-/** Fixed 5-step color scale used by the renderer. */
-export type ThemeColorScale = [string, string, string, string, string];
-
-/** Supported color-scheme modes for theme resolution. */
-export type ThemeColorScheme = "light" | "dark" | "system";
-
-/** Theme configuration for the heatmap renderer. */
-export interface Theme {
-  /** 5 colors for levels 0-4: [empty, low, medium, high, max] */
-  colors: ThemeColorScale;
-  /** Optional dark-mode colors used when `colorScheme` is `system` */
-  darkColors?: ThemeColorScale;
-  /** Background color */
-  background?: string;
-  /** Optional dark-mode background used when `colorScheme` is `system` */
-  darkBackground?: string;
-  /** Text/label color */
-  textColor?: string;
-  /** Optional dark-mode text color used when `colorScheme` is `system` */
-  darkTextColor?: string;
-  /** Border radius for cells in pixels */
-  borderRadius?: number;
-  /** Width/height of each heatmap cell in pixels */
-  cellSize?: number;
-  /** Space between cells in pixels */
-  gap?: number;
-  /** Outer SVG padding in pixels */
-  padding?: number;
-  /** Theme mode resolution strategy */
-  colorScheme?: ThemeColorScheme;
-}
-
-/** A single summary metric rendered alongside the heatmap. */
-export interface ContributionMetric {
-  /** Metric label, for example "Best Streak" */
-  label: string;
-  /** Metric value shown prominently */
-  value: string | number;
-}
-
-/** Supported widget sizes for the composite renderer. */
-export type WidgetSize = "sm" | "md" | "lg";
-
-/** Position of the summary metrics relative to the heatmap. */
-export type WidgetStatsPosition = "left" | "right";
-
-/** Labels for the contribution intensity legend rendered inside the widget. */
-export interface WidgetLegend {
-  /** Label for the low end of the scale, e.g. "Less" */
-  less: string;
-  /** Label for the high end of the scale, e.g. "More" */
-  more: string;
-}
-
-/** Options for rendering the composite streak widget. */
-export interface ContributionWidgetOptions {
-  /** Calendar grid produced by `buildCalendarGrid` */
-  grid: CalendarGrid;
-  /** Summary metrics shown next to the heatmap */
-  metrics: ContributionMetric[];
-  /** Optional theme forwarded to the renderer */
-  theme?: Theme;
-  /** Visual size preset */
-  size?: WidgetSize;
-  /** Metrics position relative to the heatmap */
-  statsPosition?: WidgetStatsPosition;
-  /** If provided, renders a color-scale legend below the heatmap using the active theme colors */
-  legend?: WidgetLegend;
-}
-
 /** Parameters for fetching events from a provider. */
 export interface FetchParams {
   /** Username to fetch events for */
@@ -124,4 +54,107 @@ export interface FetchParams {
   start: string;
   /** End date in YYYY-MM-DD format */
   end: string;
+}
+
+/** Visual theme for the Streakr component. */
+export type StreakrTheme = "dark" | "light";
+
+/** Color-scheme alias kept for forward compatibility with auto-detection. */
+export type StreakrThemeMode = StreakrTheme | "system";
+
+/** Lifecycle/state of the Streakr component. */
+export type StreakrState = "loading" | "empty" | "ready";
+
+/** Map of provider keys to their on/off state. */
+export type StreakrProviders = Record<string, boolean>;
+
+/**
+ * Provider definition consumed by the Streakr component.
+ *
+ * `key` is the lookup name used in `StreakrDay.sources`. `name` is the
+ * display label, `color` is the dot/accent color, and `icon` is an optional
+ * SVG snippet shown in the provider chip.
+ */
+export interface StreakrProvider {
+  /** Stable lookup key (e.g. `"github"`). */
+  key: string;
+  /** Display name (e.g. `"GitHub"`). */
+  name: string;
+  /** Dot/accent color used in chips and tooltips. */
+  color: string;
+  /**
+   * Optional inline SVG markup shown inside the provider chip.
+   *
+   * Built-in icons are provided automatically when `key` is `"github"`,
+   * `"gitlab"`, or `"bitbucket"`. Pass your own to override.
+   */
+  icon?: string;
+}
+
+/**
+ * A single day's contribution data for the stateful Streakr component.
+ *
+ * Per-provider counters live under `sources` keyed by `StreakrProvider.key`.
+ * `total` is recomputed by the component when toggling providers, so the
+ * value you pass in is treated as the "all providers active" total.
+ */
+export interface StreakrDay {
+  /** Calendar date (local time) for this entry. */
+  date: Date;
+  /** Total contributions across all providers for this day. */
+  total: number;
+  /** Per-provider counts, keyed by `StreakrProvider.key`. */
+  sources?: Record<string, number>;
+}
+
+/** A `StreakrDay` with an intensity level (0-4) used for cell coloring. */
+export interface StreakrLeveledDay extends StreakrDay {
+  level: 0 | 1 | 2 | 3 | 4;
+}
+
+/** Options accepted by `createStreakr`. */
+export interface StreakrOptions {
+  /** Element that the component will mount into. */
+  target: HTMLElement;
+  /** Visual theme. Default: `"dark"`. */
+  theme?: StreakrTheme;
+  /** Accent color (any CSS color). Default: `"#39d353"`. */
+  accent?: string;
+  /** When true, the heatmap palette is tinted from `accent`. Default: `true`. */
+  tintHeatmap?: boolean;
+  /** Toggle the provider row. Default: `true`. */
+  showProviders?: boolean;
+  /** Toggle the stats grid. Default: `true`. */
+  showStats?: boolean;
+  /** Lifecycle state. Default: `"ready"`. */
+  state?: StreakrState;
+  /** Years available in the year tabs row and modal. */
+  years: number[];
+  /** Currently selected year. Defaults to the latest entry of `years`. */
+  year?: number;
+  /** Returns the contribution days for a given year. */
+  getDays: (year: number) => StreakrDay[];
+  /**
+   * Provider definitions shown in the provider chip row and tooltip.
+   *
+   * Defaults to `[github, gitlab, bitbucket]` (built-in icons). Pass your
+   * own array to support arbitrary providers.
+   */
+  providers?: StreakrProvider[];
+  /** Fired when the user changes the active year. */
+  onYearChange?: (year: number) => void;
+  /** Fired when the user toggles a provider chip. */
+  onProviderToggle?: (key: string, enabled: boolean, providers: StreakrProviders) => void;
+}
+
+/** Public instance API returned by `createStreakr`. */
+export interface StreakrInstance {
+  /** Patch options and re-render. */
+  update(patch: Partial<StreakrOptions>): void;
+  /** Programmatically set the active year. */
+  setYear(year: number): void;
+  /** Patch the provider toggle state. */
+  setProviders(next: StreakrProviders): void;
+  /** Tear down the component, listeners, and tooltip node. */
+  destroy(): void;
 }
