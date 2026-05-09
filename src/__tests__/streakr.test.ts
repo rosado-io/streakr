@@ -35,9 +35,7 @@ describe("createStreakr", () => {
     instance?.destroy();
     instance = null;
     target.remove();
-    document.body
-      .querySelectorAll(".sk-tooltip, .sk-root")
-      .forEach((el) => el.remove());
+    document.body.querySelectorAll(".sk-tooltip, .sk-root").forEach((el) => el.remove());
   });
 
   // ─── mount ─────────────────────────────────────────────────
@@ -141,9 +139,9 @@ describe("createStreakr", () => {
     it("clicking a year tab switches active year and fires onYearChange", () => {
       const onYearChange = vi.fn();
       instance = createStreakr({ target, years, year: 2026, getDays, onYearChange });
-      const tab2024 = Array.from(
-        target.querySelectorAll<HTMLButtonElement>(".sk-year-tab"),
-      ).find((b) => b.textContent === "2024");
+      const tab2024 = Array.from(target.querySelectorAll<HTMLButtonElement>(".sk-year-tab")).find(
+        (b) => b.textContent === "2024",
+      );
       tab2024?.click();
       expect(onYearChange).toHaveBeenCalledWith(2024);
       const newActive = target.querySelector(".sk-year-tab.active");
@@ -199,9 +197,7 @@ describe("createStreakr", () => {
     it("picking a year from the modal switches active year", () => {
       instance = createStreakr({ target, years: many, year: 2026, getDays });
       target.querySelector<HTMLButtonElement>(".sk-year-more")?.click();
-      const buttons = Array.from(
-        target.querySelectorAll<HTMLButtonElement>(".sk-modal-year"),
-      );
+      const buttons = Array.from(target.querySelectorAll<HTMLButtonElement>(".sk-modal-year"));
       const target2020 = buttons.find((b) => b.textContent?.startsWith("2020"));
       target2020?.click();
       expect(target.querySelector(".sk-year-tab.active")?.textContent).toBe("2020");
@@ -269,26 +265,18 @@ describe("createStreakr", () => {
         target,
         years,
         providers: custom,
-        getDays: (y) => [
-          { date: new Date(y, 0, 5), total: 1, sources: { linear: 1 } },
-        ],
+        getDays: (y) => [{ date: new Date(y, 0, 5), total: 1, sources: { linear: 1 } }],
       });
-      expect(
-        target.querySelector(".sk-provider [data-test='custom-icon']"),
-      ).toBeTruthy();
+      expect(target.querySelector(".sk-provider [data-test='custom-icon']")).toBeTruthy();
     });
 
     it("falls back to the color dot when no built-in icon exists and none supplied", () => {
-      const custom: StreakrProvider[] = [
-        { key: "gitea", name: "Gitea", color: "#609926" },
-      ];
+      const custom: StreakrProvider[] = [{ key: "gitea", name: "Gitea", color: "#609926" }];
       instance = createStreakr({
         target,
         years,
         providers: custom,
-        getDays: (y) => [
-          { date: new Date(y, 0, 5), total: 1, sources: { gitea: 1 } },
-        ],
+        getDays: (y) => [{ date: new Date(y, 0, 5), total: 1, sources: { gitea: 1 } }],
       });
       const iconWrap = target.querySelector<HTMLElement>(".sk-provider-icon");
       // happy-dom preserves the literal hex; jsdom would normalize to rgb()
@@ -356,9 +344,7 @@ describe("createStreakr", () => {
       instance = createStreakr({
         target,
         years,
-        getDays: () => [
-          { date: new Date(2026, 0, 1), total: 0, sources: {} },
-        ],
+        getDays: () => [{ date: new Date(2026, 0, 1), total: 0, sources: {} }],
       });
       expect(target.querySelector(".sk-empty")).toBeTruthy();
     });
