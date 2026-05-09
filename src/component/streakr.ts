@@ -569,10 +569,13 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
     if (isLoading) {
       card.appendChild(renderLoadingBody());
+    } else if (allOff) {
+      // Check `allOff` before `isEmpty` so users who explicitly toggled every
+      // provider off see "providers disabled" guidance instead of the
+      // (technically true but misleading) "no contributions" empty state.
+      card.appendChild(renderNoProviders());
     } else if (isEmpty) {
       card.appendChild(renderEmpty());
-    } else if (allOff) {
-      card.appendChild(renderNoProviders());
     } else {
       const body = renderReadyBody(leveled, stats) as ReadyBody;
       card.appendChild(body);
