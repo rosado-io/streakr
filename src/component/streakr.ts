@@ -9,12 +9,32 @@ import type {
 
 const MAX_VISIBLE_YEARS = 5;
 const MONTH_LABELS_SHORT = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ];
 const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 const DOW = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const DAY_LABELS = ["Mon", "Wed", "Fri"];
@@ -34,7 +54,14 @@ const DEFAULT_PROVIDERS: StreakrProvider[] = [
   { key: "bitbucket", name: "Bitbucket", color: "#2684ff" },
 ];
 
-type ElAttrValue = string | number | boolean | EventListener | Record<string, string> | null | undefined;
+type ElAttrValue =
+  | string
+  | number
+  | boolean
+  | EventListener
+  | Record<string, string>
+  | null
+  | undefined;
 type ElAttrs = Record<string, ElAttrValue>;
 type ElChild = Node | string | null | false | undefined;
 
@@ -121,7 +148,10 @@ function monthHeaders(cols: (StreakrDay | null)[][]): { col: number; label: stri
 }
 
 function levelize(days: StreakrDay[]): StreakrLeveledDay[] {
-  const counts = days.map((d) => d.total).filter((x) => x > 0).sort((a, b) => a - b);
+  const counts = days
+    .map((d) => d.total)
+    .filter((x) => x > 0)
+    .sort((a, b) => a - b);
   if (!counts.length) return days.map((d) => ({ ...d, level: 0 }));
   const p = (q: number) => counts[Math.min(counts.length - 1, Math.floor(counts.length * q))];
   const t1 = p(0.25);
@@ -178,9 +208,15 @@ function logoR(): SVGElement {
   const FILL = "var(--sk-heat-4, #39d353)";
   const HOLE = "var(--sk-heat-1, #0e4429)";
   const cells: [number, number, string][] = [
-    [1, 1, FILL],  [7, 1, FILL],  [13, 1, FILL],
-    [1, 7, FILL],  [7, 7, FILL],  [13, 7, HOLE],
-    [1, 13, FILL], [7, 13, HOLE], [13, 13, FILL],
+    [1, 1, FILL],
+    [7, 1, FILL],
+    [13, 1, FILL],
+    [1, 7, FILL],
+    [7, 7, FILL],
+    [13, 7, HOLE],
+    [1, 13, FILL],
+    [7, 13, HOLE],
+    [13, 13, FILL],
   ];
   return svg(
     "svg",
@@ -208,9 +244,7 @@ interface ResolvedConfig {
   getDays: (year: number) => StreakrDay[];
   providers: StreakrProvider[];
   onYearChange: ((year: number) => void) | null;
-  onProviderToggle:
-    | ((key: string, enabled: boolean, providers: StreakrProviders) => void)
-    | null;
+  onProviderToggle: ((key: string, enabled: boolean, providers: StreakrProviders) => void) | null;
 }
 
 function dayCount(day: StreakrDay, key: string): number {
@@ -361,7 +395,10 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     const headers = monthHeaders(cols);
     const labelsW = 28;
     const trailingW = 8;
-    const gridW = Math.max(0, (containerW || wrap.getBoundingClientRect().width || 820) - labelsW - trailingW);
+    const gridW = Math.max(
+      0,
+      (containerW || wrap.getBoundingClientRect().width || 820) - labelsW - trailingW,
+    );
     const targetGap = 3;
     const rawSq = gridW / Math.max(1, cols.length) - targetGap;
     const sq = Math.max(9, Math.min(11, rawSq));
@@ -424,8 +461,10 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
           style: { cursor: day ? "pointer" : "default" },
         });
         if (day) {
-          r.addEventListener("mouseenter", ((e: Event) => showTooltip(e as MouseEvent, day)) as EventListener);
-          r.addEventListener("mousemove", ((e: Event) => moveTooltip(e as MouseEvent)) as EventListener);
+          r.addEventListener("mouseenter", ((e: Event) =>
+            showTooltip(e as MouseEvent, day)) as EventListener);
+          r.addEventListener("mousemove", ((e: Event) =>
+            moveTooltip(e as MouseEvent)) as EventListener);
           r.addEventListener("mouseleave", hideTooltip as EventListener);
         }
         colG.appendChild(r);
@@ -588,7 +627,10 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       );
     }
     const skel = (w: number, hpx: number) =>
-      h("div", { class: "sk-skeleton", style: { width: w + "px", height: hpx + "px", marginBottom: "10px" } });
+      h("div", {
+        class: "sk-skeleton",
+        style: { width: w + "px", height: hpx + "px", marginBottom: "10px" },
+      });
     const stat = () => h("div", { class: "sk-stat" }, [skel(90, 11), skel(60, 26)]);
     return h("div", { class: "sk-body" }, [
       h("div", { class: "sk-heatmap-wrap" }, [
@@ -616,8 +658,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       }),
       h("div", {
         class: "sk-empty-sub",
-        text:
-          "When you commit, push, or open PRs across your connected accounts, they'll show up here.",
+        text: "When you commit, push, or open PRs across your connected accounts, they'll show up here.",
       }),
     ]);
   }
@@ -629,7 +670,11 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         style: { flex: "1" },
         text: "All providers are disabled — toggle one above to see contributions.",
       }),
-      h("button", { class: "sk-year-tab", onclick: () => enableAllProviders(), text: "Enable all" }),
+      h("button", {
+        class: "sk-year-tab",
+        onclick: () => enableAllProviders(),
+        text: "Enable all",
+      }),
     ]);
   }
 
@@ -704,29 +749,32 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       ]),
     );
     const grid = h("div", { class: "sk-modal-grid" });
-    cfg.years.slice().reverse().forEach((y) => {
-      const days = cfg.getDays(y) || [];
-      const tot = days.reduce((s, d) => s + (d.total || 0), 0);
-      grid.appendChild(
-        h(
-          "button",
-          {
-            class: "sk-modal-year" + (state.year === y ? " active" : ""),
-            onclick: () => {
-              setYear(y);
-              closeYearModal();
+    cfg.years
+      .slice()
+      .reverse()
+      .forEach((y) => {
+        const days = cfg.getDays(y) || [];
+        const tot = days.reduce((s, d) => s + (d.total || 0), 0);
+        grid.appendChild(
+          h(
+            "button",
+            {
+              class: "sk-modal-year" + (state.year === y ? " active" : ""),
+              onclick: () => {
+                setYear(y);
+                closeYearModal();
+              },
             },
-          },
-          [
-            h("div", { class: "sk-modal-year-num", text: String(y) }),
-            h("div", {
-              class: "sk-modal-year-count",
-              text: tot.toLocaleString() + " contributions",
-            }),
-          ],
-        ),
-      );
-    });
+            [
+              h("div", { class: "sk-modal-year-num", text: String(y) }),
+              h("div", {
+                class: "sk-modal-year-count",
+                text: tot.toLocaleString() + " contributions",
+              }),
+            ],
+          ),
+        );
+      });
     modal.appendChild(grid);
     overlay.appendChild(modal);
     card.appendChild(overlay);
