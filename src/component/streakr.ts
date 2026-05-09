@@ -145,7 +145,9 @@ function gridFromDays<T extends StreakrDay>(days: T[]): (T | null)[][] {
   return cols;
 }
 
-function monthHeaders<T extends StreakrDay>(cols: (T | null)[][]): { col: number; label: string }[] {
+function monthHeaders<T extends StreakrDay>(
+  cols: (T | null)[][],
+): { col: number; label: string }[] {
   const out: { col: number; label: string }[] = [];
   let lastMonth = -1;
   cols.forEach((col, i) => {
@@ -531,8 +533,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     const yearTotal = days.reduce((a, d) => a + d.total, 0);
     const isLoading = cfg.state === "loading";
     const isEmpty = cfg.state === "empty" || (cfg.state === "ready" && yearTotal === 0);
-    const allOff =
-      cfg.providers.length > 0 && cfg.providers.every((p) => !state.providers[p.key]);
+    const allOff = cfg.providers.length > 0 && cfg.providers.every((p) => !state.providers[p.key]);
     return { isLoading, isEmpty, allOff, leveled, stats };
   }
 
