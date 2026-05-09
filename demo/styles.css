@@ -78,10 +78,12 @@ body {
 .lv1-eyebrow {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 5px 12px;
-  background: rgba(255,255,255,0.04);
+  /* Opaque equivalent of rgba(255,255,255,0.04) over #000 — kept hex so
+     contrast tools (and Sonar) can compute the foreground contrast. */
+  background: #0a0a0a;
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 999px;
-  font-size: 12px; color: rgba(255,255,255,0.7);
+  font-size: 12px; color: #b3b3b3;
   position: relative;
 }
 .lv1-eyebrow-dot {
@@ -122,7 +124,8 @@ body {
 .lv1-btn-primary { background: #fff; color: #000; }
 .lv1-btn-primary:hover { background: rgba(255,255,255,0.9); }
 .lv1-btn-ghost {
-  background: rgba(255,255,255,0.04);
+  /* Opaque equivalent of rgba(255,255,255,0.04) over #000. */
+  background: #0a0a0a;
   color: #ededed;
   border: 1px solid rgba(255,255,255,0.1);
 }
@@ -169,7 +172,9 @@ body {
 .lv1-fc-btn {
   width: 26px; height: 26px;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(255,255,255,0.06);
+  /* Opaque equivalent of rgba(255,255,255,0.06) over the parent
+     .lv1-pg-controls (~rgba(255,255,255,0.03) on #000). */
+  background: #171717;
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 50%;
   color: #e6e6ea;

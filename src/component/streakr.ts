@@ -54,18 +54,53 @@ const DEFAULT_PROVIDERS: StreakrProvider[] = [
   { key: "bitbucket", name: "Bitbucket", color: "#2684ff" },
 ];
 
-type ElAttrValue =
-  | string
-  | number
-  | boolean
-  | EventListener
-  | Record<string, string>
-  | null
-  | undefined;
+type SimpleAttr = string | number | boolean;
+type StyleAttr = Partial<CSSStyleDeclaration> | Record<string, string>;
+type EventAttr = (e: Event) => void;
+type ElAttrValue = SimpleAttr | EventAttr | StyleAttr | null | undefined;
 type ElAttrs = Record<string, ElAttrValue>;
 type ElChild = Node | string | null | false | undefined;
 
 const SVG_NS = "http://www.w3.org/2000/svg";
+
+function isSimple(value: ElAttrValue): value is SimpleAttr {
+  return typeof value === "string" || typeof value === "number" || typeof value === "boolean";
+}
+
+function setSimpleAttr(el: Element, key: string, value: SimpleAttr): void {
+  const str = String(value);
+  if (key === "class") {
+    el.setAttribute("class", str);
+  } else if (key === "html") {
+    (el as HTMLElement).innerHTML = str;
+  } else if (key === "text") {
+    el.textContent = str;
+  } else {
+    el.setAttribute(key, str);
+  }
+}
+
+function setAttr(el: Element, key: string, value: ElAttrValue): void {
+  if (value === false || value == null) return;
+  if (key === "style") {
+    if (typeof value === "object") Object.assign((el as HTMLElement).style, value);
+    return;
+  }
+  if (key.startsWith("on")) {
+    if (typeof value === "function") {
+      el.addEventListener(key.slice(2).toLowerCase(), value);
+    }
+    return;
+  }
+  if (isSimple(value)) setSimpleAttr(el, key, value);
+}
+
+function appendChildren(el: Element, list: ElChild[]): void {
+  for (const child of list) {
+    if (child == null || child === false) continue;
+    el.appendChild(typeof child === "string" ? document.createTextNode(child) : child);
+  }
+}
 
 function h<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -76,35 +111,15 @@ function h(tag: string, attrs?: ElAttrs, children?: ElChild | ElChild[]): Elemen
 function h(tag: string, attrs?: ElAttrs, children?: ElChild | ElChild[]): Element {
   const isSvg = tag.includes(":");
   const el = isSvg
-    ? document.createElementNS(SVG_NS, tag.split(":")[1])
+    ? document.createElementNS(SVG_NS, tag.slice(tag.indexOf(":") + 1))
     : document.createElement(tag);
 
   if (attrs) {
-    for (const key of Object.keys(attrs)) {
-      const value = attrs[key];
-      if (value === false || value == null) continue;
-      if (key === "class") {
-        el.setAttribute("class", String(value));
-      } else if (key === "style" && typeof value === "object") {
-        Object.assign((el as HTMLElement).style, value);
-      } else if (key === "html") {
-        (el as HTMLElement).innerHTML = String(value);
-      } else if (key === "text") {
-        el.textContent = String(value);
-      } else if (key.startsWith("on") && typeof value === "function") {
-        el.addEventListener(key.slice(2).toLowerCase(), value as EventListener);
-      } else {
-        el.setAttribute(key, String(value));
-      }
-    }
+    for (const key of Object.keys(attrs)) setAttr(el, key, attrs[key]);
   }
 
   if (children !== undefined && children !== null) {
-    const list = Array.isArray(children) ? children : [children];
-    for (const child of list) {
-      if (child == null || child === false) continue;
-      el.appendChild(typeof child === "string" ? document.createTextNode(child) : child);
-    }
+    appendChildren(el, Array.isArray(children) ? children : [children]);
   }
 
   return el;
@@ -114,10 +129,10 @@ function svg(tag: string, attrs?: ElAttrs, children?: ElChild | ElChild[]): SVGE
   return h("svg:" + tag, attrs, children) as SVGElement;
 }
 
-function gridFromDays(days: StreakrDay[]): (StreakrDay | null)[][] {
+function gridFromDays<T extends StreakrDay>(days: T[]): (T | null)[][] {
   if (!days.length) return [];
-  const cols: (StreakrDay | null)[][] = [];
-  let col: (StreakrDay | null)[] = new Array(days[0].date.getDay()).fill(null);
+  const cols: (T | null)[][] = [];
+  let col: (T | null)[] = new Array(days[0].date.getDay()).fill(null);
   for (const day of days) {
     if (col.length === 7) {
       cols.push(col);
@@ -130,11 +145,11 @@ function gridFromDays(days: StreakrDay[]): (StreakrDay | null)[][] {
   return cols;
 }
 
-function monthHeaders(cols: (StreakrDay | null)[][]): { col: number; label: string }[] {
+function monthHeaders<T extends StreakrDay>(cols: (T | null)[][]): { col: number; label: string }[] {
   const out: { col: number; label: string }[] = [];
   let lastMonth = -1;
   cols.forEach((col, i) => {
-    const firstDay = col.find((d): d is StreakrDay => Boolean(d));
+    const firstDay = col.find((d): d is T => Boolean(d));
     if (!firstDay) return;
     const m = firstDay.date.getMonth();
     if (m !== lastMonth) {
@@ -197,6 +212,12 @@ function computeStats(days: StreakrDay[]): StreakrStats {
 
 function fmtDateLong(d: Date): string {
   return `${DOW[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+function formatTotalLabel(total: number): string {
+  if (total === 0) return "No contributions";
+  const noun = total === 1 ? "contribution" : "contributions";
+  return `${total} ${noun}`;
 }
 
 function providerIconHtml(p: StreakrProvider): string | null {
@@ -352,15 +373,8 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   function showTooltip(e: MouseEvent, day: StreakrDay): void {
     tooltipEl.innerHTML = "";
     tooltipEl.appendChild(h("div", { class: "tt-date", text: fmtDateLong(day.date) }));
-    tooltipEl.appendChild(
-      h("div", {
-        class: "tt-total",
-        text:
-          day.total === 0
-            ? "No contributions"
-            : day.total + " contribution" + (day.total === 1 ? "" : "s"),
-      }),
-    );
+    const totalLabel = formatTotalLabel(day.total);
+    tooltipEl.appendChild(h("div", { class: "tt-total", text: totalLabel }));
     if (day.total > 0) {
       cfg.providers.forEach((p) => {
         const value = dayCount(day, p.key);
@@ -389,6 +403,44 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
   function hideTooltip(): void {
     tooltipEl.classList.remove("visible");
+  }
+
+  function bindCellEvents(rect: SVGElement, day: StreakrDay): void {
+    rect.addEventListener("mouseenter", (e) => showTooltip(e, day));
+    rect.addEventListener("mousemove", (e) => moveTooltip(e));
+    rect.addEventListener("mouseleave", hideTooltip);
+  }
+
+  function buildHeatmapCell(
+    day: StreakrLeveledDay | null,
+    ri: number,
+    sq: number,
+    colStep: number,
+  ): SVGElement {
+    const rect = svg("rect", {
+      class: day ? "sk-heatmap-cell" : null,
+      y: ri * colStep,
+      width: sq,
+      height: sq,
+      rx: Math.max(2, sq * 0.22),
+      fill: day ? `var(--sk-heat-${day.level})` : "transparent",
+      style: { cursor: day ? "pointer" : "default" },
+    });
+    if (day) bindCellEvents(rect, day);
+    return rect;
+  }
+
+  function buildHeatmapColumn(
+    col: (StreakrLeveledDay | null)[],
+    ci: number,
+    sq: number,
+    colStep: number,
+  ): SVGElement {
+    const colG = svg("g", { transform: `translate(${ci * colStep}, 0)` });
+    col.forEach((day, ri) => {
+      colG.appendChild(buildHeatmapCell(day, ri, sq, colStep));
+    });
+    return colG;
   }
 
   function renderHeatmap(wrap: HTMLElement, days: StreakrLeveledDay[], containerW: number): void {
@@ -450,27 +502,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
     const g = svg("g", { transform: `translate(${labelsW}, 18)` });
     cols.forEach((col, ci) => {
-      const colG = svg("g", { transform: `translate(${ci * colStep}, 0)` });
-      col.forEach((day, ri) => {
-        const r = svg("rect", {
-          class: day ? "sk-heatmap-cell" : null,
-          y: ri * colStep,
-          width: sq,
-          height: sq,
-          rx: Math.max(2, sq * 0.22),
-          fill: day ? `var(--sk-heat-${(day as StreakrLeveledDay).level})` : "transparent",
-          style: { cursor: day ? "pointer" : "default" },
-        });
-        if (day) {
-          r.addEventListener("mouseenter", ((e: Event) =>
-            showTooltip(e as MouseEvent, day)) as EventListener);
-          r.addEventListener("mousemove", ((e: Event) =>
-            moveTooltip(e as MouseEvent)) as EventListener);
-          r.addEventListener("mouseleave", hideTooltip as EventListener);
-        }
-        colG.appendChild(r);
-      });
-      g.appendChild(colG);
+      g.appendChild(buildHeatmapColumn(col, ci, sq, colStep));
     });
     svgEl.appendChild(g);
 
@@ -484,59 +516,52 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     __skObserveTarget?: HTMLElement;
   };
 
-  function render(): void {
-    syncProviderState();
-    // Hide any tooltip pinned by a hovered cell that is about to be replaced
-    // when we wipe `root.innerHTML` below — the cell's mouseleave never fires.
-    hideTooltip();
-    // Drop the previous heatmap wrap from the observer (the new render will
-    // re-observe the freshly mounted wrap, if any).
-    resizeObs.disconnect();
-    currentDraw = null;
-    const wasOpen = state.yearModalOpen;
+  interface RenderFlags {
+    isLoading: boolean;
+    isEmpty: boolean;
+    allOff: boolean;
+    leveled: StreakrLeveledDay[];
+    stats: StreakrStats;
+  }
+
+  function computeRenderFlags(): RenderFlags {
     const days = getCurrentDays();
     const leveled = levelize(days);
     const stats = computeStats(leveled);
     const yearTotal = days.reduce((a, d) => a + d.total, 0);
     const isLoading = cfg.state === "loading";
     const isEmpty = cfg.state === "empty" || (cfg.state === "ready" && yearTotal === 0);
-    const allOff = cfg.providers.length > 0 && cfg.providers.every((p) => !state.providers[p.key]);
+    const allOff =
+      cfg.providers.length > 0 && cfg.providers.every((p) => !state.providers[p.key]);
+    return { isLoading, isEmpty, allOff, leveled, stats };
+  }
 
-    root.innerHTML = "";
-    root.dataset.theme = cfg.theme;
-    applyAccentVars(root);
-
-    const card = h("div", { class: "sk-card" });
-    root.appendChild(card);
-
-    const header = h("div", { class: "sk-header" });
-    const titleRow = h("div", { class: "sk-title-row" }, [
+  function renderTitleRow(): HTMLElement {
+    const subtitleText =
+      state.year === currentYearLabel() ? "Last 12 months" : String(state.year ?? "");
+    return h("div", { class: "sk-title-row" }, [
       h("div", { class: "sk-brand" }, [
         h("div", { class: "sk-logo" }, [logoR()]),
         h("div", { class: "sk-title", text: "streakr" }),
-        h("div", {
-          class: "sk-subtitle",
-          text: state.year === currentYearLabel() ? "Last 12 months" : String(state.year ?? ""),
-        }),
+        h("div", { class: "sk-subtitle", text: subtitleText }),
       ]),
     ]);
-    header.appendChild(titleRow);
+  }
 
+  function buildYearTab(year: number, isLoading: boolean): HTMLElement {
+    return h("button", {
+      class: "sk-year-tab" + (state.year === year ? " active" : ""),
+      onclick: () => setYear(year),
+      disabled: isLoading || undefined,
+      text: String(year),
+    });
+  }
+
+  function renderYearsList(isLoading: boolean): HTMLElement {
     const { visible, hasMore } = visibleYears();
     const yearIsHidden = state.year != null && !visible.includes(state.year);
-    const yearsBar = h("div", { class: "sk-years" }) as HTMLElement;
-    yearsBar.dataset.noProviders = String(!cfg.showProviders);
     const list = h("div", { class: "sk-years-list" });
-    visible.forEach((y) => {
-      list.appendChild(
-        h("button", {
-          class: "sk-year-tab" + (state.year === y ? " active" : ""),
-          onclick: () => setYear(y),
-          disabled: isLoading || undefined,
-          text: String(y),
-        }),
-      );
-    });
+    visible.forEach((y) => list.appendChild(buildYearTab(y, isLoading)));
     if (yearIsHidden && state.year != null) {
       list.appendChild(
         h("button", {
@@ -559,29 +584,75 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         ),
       );
     }
-    yearsBar.appendChild(list);
+    return list;
+  }
 
-    if (!isLoading && !isEmpty && cfg.showProviders && cfg.providers.length > 0) {
+  function shouldRenderProviderRow(flags: RenderFlags): boolean {
+    if (flags.isLoading || flags.isEmpty) return false;
+    if (!cfg.showProviders) return false;
+    return cfg.providers.length > 0;
+  }
+
+  function renderYearsBar(flags: RenderFlags): HTMLElement {
+    const yearsBar = h("div", { class: "sk-years" });
+    yearsBar.dataset.noProviders = String(!cfg.showProviders);
+    yearsBar.appendChild(renderYearsList(flags.isLoading));
+    if (shouldRenderProviderRow(flags)) {
       yearsBar.appendChild(renderProviderRow());
     }
-    header.appendChild(yearsBar);
-    card.appendChild(header);
+    return yearsBar;
+  }
 
-    if (isLoading) {
+  function renderHeader(flags: RenderFlags): HTMLElement {
+    const header = h("div", { class: "sk-header" });
+    header.appendChild(renderTitleRow());
+    header.appendChild(renderYearsBar(flags));
+    return header;
+  }
+
+  function appendBody(card: Element, flags: RenderFlags): void {
+    if (flags.isLoading) {
       card.appendChild(renderLoadingBody());
-    } else if (allOff) {
+      return;
+    }
+    if (flags.allOff) {
       // Check `allOff` before `isEmpty` so users who explicitly toggled every
       // provider off see "providers disabled" guidance instead of the
       // (technically true but misleading) "no contributions" empty state.
       card.appendChild(renderNoProviders());
-    } else if (isEmpty) {
-      card.appendChild(renderEmpty());
-    } else {
-      const body = renderReadyBody(leveled, stats) as ReadyBody;
-      card.appendChild(body);
-      if (body.__skDraw) body.__skDraw();
-      if (body.__skObserveTarget) resizeObs.observe(body.__skObserveTarget);
+      return;
     }
+    if (flags.isEmpty) {
+      card.appendChild(renderEmpty());
+      return;
+    }
+    const body = renderReadyBody(flags.leveled, flags.stats) as ReadyBody;
+    card.appendChild(body);
+    body.__skDraw?.();
+    if (body.__skObserveTarget) resizeObs.observe(body.__skObserveTarget);
+  }
+
+  function render(): void {
+    syncProviderState();
+    // Hide any tooltip pinned by a hovered cell that is about to be replaced
+    // when we wipe `root.innerHTML` below — the cell's mouseleave never fires.
+    hideTooltip();
+    // Drop the previous heatmap wrap from the observer (the new render will
+    // re-observe the freshly mounted wrap, if any).
+    resizeObs.disconnect();
+    currentDraw = null;
+
+    const wasOpen = state.yearModalOpen;
+    const flags = computeRenderFlags();
+
+    root.innerHTML = "";
+    root.dataset.theme = cfg.theme;
+    applyAccentVars(root);
+
+    const card = h("div", { class: "sk-card" });
+    root.appendChild(card);
+    card.appendChild(renderHeader(flags));
+    appendBody(card, flags);
 
     if (wasOpen) renderYearModal(card);
   }
@@ -603,7 +674,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
           h("span", {
             class: "sk-provider-icon",
             html: iconHtml ?? "",
-            style: !iconHtml ? { background: p.color, borderRadius: "50%" } : undefined,
+            style: iconHtml ? undefined : { background: p.color, borderRadius: "50%" },
           }),
           h("span", { class: "sk-provider-count", text: totals[p.key].toLocaleString() }),
         ],
@@ -711,15 +782,15 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
     const draw = () => {
       try {
-        const w = (heatmapWrap as HTMLElement).clientWidth - 32;
-        renderHeatmap(heatmapInner as HTMLElement, leveled, Math.max(200, w));
+        const w = heatmapWrap.clientWidth - 32;
+        renderHeatmap(heatmapInner, leveled, Math.max(200, w));
       } catch (err) {
         console.error("[streakr] draw failed:", err);
       }
     };
     body.__skDraw = draw;
     currentDraw = draw;
-    body.__skObserveTarget = heatmapWrap as HTMLElement;
+    body.__skObserveTarget = heatmapWrap;
 
     if (cfg.showStats) {
       body.appendChild(
@@ -853,8 +924,8 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     destroy(): void {
       resizeObs.disconnect();
       document.removeEventListener("keydown", onKey);
-      if (tooltipEl.parentNode) tooltipEl.parentNode.removeChild(tooltipEl);
-      if (root.parentNode) root.parentNode.removeChild(root);
+      tooltipEl.remove();
+      root.remove();
     },
   };
 }
