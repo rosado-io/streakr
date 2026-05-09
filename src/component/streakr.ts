@@ -268,8 +268,10 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     state.providers = next;
   }
 
-  let root: HTMLElement;
-  let tooltipEl: HTMLElement;
+  const root = h("div", { class: "sk-root" }) as HTMLElement;
+  cfg.target.appendChild(root);
+  const tooltipEl = h("div", { class: "sk-tooltip" }) as HTMLElement;
+  document.body.appendChild(tooltipEl);
   let resizeObs: ResizeObserver | null = null;
 
   function applyAccentVars(el: HTMLElement): void {
@@ -767,10 +769,6 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     if (e.key === "Escape" && state.yearModalOpen) closeYearModal();
   }
 
-  root = h("div", { class: "sk-root" }) as HTMLElement;
-  cfg.target.appendChild(root);
-  tooltipEl = h("div", { class: "sk-tooltip" }) as HTMLElement;
-  document.body.appendChild(tooltipEl);
   document.addEventListener("keydown", onKey);
   render();
 
