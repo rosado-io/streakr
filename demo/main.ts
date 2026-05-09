@@ -220,6 +220,9 @@ function renderControls(): void {
     state.accent = (e.target as HTMLInputElement).value;
     updateComponent();
   });
+  customInput.addEventListener("change", () => {
+    renderControls();
+  });
   customLabel.appendChild(customInput);
   customWrap.appendChild(customLabel);
   controls.appendChild(customWrap);

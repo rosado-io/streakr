@@ -306,7 +306,8 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   cfg.target.appendChild(root);
   const tooltipEl = h("div", { class: "sk-tooltip" }) as HTMLElement;
   document.body.appendChild(tooltipEl);
-  let resizeObs: ResizeObserver | null = null;
+  let currentDraw: (() => void) | null = null;
+  const resizeObs = new ResizeObserver(() => currentDraw?.());
 
   function applyAccentVars(el: HTMLElement): void {
     const a = cfg.accent;
@@ -485,6 +486,13 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
   function render(): void {
     syncProviderState();
+    // Hide any tooltip pinned by a hovered cell that is about to be replaced
+    // when we wipe `root.innerHTML` below — the cell's mouseleave never fires.
+    hideTooltip();
+    // Drop the previous heatmap wrap from the observer (the new render will
+    // re-observe the freshly mounted wrap, if any).
+    resizeObs.disconnect();
+    currentDraw = null;
     const wasOpen = state.yearModalOpen;
     const days = getCurrentDays();
     const leveled = levelize(days);
@@ -569,7 +577,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       const body = renderReadyBody(leveled, stats) as ReadyBody;
       card.appendChild(body);
       if (body.__skDraw) body.__skDraw();
-      if (resizeObs && body.__skObserveTarget) resizeObs.observe(body.__skObserveTarget);
+      if (body.__skObserveTarget) resizeObs.observe(body.__skObserveTarget);
     }
 
     if (wasOpen) renderYearModal(card);
@@ -618,7 +626,10 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   function renderLoadingBody(): HTMLElement {
     const grid = h("div", { class: "sk-skel-grid-cells" });
     for (let i = 0; i < 53 * 7; i++) {
-      const on = Math.random() > 0.6;
+      // Deterministic ~40% "on" pattern via Knuth's multiplicative hash —
+      // not for security, just for a non-uniform shimmer that stays stable
+      // across re-renders (avoids the flicker a real PRNG would cause).
+      const on = ((i * 2654435761) >>> 0) % 100 < 40;
       grid.appendChild(
         h("div", {
           class: "sk-skel-cell" + (on ? " shimmer" : ""),
@@ -704,8 +715,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       }
     };
     body.__skDraw = draw;
-    if (resizeObs) resizeObs.disconnect();
-    resizeObs = new ResizeObserver(() => draw());
+    currentDraw = draw;
     body.__skObserveTarget = heatmapWrap as HTMLElement;
 
     if (cfg.showStats) {
@@ -822,7 +832,14 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
   return {
     update(patch: Partial<StreakrOptions>): void {
-      Object.assign(cfg, patch);
+      // Skip undefined values so callers can spread partial patches without
+      // accidentally clobbering resolved defaults (e.g. theme: undefined).
+      for (const key of Object.keys(patch) as (keyof StreakrOptions)[]) {
+        const value = patch[key];
+        if (value !== undefined) {
+          (cfg as unknown as Record<string, unknown>)[key] = value;
+        }
+      }
       render();
     },
     setYear,
@@ -831,7 +848,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       render();
     },
     destroy(): void {
-      if (resizeObs) resizeObs.disconnect();
+      resizeObs.disconnect();
       document.removeEventListener("keydown", onKey);
       if (tooltipEl.parentNode) tooltipEl.parentNode.removeChild(tooltipEl);
       if (root.parentNode) root.parentNode.removeChild(root);

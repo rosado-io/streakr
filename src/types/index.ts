@@ -87,6 +87,12 @@ export interface StreakrProvider {
    *
    * Built-in icons are provided automatically when `key` is `"github"`,
    * `"gitlab"`, or `"bitbucket"`. Pass your own to override.
+   *
+   * ⚠️ Security: this string is inserted as raw HTML via `innerHTML`. Only
+   * pass trusted, statically-defined SVG markup. Never forward user-supplied
+   * or remotely-fetched SVG without sanitizing it first (e.g. with
+   * [DOMPurify](https://github.com/cure53/DOMPurify)) — SVG can contain
+   * inline scripts and lead to XSS.
    */
   icon?: string;
 }

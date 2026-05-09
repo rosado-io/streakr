@@ -130,6 +130,12 @@ createStreakr({
 });
 ```
 
+> ⚠️ **Security note on `icon`.** The string is inserted into the DOM as
+> raw HTML. Only pass trusted, statically-defined SVG markup. Never forward
+> user-supplied or remotely-fetched SVG without sanitizing it first (e.g.
+> with [DOMPurify](https://github.com/cure53/DOMPurify)) — SVG can contain
+> inline scripts and lead to XSS.
+
 ## Lifecycle states
 
 ```ts
