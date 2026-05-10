@@ -1,3 +1,9 @@
+## [0.2.1](https://github.com/rosado-io/streakr/compare/v0.2.0...v0.2.1) (2026-05-10)
+
+### Bug Fixes
+
+* fix(tooltip): mount inside .sk-root so theme tokens cascade (#81) ([`9131b79`](https://github.com/rosado-io/streakr/commit/9131b79f8210aab223bbb0ba87cd27707736801c)) by ****
+
 ## [0.2.0](https://github.com/rosado-io/streakr/compare/v0.1.0...v0.2.0) (2026-05-10)
 
 ### Features
