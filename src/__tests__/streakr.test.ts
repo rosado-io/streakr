@@ -266,9 +266,7 @@ describe("createStreakr", () => {
         target,
         years,
         providers: custom,
-        getDays: (y) => [
-          { date: new Date(y, 0, 5), total: 2, sources: { linear: 1, jira: 1 } },
-        ],
+        getDays: (y) => [{ date: new Date(y, 0, 5), total: 2, sources: { linear: 1, jira: 1 } }],
       });
       expect(target.querySelector(".sk-provider [data-test='custom-icon']")).toBeTruthy();
     });
@@ -282,9 +280,7 @@ describe("createStreakr", () => {
         target,
         years,
         providers: custom,
-        getDays: (y) => [
-          { date: new Date(y, 0, 5), total: 2, sources: { gitea: 1, forgejo: 1 } },
-        ],
+        getDays: (y) => [{ date: new Date(y, 0, 5), total: 2, sources: { gitea: 1, forgejo: 1 } }],
       });
       const iconWrap = target.querySelector<HTMLElement>(".sk-provider-icon");
       // happy-dom preserves the literal hex; jsdom would normalize to rgb()
@@ -309,9 +305,7 @@ describe("createStreakr", () => {
       instance = createStreakr({
         target,
         years,
-        getDays: (y) => [
-          { date: new Date(y, 0, 5), total: 3, sources: { github: 2, gitlab: 1 } },
-        ],
+        getDays: (y) => [{ date: new Date(y, 0, 5), total: 3, sources: { github: 2, gitlab: 1 } }],
       });
       expect(target.querySelector(".sk-providers")).toBeTruthy();
       expect(target.querySelectorAll(".sk-provider").length).toBe(3);
@@ -329,9 +323,9 @@ describe("createStreakr", () => {
             : [{ date: new Date(2025, 0, 5), total: 2, sources: { github: 2 } }],
       });
       expect(target.querySelector(".sk-providers")).toBeTruthy();
-      const tab2025 = Array.from(
-        target.querySelectorAll<HTMLButtonElement>(".sk-year-tab"),
-      ).find((b) => b.textContent === "2025");
+      const tab2025 = Array.from(target.querySelectorAll<HTMLButtonElement>(".sk-year-tab")).find(
+        (b) => b.textContent === "2025",
+      );
       tab2025?.click();
       expect(target.querySelector(".sk-providers")).toBeNull();
     });
