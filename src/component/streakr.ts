@@ -283,8 +283,9 @@ function dayCount(day: StreakrDay, key: string): number {
  * `setProviders`, and `destroy` methods.
  *
  * The component is framework-agnostic and uses no global state — it only
- * reads/writes inside the provided `target` element (and a single
- * document-level tooltip node).
+ * reads/writes inside the provided `target` element. The tooltip is mounted
+ * inside `.sk-root` so it inherits the component's theme tokens and any
+ * accent overrides applied via `update()`.
  */
 export function createStreakr(options: StreakrOptions): StreakrInstance {
   const cfg: ResolvedConfig = {
@@ -327,8 +328,11 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
   const root = h("div", { class: "sk-root" }) as HTMLElement;
   cfg.target.appendChild(root);
+  // Mount the tooltip inside `.sk-root` so it inherits the component's
+  // scoped CSS tokens (--sk-modal-bg, --sk-text, etc.). It still uses
+  // `position: fixed` so it positions against the viewport.
   const tooltipEl = h("div", { class: "sk-tooltip" }) as HTMLElement;
-  document.body.appendChild(tooltipEl);
+  root.appendChild(tooltipEl);
   let currentDraw: (() => void) | null = null;
   const resizeObs = new ResizeObserver(() => currentDraw?.());
 
@@ -647,6 +651,10 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     const flags = computeRenderFlags();
 
     root.innerHTML = "";
+    // Re-attach the tooltip — `innerHTML = ""` above detached it from the
+    // DOM but the element reference is preserved so listeners and pending
+    // hover state stay intact.
+    root.appendChild(tooltipEl);
     root.dataset.theme = cfg.theme;
     applyAccentVars(root);
 

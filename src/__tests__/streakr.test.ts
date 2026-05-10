@@ -62,9 +62,9 @@ describe("createStreakr", () => {
       expect(target.querySelector(".sk-root .sk-header")).toBeTruthy();
     });
 
-    it("appends a tooltip element to document.body", () => {
+    it("appends a tooltip element inside the root", () => {
       instance = createStreakr({ target, years, getDays });
-      expect(document.body.querySelector(".sk-tooltip")).toBeTruthy();
+      expect(target.querySelector(".sk-root > .sk-tooltip")).toBeTruthy();
     });
 
     it("applies the theme dataset attribute", () => {
@@ -358,7 +358,7 @@ describe("createStreakr", () => {
       // pick a cell that has data (rects are created in column-major order)
       const cell = cells[3];
       cell.dispatchEvent(new MouseEvent("mouseenter", { clientX: 50, clientY: 50 }));
-      const tooltip = document.body.querySelector(".sk-tooltip");
+      const tooltip = target.querySelector(".sk-tooltip");
       expect(tooltip?.classList.contains("visible")).toBe(true);
     });
 
@@ -368,7 +368,7 @@ describe("createStreakr", () => {
       expect(cell).toBeTruthy();
       cell?.dispatchEvent(new MouseEvent("mouseenter", { clientX: 50, clientY: 50 }));
       cell?.dispatchEvent(new MouseEvent("mouseleave"));
-      const tooltip = document.body.querySelector(".sk-tooltip");
+      const tooltip = target.querySelector(".sk-tooltip");
       expect(tooltip?.classList.contains("visible")).toBe(false);
     });
 
@@ -377,7 +377,7 @@ describe("createStreakr", () => {
       const cell = target.querySelector<SVGRectElement>("rect.sk-heatmap-cell");
       expect(cell).toBeTruthy();
       cell?.dispatchEvent(new MouseEvent("mouseenter", { clientX: 10, clientY: 10 }));
-      const tooltip = document.body.querySelector(".sk-tooltip");
+      const tooltip = target.querySelector(".sk-tooltip");
       expect(tooltip?.classList.contains("visible")).toBe(true);
       // any state change re-renders
       instance.setYear(years[0]);
@@ -417,7 +417,7 @@ describe("createStreakr", () => {
       instance.destroy();
       instance = null;
       expect(target.querySelector(".sk-root")).toBeNull();
-      expect(document.body.querySelector(".sk-tooltip")).toBeNull();
+      expect(target.querySelector(".sk-tooltip")).toBeNull();
     });
 
     it("destroy() removes the keydown listener (modal Escape no-op afterwards)", () => {
