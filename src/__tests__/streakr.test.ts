@@ -328,7 +328,12 @@ describe("createStreakr", () => {
         return d.date <= cutoff;
       });
       const partialGetDays = (year: number) => (year === 2026 ? partialYear : fullYear);
-      instance = createStreakr({ target, years: [2025, 2026], year: 2025, getDays: partialGetDays });
+      instance = createStreakr({
+        target,
+        years: [2025, 2026],
+        year: 2025,
+        getDays: partialGetDays,
+      });
       const fullCols = target.querySelectorAll(".sk-heatmap-svg > g > g").length;
       instance.setYear(2026);
       const partialCols = target.querySelectorAll(".sk-heatmap-svg > g > g").length;
