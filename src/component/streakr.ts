@@ -806,12 +806,20 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         h("div", { class: "sk-stats" }, [
           statCard("Total Contributions", stats.total.toLocaleString()),
           statCard("Best Streak", stats.best, " days"),
-          statCard("Current Streak", stats.current, " days"),
+          streakMetricCard(stats, leveled),
           statCard("Active Days", stats.active.toLocaleString()),
         ]),
       );
     }
     return body;
+  }
+
+  function streakMetricCard(stats: StreakrStats, days: StreakrDay[]): HTMLElement {
+    if (state.year === currentYearLabel()) {
+      return statCard("Current Streak", stats.current, " days");
+    }
+    const activeRate = days.length ? Math.round((stats.active / days.length) * 100) : 0;
+    return statCard("Active Rate", activeRate, "%");
   }
 
   function statCard(label: string, value: string | number, suffix?: string): HTMLElement {
