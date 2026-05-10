@@ -1,3 +1,9 @@
+## [0.2.0](https://github.com/rosado-io/streakr/compare/v0.1.0...v0.2.0) (2026-05-10)
+
+### Features
+
+* feat: vanilla TS component + provider-agnostic redesign (#77) ([`3e48fe4`](https://github.com/rosado-io/streakr/commit/3e48fe4674948c8b4c2b9d3e4e8504d63ab9c779)) by ****
+
 ## [0.1.0](https://github.com/rosado-io/streakr/compare/v0.0.1...v0.1.0) (2026-04-26)
 
 ### Features
