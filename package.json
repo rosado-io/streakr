@@ -16,14 +16,16 @@
         "types": "./dist/index.d.ts",
         "default": "./dist/streakr.cjs.js"
       }
-    }
+    },
+    "./styles.css": "./dist/streakr.css",
+    "./dist/streakr.css": "./dist/streakr.css"
   },
   "files": [
     "dist"
   ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && node -e \"require('fs').copyFileSync('src/component/streakr.css','dist/streakr.css')\"",
     "test": "vitest",
     "test:ci": "vitest run --coverage",
     "lint": "eslint src/",
@@ -48,7 +50,9 @@
     "type": "git",
     "url": "https://github.com/rosado-io/streakr.git"
   },
-  "sideEffects": false,
+  "sideEffects": [
+    "**/*.css"
+  ],
   "packageManager": "pnpm@10.12.2",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -56,6 +60,7 @@
     "@vitest/coverage-v8": "^4.1.5",
     "eslint": "^10.2.1",
     "eslint-config-prettier": "^10.1.8",
+    "happy-dom": "^20.9.0",
     "prettier": "^3.8.3",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.0",

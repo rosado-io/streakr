@@ -9,22 +9,22 @@ export type { GitHubProviderOptions } from "./providers/github";
 export { GitLabProvider } from "./providers/gitlab";
 export type { GitLabProviderOptions } from "./providers/gitlab";
 
-export { renderSvgCalendar } from "./render/svg";
-export { renderContributionWidget } from "./render/widget";
-export { themes, createCssVarTheme } from "./render/themes";
+export { createStreakr } from "./component/streakr";
 
 export type {
   ContributionDay,
-  ContributionMetric,
   CalendarGrid,
   CalendarCell,
-  ContributionWidgetOptions,
   GridOptions,
   StreakResult,
-  Theme,
-  ThemeColorScale,
-  ThemeColorScheme,
   FetchParams,
-  WidgetSize,
-  WidgetStatsPosition,
+  StreakrDay,
+  StreakrLeveledDay,
+  StreakrOptions,
+  StreakrInstance,
+  StreakrProvider,
+  StreakrProviders,
+  StreakrState,
+  StreakrTheme,
+  StreakrThemeMode,
 } from "./types";
