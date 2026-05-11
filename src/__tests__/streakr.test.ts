@@ -260,27 +260,74 @@ describe("createStreakr", () => {
           color: "#5e6ad2",
           icon: '<svg data-test="custom-icon"></svg>',
         },
+        { key: "jira", name: "Jira", color: "#0052cc" },
       ];
       instance = createStreakr({
         target,
         years,
         providers: custom,
-        getDays: (y) => [{ date: new Date(y, 0, 5), total: 1, sources: { linear: 1 } }],
+        getDays: (y) => [{ date: new Date(y, 0, 5), total: 2, sources: { linear: 1, jira: 1 } }],
       });
       expect(target.querySelector(".sk-provider [data-test='custom-icon']")).toBeTruthy();
     });
 
     it("falls back to the color dot when no built-in icon exists and none supplied", () => {
-      const custom: StreakrProvider[] = [{ key: "gitea", name: "Gitea", color: "#609926" }];
+      const custom: StreakrProvider[] = [
+        { key: "gitea", name: "Gitea", color: "#609926" },
+        { key: "forgejo", name: "Forgejo", color: "#d97706" },
+      ];
       instance = createStreakr({
         target,
         years,
         providers: custom,
-        getDays: (y) => [{ date: new Date(y, 0, 5), total: 1, sources: { gitea: 1 } }],
+        getDays: (y) => [{ date: new Date(y, 0, 5), total: 2, sources: { gitea: 1, forgejo: 1 } }],
       });
       const iconWrap = target.querySelector<HTMLElement>(".sk-provider-icon");
       // happy-dom preserves the literal hex; jsdom would normalize to rgb()
       expect(iconWrap?.style.background.toLowerCase()).toContain("#609926");
+    });
+
+    it("hides the chip row when only one provider has contributions (issue #84)", () => {
+      // All days come from github only — gitlab/bitbucket sums are zero.
+      instance = createStreakr({
+        target,
+        years,
+        getDays: (y) => [
+          { date: new Date(y, 0, 5), total: 3, sources: { github: 3 } },
+          { date: new Date(y, 1, 1), total: 2, sources: { github: 2 } },
+        ],
+      });
+      expect(target.querySelector(".sk-providers")).toBeNull();
+      expect(target.querySelectorAll(".sk-provider").length).toBe(0);
+    });
+
+    it("shows the chip row when ≥2 providers have contributions", () => {
+      instance = createStreakr({
+        target,
+        years,
+        getDays: (y) => [{ date: new Date(y, 0, 5), total: 3, sources: { github: 2, gitlab: 1 } }],
+      });
+      expect(target.querySelector(".sk-providers")).toBeTruthy();
+      expect(target.querySelectorAll(".sk-provider").length).toBe(3);
+    });
+
+    it("recomputes chip-row visibility when the year changes", () => {
+      // 2024 has two providers; 2025 has only github.
+      instance = createStreakr({
+        target,
+        years: [2024, 2025],
+        year: 2024,
+        getDays: (y) =>
+          y === 2024
+            ? [{ date: new Date(2024, 0, 5), total: 3, sources: { github: 2, gitlab: 1 } }]
+            : [{ date: new Date(2025, 0, 5), total: 2, sources: { github: 2 } }],
+      });
+      expect(target.querySelector(".sk-providers")).toBeTruthy();
+      const tab2025 = Array.from(target.querySelectorAll<HTMLButtonElement>(".sk-year-tab")).find(
+        (b) => b.textContent === "2025",
+      );
+      tab2025?.click();
+      expect(target.querySelector(".sk-providers")).toBeNull();
     });
 
     it("renders the no-providers state when all are disabled", () => {
