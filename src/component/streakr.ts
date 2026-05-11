@@ -549,6 +549,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     isLoading: boolean;
     isEmpty: boolean;
     allOff: boolean;
+    days: StreakrDay[];
     leveled: StreakrLeveledDay[];
     stats: StreakrStats;
   }
@@ -566,7 +567,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     const isLoading = cfg.state === "loading";
     const isEmpty = cfg.state === "empty" || (cfg.state === "ready" && yearTotal === 0);
     const allOff = cfg.providers.length > 0 && cfg.providers.every((p) => !state.providers[p.key]);
-    return { isLoading, isEmpty, allOff, leveled, stats };
+    return { isLoading, isEmpty, allOff, days, leveled, stats };
   }
 
   function renderTitleRow(): HTMLElement {
@@ -659,7 +660,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       card.appendChild(renderEmpty());
       return;
     }
-    const body = renderReadyBody(flags.leveled, flags.stats) as ReadyBody;
+    const body = renderReadyBody(flags.leveled, flags.stats, flags.days) as ReadyBody;
     card.appendChild(body);
     body.__skDraw?.();
     if (body.__skObserveTarget) resizeObs.observe(body.__skObserveTarget);
@@ -800,7 +801,11 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     ]);
   }
 
-  function renderReadyBody(leveled: StreakrLeveledDay[], stats: StreakrStats): HTMLElement {
+  function renderReadyBody(
+    leveled: StreakrLeveledDay[],
+    stats: StreakrStats,
+    days: StreakrDay[],
+  ): HTMLElement {
     const body = h("div", { class: "sk-body" }) as ReadyBody;
     body.dataset.noStats = String(!cfg.showStats);
 
@@ -834,7 +839,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         h("div", { class: "sk-stats" }, [
           statCard("Total Contributions", stats.total.toLocaleString()),
           statCard("Best Streak", stats.best, " days"),
-          streakMetricCard(stats, leveled),
+          streakMetricCard(stats, days),
           statCard("Active Days", stats.active.toLocaleString()),
         ]),
       );
