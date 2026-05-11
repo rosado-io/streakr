@@ -1,3 +1,9 @@
+## [0.2.4](https://github.com/rosado-io/streakr/compare/v0.2.3...v0.2.4) (2026-05-11)
+
+### Bug Fixes
+
+* fix: historical streak stat (#87) ([`254c3e4`](https://github.com/rosado-io/streakr/commit/254c3e48a54e106fcee96253126976afd07effac)) by ****
+
 ## [0.2.3](https://github.com/rosado-io/streakr/compare/v0.2.2...v0.2.3) (2026-05-11)
 
 ### Bug Fixes
