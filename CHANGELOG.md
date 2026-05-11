@@ -1,3 +1,9 @@
+## [0.2.2](https://github.com/rosado-io/streakr/compare/v0.2.1...v0.2.2) (2026-05-11)
+
+### Bug Fixes
+
+* fix(component): preserve full Jan–Dec heatmap layout for partial years (#85) ([`cd815fe`](https://github.com/rosado-io/streakr/commit/cd815fedd3829ded51d137477fe11b3e6d8073bc)) by ****
+
 ## [0.2.1](https://github.com/rosado-io/streakr/compare/v0.2.0...v0.2.1) (2026-05-10)
 
 ### Bug Fixes

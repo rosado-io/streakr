@@ -129,6 +129,29 @@ function svg(tag: string, attrs?: ElAttrs, children?: ElChild | ElChild[]): SVGE
   return h("svg:" + tag, attrs, children) as SVGElement;
 }
 
+function pad2(n: number): string {
+  return n < 10 ? "0" + n : String(n);
+}
+
+function localDateKey(d: Date): string {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function padDaysToYear(days: StreakrDay[], year: number): StreakrDay[] {
+  const map = new Map<string, StreakrDay>();
+  for (const d of days) map.set(localDateKey(d.date), d);
+  const out: StreakrDay[] = [];
+  const cur = new Date(year, 0, 1);
+  const end = new Date(year, 11, 31);
+  while (cur <= end) {
+    const key = localDateKey(cur);
+    const existing = map.get(key);
+    out.push(existing ?? { date: new Date(cur), total: 0, sources: {} });
+    cur.setDate(cur.getDate() + 1);
+  }
+  return out;
+}
+
 function gridFromDays<T extends StreakrDay>(days: T[]): (T | null)[][] {
   if (!days.length) return [];
   const cols: (T | null)[][] = [];
@@ -533,9 +556,14 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
   function computeRenderFlags(): RenderFlags {
     const days = getCurrentDays();
-    const leveled = levelize(days);
-    const stats = computeStats(leveled);
+    const stats = computeStats(days);
     const yearTotal = days.reduce((a, d) => a + d.total, 0);
+    // Pad to a full Jan–Dec span so the heatmap keeps a uniform column count
+    // year-over-year (e.g. the in-progress current year doesn't shrink). Stats
+    // stay computed from `days` so the trailing zero pad doesn't reset
+    // "Current Streak".
+    const heatmapDays = state.year != null ? padDaysToYear(days, state.year) : days;
+    const leveled = levelize(heatmapDays);
     const isLoading = cfg.state === "loading";
     const isEmpty = cfg.state === "empty" || (cfg.state === "ready" && yearTotal === 0);
     const allOff = cfg.providers.length > 0 && cfg.providers.every((p) => !state.providers[p.key]);
