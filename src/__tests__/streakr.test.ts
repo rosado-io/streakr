@@ -318,6 +318,52 @@ describe("createStreakr", () => {
       expect(target.querySelector(".sk-heatmap-svg")).toBeTruthy();
     });
 
+    it("preserves the full Jan–Dec heatmap shell when the year has only partial data", () => {
+      // Regression: issue #82 — current year with only partial-year data
+      // (e.g. through today) used to shrink the heatmap. Padding the heatmap
+      // input to the full year keeps a uniform column count year-over-year.
+      const fullYear = makeYearDays(2025);
+      const partialYear = makeYearDays(2026).filter((d) => {
+        const cutoff = new Date(2026, 4, 10); // through May 10
+        return d.date <= cutoff;
+      });
+      const partialGetDays = (year: number) => (year === 2026 ? partialYear : fullYear);
+      instance = createStreakr({
+        target,
+        years: [2025, 2026],
+        year: 2025,
+        getDays: partialGetDays,
+      });
+      const fullCols = target.querySelectorAll(".sk-heatmap-svg > g > g").length;
+      instance.setYear(2026);
+      const partialCols = target.querySelectorAll(".sk-heatmap-svg > g > g").length;
+      expect(partialCols).toBe(fullCols);
+      expect(partialCols).toBeGreaterThanOrEqual(52);
+    });
+
+    it("does not let trailing padded zero-days reset the Current Streak stat", () => {
+      // Regression: stats must be computed from real data, not the padded
+      // shell — otherwise the trailing zeros would always force current=0.
+      const days: StreakrDay[] = [];
+      for (let i = 0; i < 5; i++) {
+        days.push({
+          date: new Date(2026, 0, 1 + i),
+          total: 2,
+          sources: { github: 2 },
+        });
+      }
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        getDays: () => days,
+      });
+      const statValues = target.querySelectorAll<HTMLElement>(".sk-stat-value");
+      // Order: Total, Best Streak, Current Streak, Active Days
+      const currentStreak = statValues[2]?.textContent ?? "";
+      expect(currentStreak.trim().startsWith("5")).toBe(true);
+    });
+
     it("renders the Less/More legend with 5 swatches", () => {
       instance = createStreakr({ target, years, getDays });
       const swatches = target.querySelectorAll(".sk-legend-sq");
