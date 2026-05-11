@@ -1,3 +1,9 @@
+## [0.2.3](https://github.com/rosado-io/streakr/compare/v0.2.2...v0.2.3) (2026-05-11)
+
+### Bug Fixes
+
+* fix(providers): hide chip row when only one provider has contributions (#86) ([`6e905f1`](https://github.com/rosado-io/streakr/commit/6e905f1d356a75a9acddf240f292fc92007d7866)) by ****
+
 ## [0.2.2](https://github.com/rosado-io/streakr/compare/v0.2.1...v0.2.2) (2026-05-11)
 
 ### Bug Fixes

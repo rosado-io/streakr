@@ -550,6 +550,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     isEmpty: boolean;
     allOff: boolean;
     days: StreakrDay[];
+    providersWithDataCount: number;
     leveled: StreakrLeveledDay[];
     stats: StreakrStats;
   }
@@ -567,7 +568,11 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     const isLoading = cfg.state === "loading";
     const isEmpty = cfg.state === "empty" || (cfg.state === "ready" && yearTotal === 0);
     const allOff = cfg.providers.length > 0 && cfg.providers.every((p) => !state.providers[p.key]);
-    return { isLoading, isEmpty, allOff, days, leveled, stats };
+    const providersWithDataCount =
+      cfg.state === "ready"
+        ? cfg.providers.filter((p) => days.some((d) => dayCount(d, p.key) > 0)).length
+        : 0;
+    return { isLoading, isEmpty, allOff, days, providersWithDataCount, leveled, stats };
   }
 
   function renderTitleRow(): HTMLElement {
@@ -624,7 +629,12 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   function shouldRenderProviderRow(flags: RenderFlags): boolean {
     if (flags.isLoading || flags.isEmpty) return false;
     if (!cfg.showProviders) return false;
-    return cfg.providers.length > 0;
+    if (cfg.providers.length === 0) return false;
+    // Hide the toggle row when ≤1 provider has any contributions for the
+    // current year — clicking the only active chip would otherwise wipe the
+    // calendar and look broken (see issue #84).
+    if (flags.providersWithDataCount <= 1) return false;
+    return true;
   }
 
   function renderYearsBar(flags: RenderFlags): HTMLElement {
