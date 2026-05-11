@@ -137,15 +137,15 @@ function nextPageUrl(headers: Headers): string | null {
   const link = headers.get("link");
   if (!link) return null;
 
-  for (const part of link.split(",")) {
-    if (part.includes('rel="next"')) {
-      const start = part.indexOf("<");
-      const end = part.indexOf(">");
-      if (start !== -1 && end !== -1 && start < end) {
-        return part.slice(start + 1, end);
-      }
-    }
-  }
-
-  return null;
+  return (
+    link
+      .split(",")
+      .filter((part) => part.includes('rel="next"'))
+      .map((part) => {
+        const start = part.indexOf("<");
+        const end = part.indexOf(">");
+        return start >= 0 && end > start ? part.slice(start + 1, end) : null;
+      })
+      .find((url): url is string => url != null) ?? null
+  );
 }

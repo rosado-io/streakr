@@ -10,26 +10,16 @@ import type { ContributionDay, StreakResult } from "../types";
  * @returns StreakResult with total contributions, longest streak, and current streak
  */
 export function computeStreaks(days: ContributionDay[]): StreakResult {
-  if (days.length === 0) {
-    return { total: 0, bestStreak: 0, currentStreak: 0 };
-  }
+  return days.reduce<StreakResult>(
+    (stats, day) => {
+      const currentStreak = day.count > 0 ? stats.currentStreak + 1 : 0;
 
-  let total = 0;
-  let bestStreak = 0;
-  let currentRun = 0;
-
-  for (const day of days) {
-    total += day.count;
-
-    if (day.count > 0) {
-      currentRun++;
-      if (currentRun > bestStreak) {
-        bestStreak = currentRun;
-      }
-    } else {
-      currentRun = 0;
-    }
-  }
-
-  return { total, bestStreak, currentStreak: currentRun };
+      return {
+        total: stats.total + day.count,
+        bestStreak: Math.max(stats.bestStreak, currentStreak),
+        currentStreak,
+      };
+    },
+    { total: 0, bestStreak: 0, currentStreak: 0 },
+  );
 }

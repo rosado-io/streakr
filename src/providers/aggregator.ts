@@ -19,33 +19,21 @@ export async function aggregate(
   providers: Provider[],
   params: FetchParams,
 ): Promise<ContributionDay[]> {
-  if (providers.length === 0) return [];
-
   const results = await Promise.allSettled(
     providers.map((provider) => provider.fetchEvents(params)),
   );
 
-  const merged: ContributionDay[] = [];
+  return results.flatMap((result, index) => {
+    if (result.status !== "fulfilled") return [];
 
-  for (let i = 0; i < results.length; i++) {
-    const result = results[i];
-    if (result.status !== "fulfilled") continue;
-
-    const providerName = providers[i].name;
-
-    for (const day of result.value) {
-      const sources: Record<string, number> = {
+    const providerName = providers[index].name;
+    return result.value.map((day) => ({
+      date: day.date,
+      count: day.count,
+      sources: {
         ...day.sources,
         [providerName]: (day.sources?.[providerName] ?? 0) + day.count,
-      };
-
-      merged.push({
-        date: day.date,
-        count: day.count,
-        sources,
-      });
-    }
-  }
-
-  return merged;
+      },
+    }));
+  });
 }
