@@ -549,6 +549,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     isLoading: boolean;
     isEmpty: boolean;
     allOff: boolean;
+    days: StreakrDay[];
     providersWithDataCount: number;
     leveled: StreakrLeveledDay[];
     stats: StreakrStats;
@@ -571,7 +572,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       cfg.state === "ready"
         ? cfg.providers.filter((p) => days.some((d) => dayCount(d, p.key) > 0)).length
         : 0;
-    return { isLoading, isEmpty, allOff, providersWithDataCount, leveled, stats };
+    return { isLoading, isEmpty, allOff, days, providersWithDataCount, leveled, stats };
   }
 
   function renderTitleRow(): HTMLElement {
@@ -669,7 +670,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       card.appendChild(renderEmpty());
       return;
     }
-    const body = renderReadyBody(flags.leveled, flags.stats) as ReadyBody;
+    const body = renderReadyBody(flags.leveled, flags.stats, flags.days) as ReadyBody;
     card.appendChild(body);
     body.__skDraw?.();
     if (body.__skObserveTarget) resizeObs.observe(body.__skObserveTarget);
@@ -810,7 +811,11 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     ]);
   }
 
-  function renderReadyBody(leveled: StreakrLeveledDay[], stats: StreakrStats): HTMLElement {
+  function renderReadyBody(
+    leveled: StreakrLeveledDay[],
+    stats: StreakrStats,
+    days: StreakrDay[],
+  ): HTMLElement {
     const body = h("div", { class: "sk-body" }) as ReadyBody;
     body.dataset.noStats = String(!cfg.showStats);
 
@@ -844,12 +849,20 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         h("div", { class: "sk-stats" }, [
           statCard("Total Contributions", stats.total.toLocaleString()),
           statCard("Best Streak", stats.best, " days"),
-          statCard("Current Streak", stats.current, " days"),
+          streakMetricCard(stats, days),
           statCard("Active Days", stats.active.toLocaleString()),
         ]),
       );
     }
     return body;
+  }
+
+  function streakMetricCard(stats: StreakrStats, days: StreakrDay[]): HTMLElement {
+    if (state.year === currentYearLabel()) {
+      return statCard("Current Streak", stats.current, " days");
+    }
+    const activeRate = days.length ? Math.round((stats.active / days.length) * 100) : 0;
+    return statCard("Active Rate", activeRate, "%");
   }
 
   function statCard(label: string, value: string | number, suffix?: string): HTMLElement {

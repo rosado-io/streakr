@@ -76,7 +76,7 @@ skeleton. You can override any token with your own CSS variables (`--sk-*`).
 | `accent` | `string` (CSS color) | `"#39d353"` | Drives chip/stat highlights and (optionally) the heatmap palette. |
 | `tintHeatmap` | `boolean` | `true` | When true, the heatmap palette is derived from `accent`. |
 | `showProviders` | `boolean` | `true` | Toggle the provider chip row. |
-| `showStats` | `boolean` | `true` | Toggle the four-card stats grid. |
+| `showStats` | `boolean` | `true` | Toggle the stats grid. Historical years show `Active Rate` instead of `Current Streak`. |
 | `state` | `"loading" \| "empty" \| "ready"` | `"ready"` | Override the lifecycle state. |
 | `years` | `number[]` | required | Years offered in the year tabs / picker. |
 | `year` | `number` | last `years` entry | Currently selected year. |

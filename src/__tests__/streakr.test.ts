@@ -360,6 +360,34 @@ describe("createStreakr", () => {
       expect(target.querySelector(".sk-stats")).toBeNull();
     });
 
+    it("shows Current Streak for the current year", () => {
+      instance = createStreakr({ target, years, getDays });
+      expect(target.textContent).toContain("Current Streak");
+      expect(target.textContent).not.toContain("Active Rate");
+    });
+
+    it("replaces Current Streak with Active Rate for historical years", () => {
+      const historicalDays: StreakrDay[] = [
+        { date: new Date(2025, 0, 1), total: 1, sources: { github: 1 } },
+        { date: new Date(2025, 0, 2), total: 0, sources: {} },
+        { date: new Date(2025, 0, 3), total: 2, sources: { github: 1, gitlab: 1 } },
+        { date: new Date(2025, 0, 4), total: 0, sources: {} },
+      ];
+      instance = createStreakr({
+        target,
+        years: [2025, 2026],
+        year: 2025,
+        getDays: () => historicalDays,
+      });
+
+      expect(target.textContent).toContain("Active Rate");
+      expect(target.textContent).not.toContain("Current Streak");
+      const activeRateCard = Array.from(target.querySelectorAll(".sk-stat")).find((card) =>
+        card.textContent?.includes("Active Rate"),
+      );
+      expect(activeRateCard?.textContent).toContain("50%");
+    });
+
     it("renders a heatmap SVG", () => {
       instance = createStreakr({ target, years, getDays });
       expect(target.querySelector(".sk-heatmap-svg")).toBeTruthy();
