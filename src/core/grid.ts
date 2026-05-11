@@ -87,11 +87,14 @@ function computeThresholds(maxCount: number): [number, number, number] {
  * Maps a contribution count to an intensity level (0–4).
  */
 function countToLevel(count: number, [q1, q2, q3]: [number, number, number]): number {
-  if (count === 0) return 0;
-  if (count < q1) return 1;
-  if (count < q2) return 2;
-  if (count < q3) return 3;
-  return 4;
+  const levels = [
+    { level: 0, matches: count === 0 },
+    { level: 1, matches: count < q1 },
+    { level: 2, matches: count < q2 },
+    { level: 3, matches: count < q3 },
+  ];
+
+  return levels.find(({ matches }) => matches)?.level ?? 4;
 }
 
 /**

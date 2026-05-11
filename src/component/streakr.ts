@@ -6,270 +6,18 @@ import type {
   StreakrProvider,
   StreakrProviders,
 } from "../types";
+import { DAY_LABELS, fmtDateLong, gridFromDays, monthHeaders, padDaysToYear } from "./calendar";
+import { h, svg } from "./dom";
+import { logoR } from "./logo";
+import { computeStats, formatTotalLabel, levelize, type StreakrStats } from "./metrics";
+import {
+  DEFAULT_PROVIDERS,
+  enabledProviderState,
+  providerIconHtml,
+  syncProviderState as syncProviders,
+} from "./providers";
 
 const MAX_VISIBLE_YEARS = 5;
-const MONTH_LABELS_SHORT = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-const DOW = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const DAY_LABELS = ["Mon", "Wed", "Fri"];
-
-const BUILTIN_ICONS: Record<string, string> = {
-  github:
-    '<svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>',
-  gitlab:
-    '<svg viewBox="0 0 16 16" width="13" height="13"><path d="M8 14.7L10.95 5.6H5.05L8 14.7z" fill="#e24329"/><path d="M8 14.7L5.05 5.6H.92L8 14.7z" fill="#fc6d26"/><path d="M.92 5.6L.02 8.36c-.08.25 0 .53.22.69L8 14.7.92 5.6z" fill="#fca326"/><path d="M.92 5.6h4.13L3.27.1c-.09-.27-.48-.27-.57 0L.92 5.6z" fill="#e24329"/><path d="M8 14.7l2.95-9.1h4.13L8 14.7z" fill="#fc6d26"/><path d="M15.08 5.6l.9 2.76c.08.25 0 .53-.22.69L8 14.7l7.08-9.1z" fill="#fca326"/><path d="M15.08 5.6h-4.13L12.73.1c.09-.27.48-.27.57 0l1.78 5.5z" fill="#e24329"/></svg>',
-  bitbucket:
-    '<svg viewBox="0 0 16 16" width="13" height="13"><path d="M.51 1.18c-.27 0-.51.24-.51.51 0 .03 0 .07.01.1l2.18 13.17c.06.36.37.62.74.63h10.46c.27 0 .51-.2.55-.47l2.18-13.32a.512.512 0 00-.41-.59L.6 1.18zm9.13 9.42H6.4l-.88-4.55h4.92l-.8 4.55z" fill="#2684ff"/></svg>',
-};
-
-const DEFAULT_PROVIDERS: StreakrProvider[] = [
-  { key: "github", name: "GitHub", color: "#39d353" },
-  { key: "gitlab", name: "GitLab", color: "#fc6d26" },
-  { key: "bitbucket", name: "Bitbucket", color: "#2684ff" },
-];
-
-type SimpleAttr = string | number | boolean;
-type StyleAttr = Partial<CSSStyleDeclaration> | Record<string, string>;
-type EventAttr = (e: Event) => void;
-type ElAttrValue = SimpleAttr | EventAttr | StyleAttr | null | undefined;
-type ElAttrs = Record<string, ElAttrValue>;
-type ElChild = Node | string | null | false | undefined;
-
-const SVG_NS = "http://www.w3.org/2000/svg";
-
-function isSimple(value: ElAttrValue): value is SimpleAttr {
-  return typeof value === "string" || typeof value === "number" || typeof value === "boolean";
-}
-
-function setSimpleAttr(el: Element, key: string, value: SimpleAttr): void {
-  const str = String(value);
-  if (key === "class") {
-    el.setAttribute("class", str);
-  } else if (key === "html") {
-    (el as HTMLElement).innerHTML = str;
-  } else if (key === "text") {
-    el.textContent = str;
-  } else {
-    el.setAttribute(key, str);
-  }
-}
-
-function setAttr(el: Element, key: string, value: ElAttrValue): void {
-  if (value === false || value == null) return;
-  if (key === "style") {
-    if (typeof value === "object") Object.assign((el as HTMLElement).style, value);
-    return;
-  }
-  if (key.startsWith("on")) {
-    if (typeof value === "function") {
-      el.addEventListener(key.slice(2).toLowerCase(), value);
-    }
-    return;
-  }
-  if (isSimple(value)) setSimpleAttr(el, key, value);
-}
-
-function appendChildren(el: Element, list: ElChild[]): void {
-  for (const child of list) {
-    if (child == null || child === false) continue;
-    el.appendChild(typeof child === "string" ? document.createTextNode(child) : child);
-  }
-}
-
-function h<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  attrs?: ElAttrs,
-  children?: ElChild | ElChild[],
-): HTMLElementTagNameMap[K];
-function h(tag: string, attrs?: ElAttrs, children?: ElChild | ElChild[]): Element;
-function h(tag: string, attrs?: ElAttrs, children?: ElChild | ElChild[]): Element {
-  const isSvg = tag.includes(":");
-  const el = isSvg
-    ? document.createElementNS(SVG_NS, tag.slice(tag.indexOf(":") + 1))
-    : document.createElement(tag);
-
-  if (attrs) {
-    for (const key of Object.keys(attrs)) setAttr(el, key, attrs[key]);
-  }
-
-  if (children !== undefined && children !== null) {
-    appendChildren(el, Array.isArray(children) ? children : [children]);
-  }
-
-  return el;
-}
-
-function svg(tag: string, attrs?: ElAttrs, children?: ElChild | ElChild[]): SVGElement {
-  return h("svg:" + tag, attrs, children) as SVGElement;
-}
-
-function pad2(n: number): string {
-  return n < 10 ? "0" + n : String(n);
-}
-
-function localDateKey(d: Date): string {
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-}
-
-function padDaysToYear(days: StreakrDay[], year: number): StreakrDay[] {
-  const map = new Map<string, StreakrDay>();
-  for (const d of days) map.set(localDateKey(d.date), d);
-  const out: StreakrDay[] = [];
-  const cur = new Date(year, 0, 1);
-  const end = new Date(year, 11, 31);
-  while (cur <= end) {
-    const key = localDateKey(cur);
-    const existing = map.get(key);
-    out.push(existing ?? { date: new Date(cur), total: 0, sources: {} });
-    cur.setDate(cur.getDate() + 1);
-  }
-  return out;
-}
-
-function gridFromDays<T extends StreakrDay>(days: T[]): (T | null)[][] {
-  if (!days.length) return [];
-  const cols: (T | null)[][] = [];
-  let col: (T | null)[] = new Array(days[0].date.getDay()).fill(null);
-  for (const day of days) {
-    if (col.length === 7) {
-      cols.push(col);
-      col = [];
-    }
-    col.push(day);
-  }
-  while (col.length < 7) col.push(null);
-  cols.push(col);
-  return cols;
-}
-
-function monthHeaders<T extends StreakrDay>(
-  cols: (T | null)[][],
-): { col: number; label: string }[] {
-  const out: { col: number; label: string }[] = [];
-  let lastMonth = -1;
-  cols.forEach((col, i) => {
-    const firstDay = col.find((d): d is T => Boolean(d));
-    if (!firstDay) return;
-    const m = firstDay.date.getMonth();
-    if (m !== lastMonth) {
-      if (out.length === 0 || i - out[out.length - 1].col >= 3) {
-        out.push({ col: i, label: MONTH_LABELS_SHORT[m] });
-      }
-      lastMonth = m;
-    }
-  });
-  return out;
-}
-
-function levelize(days: StreakrDay[]): StreakrLeveledDay[] {
-  const counts = days
-    .map((d) => d.total)
-    .filter((x) => x > 0)
-    .sort((a, b) => a - b);
-  if (!counts.length) return days.map((d) => ({ ...d, level: 0 }));
-  const p = (q: number) => counts[Math.min(counts.length - 1, Math.floor(counts.length * q))];
-  const t1 = p(0.25);
-  const t2 = p(0.55);
-  const t3 = p(0.8);
-  return days.map((d) => {
-    let level: 0 | 1 | 2 | 3 | 4 = 0;
-    if (d.total > 0) level = 1;
-    if (d.total > t1) level = 2;
-    if (d.total > t2) level = 3;
-    if (d.total > t3) level = 4;
-    return { ...d, level };
-  });
-}
-
-interface StreakrStats {
-  total: number;
-  active: number;
-  best: number;
-  current: number;
-}
-
-function computeStats(days: StreakrDay[]): StreakrStats {
-  const total = days.reduce((s, d) => s + d.total, 0);
-  const active = days.filter((d) => d.total > 0).length;
-  let best = 0;
-  let cur = 0;
-  let current = 0;
-  for (const d of days) {
-    if (d.total > 0) {
-      cur++;
-      if (cur > best) best = cur;
-    } else {
-      cur = 0;
-    }
-  }
-  for (let i = days.length - 1; i >= 0; i--) {
-    if (days[i].total > 0) current++;
-    else break;
-  }
-  return { total, active, best, current };
-}
-
-function fmtDateLong(d: Date): string {
-  return `${DOW[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-}
-
-function formatTotalLabel(total: number): string {
-  if (total === 0) return "No contributions";
-  const noun = total === 1 ? "contribution" : "contributions";
-  return `${total} ${noun}`;
-}
-
-function providerIconHtml(p: StreakrProvider): string | null {
-  if (p.icon) return p.icon;
-  return BUILTIN_ICONS[p.key] ?? null;
-}
-
-function logoR(): SVGElement {
-  const FILL = "var(--sk-heat-4, #39d353)";
-  const HOLE = "var(--sk-heat-1, #0e4429)";
-  const cells: [number, number, string][] = [
-    [1, 1, FILL],
-    [7, 1, FILL],
-    [13, 1, FILL],
-    [1, 7, FILL],
-    [7, 7, FILL],
-    [13, 7, HOLE],
-    [1, 13, FILL],
-    [7, 13, HOLE],
-    [13, 13, FILL],
-  ];
-  return svg(
-    "svg",
-    { width: 18, height: 18, viewBox: "0 0 18 18", fill: "none" },
-    cells.map(([x, y, fill]) => svg("rect", { x, y, width: 4, height: 4, rx: 1, fill })),
-  );
-}
 
 interface InternalState {
   year: number | null;
@@ -332,21 +80,14 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     cfg.year = cfg.years[cfg.years.length - 1];
   }
 
-  const initialProviders: StreakrProviders = {};
-  for (const p of cfg.providers) initialProviders[p.key] = true;
-
   const state: InternalState = {
     year: cfg.year,
-    providers: initialProviders,
+    providers: enabledProviderState(cfg.providers),
     yearModalOpen: false,
   };
 
   function syncProviderState(): void {
-    const next: StreakrProviders = {};
-    for (const p of cfg.providers) {
-      next[p.key] = state.providers[p.key] ?? true;
-    }
-    state.providers = next;
+    state.providers = syncProviders(cfg.providers, state.providers);
   }
 
   const root = h("div", { class: "sk-root" }) as HTMLElement;
@@ -390,13 +131,12 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   function getCurrentDays(): StreakrDay[] {
     if (cfg.state !== "ready" || state.year == null) return [];
     const raw = cfg.getDays(state.year) || [];
-    return raw.map((d) => {
-      let total = 0;
-      for (const p of cfg.providers) {
-        if (state.providers[p.key]) total += dayCount(d, p.key);
-      }
-      return { ...d, total };
-    });
+    return raw.map((day) => ({
+      ...day,
+      total: cfg.providers
+        .filter((provider) => state.providers[provider.key])
+        .reduce((total, provider) => total + dayCount(day, provider.key), 0),
+    }));
   }
 
   function showTooltip(e: MouseEvent, day: StreakrDay): void {
@@ -404,22 +144,20 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     tooltipEl.appendChild(h("div", { class: "tt-date", text: fmtDateLong(day.date) }));
     const totalLabel = formatTotalLabel(day.total);
     tooltipEl.appendChild(h("div", { class: "tt-total", text: totalLabel }));
-    if (day.total > 0) {
-      cfg.providers.forEach((p) => {
-        const value = dayCount(day, p.key);
-        if (value > 0) {
-          tooltipEl.appendChild(
-            h("div", { class: "tt-row" }, [
-              h("span", { class: "tt-label" }, [
-                h("span", { class: "dot", style: { background: p.color } }),
-                p.name,
-              ]),
-              h("span", { class: "tt-val", text: String(value) }),
+    cfg.providers
+      .map((provider) => ({ provider, value: dayCount(day, provider.key) }))
+      .filter(({ value }) => value > 0)
+      .forEach(({ provider, value }) => {
+        tooltipEl.appendChild(
+          h("div", { class: "tt-row" }, [
+            h("span", { class: "tt-label" }, [
+              h("span", { class: "dot", style: { background: provider.color } }),
+              provider.name,
             ]),
-          );
-        }
+            h("span", { class: "tt-val", text: String(value) }),
+          ]),
+        );
       });
-    }
     tooltipEl.style.left = e.clientX + 14 + "px";
     tooltipEl.style.top = e.clientY + 14 + "px";
     tooltipEl.classList.add("visible");
@@ -627,14 +365,16 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   }
 
   function shouldRenderProviderRow(flags: RenderFlags): boolean {
-    if (flags.isLoading || flags.isEmpty) return false;
-    if (!cfg.showProviders) return false;
-    if (cfg.providers.length === 0) return false;
     // Hide the toggle row when ≤1 provider has any contributions for the
     // current year — clicking the only active chip would otherwise wipe the
     // calendar and look broken (see issue #84).
-    if (flags.providersWithDataCount <= 1) return false;
-    return true;
+    return (
+      !flags.isLoading &&
+      !flags.isEmpty &&
+      cfg.showProviders &&
+      cfg.providers.length > 0 &&
+      flags.providersWithDataCount > 1
+    );
   }
 
   function renderYearsBar(flags: RenderFlags): HTMLElement {
@@ -655,21 +395,20 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   }
 
   function appendBody(card: Element, flags: RenderFlags): void {
-    if (flags.isLoading) {
-      card.appendChild(renderLoadingBody());
-      return;
-    }
-    if (flags.allOff) {
+    const stateBody = [
+      [flags.isLoading, renderLoadingBody],
       // Check `allOff` before `isEmpty` so users who explicitly toggled every
       // provider off see "providers disabled" guidance instead of the
       // (technically true but misleading) "no contributions" empty state.
-      card.appendChild(renderNoProviders());
+      [flags.allOff, renderNoProviders],
+      [flags.isEmpty, renderEmpty],
+    ].find(([matches]) => matches) as [boolean, () => HTMLElement] | undefined;
+
+    if (stateBody) {
+      card.appendChild(stateBody[1]());
       return;
     }
-    if (flags.isEmpty) {
-      card.appendChild(renderEmpty());
-      return;
-    }
+
     const body = renderReadyBody(flags.leveled, flags.stats, flags.days) as ReadyBody;
     card.appendChild(body);
     body.__skDraw?.();
@@ -941,9 +680,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   }
 
   function enableAllProviders(): void {
-    const next: StreakrProviders = {};
-    for (const p of cfg.providers) next[p.key] = true;
-    state.providers = next;
+    state.providers = enabledProviderState(cfg.providers);
     render();
   }
 

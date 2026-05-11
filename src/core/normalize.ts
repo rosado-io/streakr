@@ -1,5 +1,36 @@
 import type { ContributionDay } from "../types";
 
+function mergeSources(
+  current: ContributionDay["sources"] = {},
+  next: ContributionDay["sources"] = {},
+): ContributionDay["sources"] {
+  const entries = Object.entries(next).map(([source, count]) => [
+    source,
+    (current[source] ?? 0) + count,
+  ]);
+
+  return Object.keys(next).length ? { ...current, ...Object.fromEntries(entries) } : current;
+}
+
+function cloneDay(day: ContributionDay): ContributionDay {
+  return {
+    date: day.date,
+    count: day.count,
+    ...(day.sources ? { sources: { ...day.sources } } : {}),
+  };
+}
+
+function mergeDay(existing: ContributionDay | undefined, next: ContributionDay): ContributionDay {
+  if (!existing) return cloneDay(next);
+
+  const sources = next.sources ? mergeSources(existing.sources, next.sources) : existing.sources;
+  return {
+    date: existing.date,
+    count: existing.count + next.count,
+    ...(sources ? { sources } : {}),
+  };
+}
+
 /**
  * Normalizes raw contribution events into a consistent, gap-free daily series.
  *
@@ -17,23 +48,7 @@ export function normalizeEventsToDaily(events: ContributionDay[]): ContributionD
   const merged = new Map<string, ContributionDay>();
 
   for (const event of events) {
-    const existing = merged.get(event.date);
-    if (!existing) {
-      merged.set(event.date, {
-        date: event.date,
-        count: event.count,
-        ...(event.sources ? { sources: { ...event.sources } } : {}),
-      });
-      continue;
-    }
-
-    existing.count += event.count;
-    if (event.sources) {
-      existing.sources ??= {};
-      for (const [source, count] of Object.entries(event.sources)) {
-        existing.sources[source] = (existing.sources[source] ?? 0) + count;
-      }
-    }
+    merged.set(event.date, mergeDay(merged.get(event.date), event));
   }
 
   const dates = [...merged.keys()].sort((a, b) => a.localeCompare(b));
