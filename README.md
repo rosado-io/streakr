@@ -13,11 +13,6 @@ loading/empty/ready states, and an interactive tooltip.
 The component is built in vanilla TypeScript: no React, no Vue, no runtime
 dependencies. Drop it into any page or framework with two imports.
 
-> **Upgrading from 0.1.x?** 0.2 is a breaking change — `renderContributionWidget`,
-> `renderSvgCalendar`, `themes`, and `createCssVarTheme` were replaced by a single
-> `createStreakr` factory. See [MIGRATION.md](./MIGRATION.md) for a side-by-side
-> diff, the new `StreakrDay` shape, and bundler-cache notes.
-
 ## Installation
 
 ```sh
@@ -273,14 +268,6 @@ Treat tokens as secrets:
 
 Streakr follows [semver](https://semver.org/), with one caveat: while the
 package is pre-1.0, **minor releases (`0.x.0`) may include breaking changes**.
-The current major redesign (0.1.x → 0.2.x) is one such bump — the surface area
-is now small enough that we don't expect another break before 1.0.
-
-When we ship a breaking change we'll always:
-
-- bump the minor (or major, post-1.0)
-- add a "Migrating" section to [MIGRATION.md](./MIGRATION.md)
-- link the migration entry from that release's GitHub Release notes
 
 If you want to pin against breakage, use a tilde range (`~0.2.0`) instead of a
 caret (`^0.2.0`) until 1.0.

@@ -4,9 +4,13 @@ import type { ContributionDay } from "../types";
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export function validateInputDates(start: string, end: string): void {
-  if (!isValidDate(start)) throw new Error(`Invalid start date "${start}" (expected YYYY-MM-DD)`);
-  if (!isValidDate(end)) throw new Error(`Invalid end date "${end}" (expected YYYY-MM-DD)`);
-  if (start > end) throw new Error(`Invalid range: start "${start}" must be <= end "${end}"`);
+  const failed = [
+    [!isValidDate(start), `Invalid start date "${start}" (expected YYYY-MM-DD)`],
+    [!isValidDate(end), `Invalid end date "${end}" (expected YYYY-MM-DD)`],
+    [start > end, `Invalid range: start "${start}" must be <= end "${end}"`],
+  ].find(([invalid]) => invalid);
+
+  if (failed) throw new Error(String(failed[1]));
 }
 
 export function isValidDate(value: string): boolean {
@@ -20,12 +24,13 @@ export function toCanonicalDays(
   start: string,
   end: string,
 ): ContributionDay[] {
-  if (days.length > 0) return normalizeEventsToDaily(days);
+  const rangeAnchors =
+    start === end
+      ? [{ date: start, count: 0 }]
+      : [
+          { date: start, count: 0 },
+          { date: end, count: 0 },
+        ];
 
-  return start === end
-    ? normalizeEventsToDaily([{ date: start, count: 0 }])
-    : normalizeEventsToDaily([
-        { date: start, count: 0 },
-        { date: end, count: 0 },
-      ]);
+  return normalizeEventsToDaily(days.length ? days : rangeAnchors);
 }

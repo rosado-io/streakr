@@ -91,6 +91,7 @@ describe("GitLabProvider", () => {
 
   it("follows Link header pagination to collect all events", async () => {
     const page2Url = "https://gitlab.com/api/v4/users/42/events?page=2&per_page=100";
+    const previousUrl = "https://gitlab.com/api/v4/users/42/events?page=0&per_page=100";
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
       const url = String(input);
@@ -108,7 +109,7 @@ describe("GitLabProvider", () => {
       // First events page — has a next link
       return new Response(JSON.stringify([{ created_at: "2025-06-01T10:00:00.000Z" }]), {
         status: 200,
-        headers: { link: `<${page2Url}>; rel="next"` },
+        headers: { link: `<${previousUrl}>; rel="prev", <${page2Url}>; rel="next"` },
       });
     });
 

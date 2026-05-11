@@ -504,6 +504,31 @@ describe("createStreakr", () => {
       instance.setYear(years[0]);
       expect(tooltip?.classList.contains("visible")).toBe(false);
     });
+
+    it("only lists enabled providers in tooltip rows", () => {
+      instance = createStreakr({
+        target,
+        years: [2026],
+        getDays: () => [
+          {
+            date: new Date(2026, 0, 1),
+            total: 7,
+            sources: { github: 2, gitlab: 5 },
+          },
+        ],
+      });
+
+      instance.setProviders({ gitlab: false });
+
+      const cell = target.querySelector<SVGRectElement>("rect.sk-heatmap-cell");
+      expect(cell).toBeTruthy();
+      cell?.dispatchEvent(new MouseEvent("mouseenter", { clientX: 10, clientY: 10 }));
+
+      const tooltip = target.querySelector(".sk-tooltip");
+      expect(tooltip?.textContent).toContain("2 contributions");
+      expect(tooltip?.textContent).toContain("GitHub");
+      expect(tooltip?.textContent).not.toContain("GitLab");
+    });
   });
 
   // ─── instance API ─────────────────────────────────────────
