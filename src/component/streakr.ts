@@ -7,7 +7,7 @@ import type {
   StreakrProviders,
 } from "../types";
 import { DAY_LABELS, fmtDateLong, gridFromDays, monthHeaders, padDaysToYear } from "./calendar";
-import { h, svg } from "./dom";
+import { h, svg, trustedHtml } from "./dom";
 import { logoR } from "./logo";
 import { computeStats, formatTotalLabel, levelize, type StreakrStats } from "./metrics";
 import {
@@ -140,11 +140,12 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   }
 
   function showTooltip(e: MouseEvent, day: StreakrDay): void {
-    tooltipEl.innerHTML = "";
+    tooltipEl.replaceChildren();
     tooltipEl.appendChild(h("div", { class: "tt-date", text: fmtDateLong(day.date) }));
     const totalLabel = formatTotalLabel(day.total);
     tooltipEl.appendChild(h("div", { class: "tt-total", text: totalLabel }));
     cfg.providers
+      .filter((provider) => state.providers[provider.key])
       .map((provider) => ({ provider, value: dayCount(day, provider.key) }))
       .filter(({ value }) => value > 0)
       .forEach(({ provider, value }) => {
@@ -274,8 +275,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     svgEl.appendChild(g);
 
     const inner = h("div", { class: "sk-heatmap-svg-wrap" }, [svgEl]);
-    wrap.innerHTML = "";
-    wrap.appendChild(inner);
+    wrap.replaceChildren(inner);
   }
 
   type ReadyBody = HTMLElement & {
@@ -418,7 +418,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   function render(): void {
     syncProviderState();
     // Hide any tooltip pinned by a hovered cell that is about to be replaced
-    // when we wipe `root.innerHTML` below — the cell's mouseleave never fires.
+    // when we replace the root contents below — the cell's mouseleave never fires.
     hideTooltip();
     // Drop the previous heatmap wrap from the observer (the new render will
     // re-observe the freshly mounted wrap, if any).
@@ -428,11 +428,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     const wasOpen = state.yearModalOpen;
     const flags = computeRenderFlags();
 
-    root.innerHTML = "";
-    // Re-attach the tooltip — `innerHTML = ""` above detached it from the
-    // DOM but the element reference is preserved so listeners and pending
-    // hover state stay intact.
-    root.appendChild(tooltipEl);
+    // Re-attach the tooltip first. The element reference is preserved so
+    // listeners and pending hover state stay intact across renders.
+    root.replaceChildren(tooltipEl);
     root.dataset.theme = cfg.theme;
     applyAccentVars(root);
 
@@ -460,7 +458,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         [
           h("span", {
             class: "sk-provider-icon",
-            html: iconHtml ?? "",
+            html: iconHtml ? trustedHtml(iconHtml) : undefined,
             style: iconHtml ? undefined : { background: p.color, borderRadius: "50%" },
           }),
           h("span", { class: "sk-provider-count", text: totals[p.key].toLocaleString() }),
@@ -507,7 +505,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     return h("div", { class: "sk-body" }, [
       h("div", { class: "sk-heatmap-wrap" }, [
         grid,
-        h("div", { class: "sk-legend", html: '<span style="opacity:.4">Loading…</span>' }),
+        h("div", { class: "sk-legend" }, [
+          h("span", { style: { opacity: ".4" }, text: "Loading..." }),
+        ]),
       ]),
       h("div", { class: "sk-stats" }, [stat(), stat(), stat(), stat()]),
     ]);
@@ -517,10 +517,11 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     return h("div", { class: "sk-empty" }, [
       h("div", {
         class: "sk-empty-icon",
-        html:
+        html: trustedHtml(
           '<svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5">' +
-          '<rect x="3" y="5" width="16" height="14" rx="2"/><path d="M3 9 H19"/>' +
-          '<path d="M8 3 V7 M14 3 V7" stroke-linecap="round"/></svg>',
+            '<rect x="3" y="5" width="16" height="14" rx="2"/><path d="M3 9 H19"/>' +
+            '<path d="M8 3 V7 M14 3 V7" stroke-linecap="round"/></svg>',
+        ),
       }),
       h("div", {
         class: "sk-empty-title",
@@ -627,7 +628,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
           class: "sk-modal-close",
           "aria-label": "Close",
           onclick: () => closeYearModal(),
-          html: '<svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 3 L11 11 M11 3 L3 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+          html: trustedHtml(
+            '<svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 3 L11 11 M11 3 L3 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+          ),
         }),
       ]),
     );

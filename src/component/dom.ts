@@ -1,7 +1,11 @@
 type SimpleAttr = string | number | boolean;
 type StyleAttr = Partial<CSSStyleDeclaration> | Record<string, string>;
+type TrustedHtml = {
+  readonly markup: string;
+  readonly trustedHtml: true;
+};
 type EventAttr = (event: Event) => void;
-type ElAttrValue = SimpleAttr | EventAttr | StyleAttr | null | undefined;
+type ElAttrValue = SimpleAttr | TrustedHtml | EventAttr | StyleAttr | null | undefined;
 type ElAttrs = Record<string, ElAttrValue>;
 type ElChild = Node | string | null | false | undefined;
 
@@ -9,16 +13,21 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 
 const simpleAttrSetters: Record<string, (el: Element, value: string) => void> = {
   class: (el, value) => el.setAttribute("class", value),
-  html: (el, value) => {
-    (el as HTMLElement).innerHTML = value;
-  },
   text: (el, value) => {
     el.textContent = value;
   },
 };
 
+export function trustedHtml(markup: string): TrustedHtml {
+  return { markup, trustedHtml: true };
+}
+
 function isSimple(value: ElAttrValue): value is SimpleAttr {
   return typeof value === "string" || typeof value === "number" || typeof value === "boolean";
+}
+
+function isTrustedHtml(value: ElAttrValue): value is TrustedHtml {
+  return typeof value === "object" && value != null && "trustedHtml" in value;
 }
 
 function setSimpleAttr(el: Element, key: string, value: SimpleAttr): void {
@@ -29,6 +38,13 @@ function setSimpleAttr(el: Element, key: string, value: SimpleAttr): void {
 function setStyle(el: Element, value: ElAttrValue): boolean {
   if (typeof value !== "object") return false;
   Object.assign((el as HTMLElement).style, value);
+  return true;
+}
+
+function setHtml(el: Element, value: ElAttrValue): boolean {
+  if (!isTrustedHtml(value)) return false;
+  const fragment = document.createRange().createContextualFragment(value.markup);
+  el.replaceChildren(fragment);
   return true;
 }
 
@@ -43,7 +59,10 @@ function setListener(el: Element, key: string, value: ElAttrValue): boolean {
 function setAttr(el: Element, key: string, value: ElAttrValue): void {
   if (value === false || value == null) return;
 
-  const handled = (key === "style" && setStyle(el, value)) || setListener(el, key, value);
+  const handled =
+    (key === "html" && setHtml(el, value)) ||
+    (key === "style" && setStyle(el, value)) ||
+    setListener(el, key, value);
   if (!handled && isSimple(value)) setSimpleAttr(el, key, value);
 }
 
