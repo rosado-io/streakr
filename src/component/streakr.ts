@@ -305,7 +305,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     // year-over-year (e.g. the in-progress current year doesn't shrink). Stats
     // stay computed from `days` so the trailing zero pad doesn't reset
     // "Current Streak".
-    const heatmapDays = state.year != null ? padDaysToYear(days, state.year) : days;
+    const heatmapDays = state.year == null ? days : padDaysToYear(days, state.year);
     const leveled = levelize(heatmapDays);
     const isLoading = cfg.state === "loading";
     const isEmpty = cfg.state === "empty" || (cfg.state === "ready" && yearTotal === 0);
