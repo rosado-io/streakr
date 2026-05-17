@@ -57,6 +57,10 @@ function dayCount(day: StreakrDay, key: string): number {
  * reads/writes inside the provided `target` element. The tooltip is mounted
  * inside `.sk-root` so it inherits the component's theme tokens and any
  * accent overrides applied via `update()`.
+ *
+ * @param options - Component mount target, data source, visual settings, and callbacks.
+ * @returns A `StreakrInstance` for updating or destroying the component.
+ * @throws Error when `options.target` is missing.
  */
 export function createStreakr(options: StreakrOptions): StreakrInstance {
   const cfg: ResolvedConfig = {

@@ -5,30 +5,55 @@
 [![CI](https://github.com/rosado-io/streakr/actions/workflows/ci.yml/badge.svg)](https://github.com/rosado-io/streakr/actions/workflows/ci.yml)
 [![Semantic Release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
-Streakr is a framework-agnostic, drop-in contribution-calendar component. It
-unifies activity from any number of Git providers — GitHub, GitLab, Bitbucket,
-or your own — into a single themeable heatmap with year tabs, provider toggles,
-loading/empty/ready states, and an interactive tooltip.
+## What is Streakr?
 
-The component is built in vanilla TypeScript: no React, no Vue, no runtime
-dependencies. Drop it into any page or framework with two imports.
+Streakr is a framework-agnostic, drop-in contribution-calendar component. It
+unifies activity from GitHub, GitLab, Bitbucket, self-hosted GitLab, or your own
+providers into one themeable heatmap with year tabs, provider toggles,
+loading/empty/ready states, stats, and an interactive tooltip.
+
+The package is written in vanilla TypeScript and ships without React, Vue, or
+other runtime dependencies. Use the component directly from DOM code, wrap it in
+your framework of choice, or use the provider utilities independently to fetch
+and normalize contribution data.
 
 ## Installation
 
+Install from npm:
+
 ```sh
 npm install @rosado-io/streakr
+# or
+pnpm add @rosado-io/streakr
+# or
+yarn add @rosado-io/streakr
 ```
 
-Or load it from a CDN:
+Or load the ESM build and CSS from a CDN. Pin the version in production:
 
 ```html
-<link rel="stylesheet" href="https://esm.sh/@rosado-io/streakr/styles.css" />
+<div id="streakr"></div>
+
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/@rosado-io/streakr@0.2.4/dist/streakr.css"
+/>
 <script type="module">
-  import { createStreakr } from "https://esm.sh/@rosado-io/streakr";
+  import { createStreakr } from "https://esm.sh/@rosado-io/streakr@0.2.4";
+
+  createStreakr({
+    target: document.getElementById("streakr"),
+    years: [2026],
+    getDays: () => [],
+  });
 </script>
 ```
 
 ## Quickstart
+
+```html
+<div id="streakr"></div>
+```
 
 ```ts
 import { createStreakr } from "@rosado-io/streakr";
@@ -57,8 +82,9 @@ sk.update({ theme: "light", accent: "#a371f7" });
 sk.destroy();
 ```
 
-The CSS file ships the dark/light tokens, accent tinting, modal, tooltip, and
-skeleton. You can override any token with your own CSS variables (`--sk-*`).
+The CSS file ships dark/light tokens, accent tinting, modal, tooltip, skeleton,
+and responsive heatmap styles. You can override any token with your own CSS
+variables (`--sk-*`).
 
 ## API
 
@@ -80,8 +106,14 @@ skeleton. You can override any token with your own CSS variables (`--sk-*`).
 | `onYearChange` | `(year) => void` | — | Fires after the user picks a different year. |
 | `onProviderToggle` | `(key, enabled, all) => void` | — | Fires after a provider chip is toggled. |
 
-The returned `StreakrInstance` exposes `update(patch)`, `setYear(y)`,
-`setProviders(next)`, and `destroy()`.
+### `StreakrInstance`
+
+| Method | Description |
+| --- | --- |
+| `update(patch)` | Patches any `StreakrOptions` value and re-renders. Undefined values are ignored. |
+| `setYear(year)` | Changes the active year, fires `onYearChange`, and re-renders. |
+| `setProviders(next)` | Patches provider enabled/disabled state by provider key. |
+| `destroy()` | Removes DOM nodes, resize observers, tooltip, and keyboard listeners. |
 
 ### `StreakrDay`
 
@@ -149,7 +181,25 @@ the empty illustration.
 
 ## Framework snippets
 
-The component is vanilla DOM — wrap it however you like.
+The component is vanilla DOM. These snippets show the lifecycle wrapper only.
+
+### Vanilla
+
+```ts
+import { createStreakr } from "@rosado-io/streakr";
+import "@rosado-io/streakr/styles.css";
+
+const el = document.querySelector<HTMLElement>("#streakr");
+if (!el) throw new Error("Missing #streakr");
+
+const sk = createStreakr({
+  target: el,
+  years: [2026],
+  getDays: (year) => loadDays(year),
+});
+
+window.addEventListener("beforeunload", () => sk.destroy(), { once: true });
+```
 
 ### React
 
@@ -229,7 +279,12 @@ result for the component.
 ### Providers
 
 ```ts
-import { GitHubProvider, GitLabProvider, aggregate } from "@rosado-io/streakr";
+import {
+  GitHubProvider,
+  GitLabProvider,
+  aggregate,
+  normalizeEventsToDaily,
+} from "@rosado-io/streakr";
 
 const events = await aggregate(
   [
@@ -238,6 +293,12 @@ const events = await aggregate(
   ],
   { user: "octocat", start: "2026-01-01", end: "2026-12-31" },
 );
+
+const days = normalizeEventsToDaily(events).map((day) => ({
+  date: new Date(`${day.date}T00:00:00`),
+  total: day.count,
+  sources: day.sources,
+}));
 ```
 
 `aggregate(providers, params)` returns a merged array; failed providers are
@@ -253,16 +314,36 @@ self-hosted GitLab, rate-limit notes, and writing your own provider.
 These are independent helpers — useful if you want to plug custom data into
 `createStreakr` or build something different on top.
 
+### Package exports
+
+```ts
+import {
+  createStreakr,
+  GitHubProvider,
+  GitLabProvider,
+  aggregate,
+  normalizeEventsToDaily,
+  computeStreaks,
+  buildCalendarGrid,
+} from "@rosado-io/streakr";
+```
+
 ## Privacy
 
-Streakr does not send data to any Streakr-owned service. Provider classes call
-the configured Git host directly from the environment where your code runs.
+Streakr does not send data to any Streakr-owned service and does not include
+analytics, cookies, or background network calls. The component renders whatever
+`getDays` returns into the DOM. Provider classes call the configured Git host
+directly from the environment where your code runs.
 
 Treat tokens as secrets:
 
 - Don't expose GitHub or GitLab PATs in public browser code.
 - Prefer server-side fetching or an authenticated backend proxy for real data.
 - Cache provider responses to reduce API calls and rate-limit pressure.
+- Contribution counts can reveal work patterns. Aggregate, redact, or limit
+  ranges before showing private activity on public pages.
+- Custom provider icons are inserted as raw SVG HTML; only use trusted static
+  markup or sanitize it first.
 
 ## Versioning
 

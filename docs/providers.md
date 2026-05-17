@@ -1,7 +1,8 @@
 # Providers
 
-Providers fetch contribution activity and return Streakr's shared
-`ContributionDay[]` shape:
+Providers fetch contribution activity from Git hosts and return Streakr's shared
+`ContributionDay[]` shape. They are optional utilities: you can use them with
+`createStreakr`, or use the normalized data in your own calendar/grid UI.
 
 ```ts
 type ContributionDay = {
@@ -11,13 +12,21 @@ type ContributionDay = {
 };
 ```
 
-All provider fetches use `{ user, start, end }`, where dates must be in
-`YYYY-MM-DD` format and `start <= end`.
+All provider fetches use `{ user, start, end }`, where dates are inclusive,
+must be in `YYYY-MM-DD` format, and must satisfy `start <= end`.
+
+Recommended production shape:
+
+- Fetch provider data on a server, scheduled job, or authenticated backend proxy.
+- Keep Personal Access Tokens (PATs) out of browser bundles.
+- Cache by `{ provider, user, start, end }` to reduce rate-limit pressure.
+- Send only the daily counts needed by the client.
 
 ## GitHub
 
 `GitHubProvider` uses the GitHub GraphQL API and the
-`contributionsCollection.contributionCalendar` field.
+`contributionsCollection.contributionCalendar` field. It returns a canonical
+daily series for the requested range, including zero-count days.
 
 ```ts
 import { GitHubProvider } from "@rosado-io/streakr";
@@ -72,11 +81,21 @@ For heavy usage:
 - Avoid repeatedly fetching large date windows.
 - Prefer server-side scheduled refreshes for public profile pages.
 
+### Failure Behavior
+
+`fetchEvents()` throws when:
+
+- The date range is invalid.
+- GitHub returns HTTP or GraphQL errors.
+- The requested GitHub user does not exist.
+- The token cannot read the requested contribution calendar.
+
 ## GitLab
 
 `GitLabProvider` uses the GitLab REST API. It resolves a username through
 `/api/v4/users?username=...`, then fetches paginated user events from
-`/api/v4/users/:id/events`.
+`/api/v4/users/:id/events`. It returns a canonical daily series for the
+requested range, including zero-count days.
 
 ```ts
 import { GitLabProvider } from "@rosado-io/streakr";
@@ -140,12 +159,26 @@ For heavy usage:
 - Keep date windows bounded.
 - Prefer backend fetching so tokens stay out of the browser.
 
+### Failure Behavior
+
+`fetchEvents()` throws when:
+
+- The date range is invalid.
+- The GitLab user cannot be resolved.
+- GitLab returns an HTTP error while resolving users or fetching events.
+- The token cannot read the requested user's event stream.
+
 ## Aggregating Providers
 
 Use `aggregate()` to fetch from multiple providers concurrently:
 
 ```ts
-import { aggregate, GitHubProvider, GitLabProvider, normalizeEventsToDaily } from "@rosado-io/streakr";
+import {
+  aggregate,
+  GitHubProvider,
+  GitLabProvider,
+  normalizeEventsToDaily,
+} from "@rosado-io/streakr";
 
 const raw = await aggregate(
   [
@@ -161,6 +194,33 @@ const days = normalizeEventsToDaily(raw);
 Each successful provider's events are tagged in `sources` with the provider name.
 If one provider fails, `aggregate()` skips it and returns data from the providers
 that succeeded.
+
+If you need fail-fast behavior, call each provider's `fetchEvents()` directly and
+handle errors in your application.
+
+## Using Provider Data with `createStreakr`
+
+Provider utilities return string dates (`YYYY-MM-DD`) and `count`. The component
+expects `Date` objects and `total`, so map the normalized output before passing
+it into `getDays`:
+
+```ts
+import { createStreakr, normalizeEventsToDaily } from "@rosado-io/streakr";
+import "@rosado-io/streakr/styles.css";
+
+const normalized = normalizeEventsToDaily(raw);
+const componentDays = normalized.map((day) => ({
+  date: new Date(`${day.date}T00:00:00`),
+  total: day.count,
+  sources: day.sources,
+}));
+
+createStreakr({
+  target: document.getElementById("streakr")!,
+  years: [2025],
+  getDays: () => componentDays,
+});
+```
 
 ## Custom Providers
 
@@ -183,3 +243,15 @@ class MyProvider implements Provider {
 
 Provider output can contain gaps and duplicate dates. Call
 `normalizeEventsToDaily()` before computing streaks or building a grid.
+
+## Privacy and Token Handling
+
+- Treat GitHub and GitLab PATs as secrets.
+- Do not ship PATs in public browser code, static HTML, or client-side
+  environment variables.
+- Prefer backend fetching for real user data. Browser-side fetching is suitable
+  only for demos with disposable or intentionally public credentials.
+- Contribution counts can reveal private work cadence. Limit date ranges,
+  aggregate results, or omit private providers when publishing public profiles.
+- Store cached provider responses with the same access controls as the source
+  data.
