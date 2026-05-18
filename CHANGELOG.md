@@ -1,3 +1,9 @@
+## [0.3.0](https://github.com/rosado-io/streakr/compare/v0.2.4...v0.3.0) (2026-05-18)
+
+### Features
+
+* feat: expand README quickstart and API docs (#91) ([`fafeae8`](https://github.com/rosado-io/streakr/commit/fafeae8ab8632b8277c69b39d9d0b27c4771591a)) by ****
+
 ## [0.2.4](https://github.com/rosado-io/streakr/compare/v0.2.3...v0.2.4) (2026-05-11)
 
 ### Bug Fixes
