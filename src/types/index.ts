@@ -155,12 +155,43 @@ export interface StreakrOptions {
 
 /** Public instance API returned by `createStreakr`. */
 export interface StreakrInstance {
-  /** Patch options and re-render. */
+  /**
+   * Patches component options and re-renders in place.
+   *
+   * Pass any subset of `StreakrOptions` to update theme, accent, providers,
+   * years, state, callbacks, or data access. Properties whose value is
+   * `undefined` are ignored so callers can safely spread partial objects.
+   *
+   * @param patch - Partial options to merge into the live component config.
+   */
   update(patch: Partial<StreakrOptions>): void;
-  /** Programmatically set the active year. */
+
+  /**
+   * Programmatically changes the active year.
+   *
+   * The component re-renders immediately and invokes `onYearChange` with the
+   * selected year, matching the behavior of a user clicking a year tab.
+   *
+   * @param year - Year to make active. It should usually be present in `years`.
+   */
   setYear(year: number): void;
-  /** Patch the provider toggle state. */
+
+  /**
+   * Patches provider toggle state by provider key.
+   *
+   * Only keys included in `next` are changed; omitted providers keep their
+   * current enabled/disabled state.
+   *
+   * @param next - Map of provider keys to enabled/disabled booleans.
+   */
   setProviders(next: StreakrProviders): void;
-  /** Tear down the component, listeners, and tooltip node. */
+
+  /**
+   * Tears down the component instance.
+   *
+   * Removes rendered DOM, disconnects resize observers, removes keyboard
+   * listeners, and detaches the tooltip node. Call this from framework
+   * unmount/destroy hooks to avoid leaking listeners.
+   */
   destroy(): void;
 }

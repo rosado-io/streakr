@@ -57,6 +57,10 @@ function dayCount(day: StreakrDay, key: string): number {
  * reads/writes inside the provided `target` element. The tooltip is mounted
  * inside `.sk-root` so it inherits the component's theme tokens and any
  * accent overrides applied via `update()`.
+ *
+ * @param options - Component mount target, data source, visual settings, and callbacks.
+ * @returns A `StreakrInstance` for updating or destroying the component.
+ * @throws Error when `options.target` is missing.
  */
 export function createStreakr(options: StreakrOptions): StreakrInstance {
   const cfg: ResolvedConfig = {
@@ -301,7 +305,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     // year-over-year (e.g. the in-progress current year doesn't shrink). Stats
     // stay computed from `days` so the trailing zero pad doesn't reset
     // "Current Streak".
-    const heatmapDays = state.year != null ? padDaysToYear(days, state.year) : days;
+    const heatmapDays = state.year == null ? days : padDaysToYear(days, state.year);
     const leveled = levelize(heatmapDays);
     const isLoading = cfg.state === "loading";
     const isEmpty = cfg.state === "empty" || (cfg.state === "ready" && yearTotal === 0);
