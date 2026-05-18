@@ -469,6 +469,18 @@ describe("createStreakr", () => {
       });
       expect(target.querySelector(".sk-empty")).toBeTruthy();
     });
+
+    it("renders the empty illustration when no years are available", () => {
+      const getEmptyDays = vi.fn(() => []);
+      instance = createStreakr({
+        target,
+        years: [],
+        getDays: getEmptyDays,
+      });
+
+      expect(target.querySelector(".sk-empty")).toBeTruthy();
+      expect(getEmptyDays).not.toHaveBeenCalled();
+    });
   });
 
   // ─── tooltip ──────────────────────────────────────────────
