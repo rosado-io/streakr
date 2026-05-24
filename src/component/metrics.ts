@@ -7,6 +7,8 @@ export interface StreakrStats {
   current: number;
 }
 
+const LEVEL_PERCENTILES = [0.25, 0.55, 0.8] as const;
+
 export function levelize(days: StreakrDay[]): StreakrLeveledDay[] {
   const counts = days
     .map((day) => day.total)
@@ -18,9 +20,9 @@ export function levelize(days: StreakrDay[]): StreakrLeveledDay[] {
   }
 
   const p = (q: number) => counts[Math.min(counts.length - 1, Math.floor(counts.length * q))];
-  const t1 = p(0.25);
-  const t2 = p(0.55);
-  const t3 = p(0.8);
+  const t1 = p(LEVEL_PERCENTILES[0]);
+  const t2 = p(LEVEL_PERCENTILES[1]);
+  const t3 = p(LEVEL_PERCENTILES[2]);
 
   return days.map((day) => {
     let level: 0 | 1 | 2 | 3 | 4 = 0;
