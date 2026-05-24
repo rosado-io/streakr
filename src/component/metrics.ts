@@ -40,8 +40,8 @@ export function computeStats(days: StreakrDay[]): StreakrStats {
   let best = 0;
   let curRun = 0;
 
-  for (let i = 0; i < days.length; i++) {
-    const val = days[i].total;
+  for (const day of days) {
+    const val = day.total;
     total += val;
     if (val > 0) {
       active++;
