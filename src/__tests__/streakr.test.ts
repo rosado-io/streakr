@@ -79,6 +79,31 @@ describe("createStreakr", () => {
       expect(root?.dataset.theme).toBe("dark");
     });
 
+    it("handles theme: 'system' auto-detection", () => {
+      const originalMatchMedia = window.matchMedia;
+      const mockMatches = vi.fn().mockReturnValue(true);
+      window.matchMedia = vi.fn().mockImplementation((query) => ({
+        matches: mockMatches(),
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      } as unknown as MediaQueryList));
+
+      instance = createStreakr({ target, theme: "system", years, getDays });
+      const root = target.querySelector<HTMLElement>(".sk-root");
+      expect(root?.dataset.theme).toBe("dark");
+
+      mockMatches.mockReturnValue(false);
+      instance.update({ theme: "system" });
+      expect(root?.dataset.theme).toBe("light");
+
+      window.matchMedia = originalMatchMedia;
+    });
+
     it("applies accent CSS variables on the root", () => {
       instance = createStreakr({ target, accent: "#ff00aa", years, getDays });
       const root = target.querySelector<HTMLElement>(".sk-root");
