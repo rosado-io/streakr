@@ -5,6 +5,7 @@ import type {
   StreakrOptions,
   StreakrProvider,
   StreakrProviders,
+  StreakrThemeMode,
 } from "../types";
 import { DAY_LABELS, fmtDateLong, gridFromDays, monthHeaders, padDaysToYear } from "./calendar";
 import { h, svg, trustedHtml } from "./dom";
@@ -27,7 +28,7 @@ interface InternalState {
 
 interface ResolvedConfig {
   target: HTMLElement;
-  theme: "dark" | "light";
+  theme: StreakrThemeMode;
   accent: string;
   tintHeatmap: boolean;
   showProviders: boolean;
@@ -103,6 +104,40 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   root.appendChild(tooltipEl);
   let currentDraw: (() => void) | null = null;
   const resizeObs = new ResizeObserver(() => currentDraw?.());
+
+  let mediaQueryListener: ((e: MediaQueryListEvent) => void) | null = null;
+
+  function getActiveTheme(): "dark" | "light" {
+    if (cfg.theme === "system") {
+      if (typeof window !== "undefined" && window.matchMedia) {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      return "dark";
+    }
+    return cfg.theme;
+  }
+
+  function setupThemeListener(): void {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+
+    cleanupThemeListener();
+
+    if (cfg.theme === "system") {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      mediaQueryListener = (e: MediaQueryListEvent) => {
+        root.dataset.theme = e.matches ? "dark" : "light";
+      };
+      mediaQuery.addEventListener("change", mediaQueryListener);
+    }
+  }
+
+  function cleanupThemeListener(): void {
+    if (mediaQueryListener && typeof window !== "undefined" && window.matchMedia) {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      mediaQuery.removeEventListener("change", mediaQueryListener);
+      mediaQueryListener = null;
+    }
+  }
 
   function applyAccentVars(el: HTMLElement): void {
     const a = cfg.accent;
@@ -435,7 +470,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     // Re-attach the tooltip first. The element reference is preserved so
     // listeners and pending hover state stay intact across renders.
     root.replaceChildren(tooltipEl);
-    root.dataset.theme = cfg.theme;
+    root.dataset.theme = getActiveTheme();
     applyAccentVars(root);
 
     const card = h("div", { class: "sk-card" });
@@ -706,6 +741,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   }
 
   document.addEventListener("keydown", onKey);
+  setupThemeListener();
   render();
 
   return {
@@ -718,6 +754,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
           (cfg as unknown as Record<string, unknown>)[key] = value;
         }
       }
+      if (patch.theme !== undefined) {
+        setupThemeListener();
+      }
       render();
     },
     setYear,
@@ -727,6 +766,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     },
     destroy(): void {
       resizeObs.disconnect();
+      cleanupThemeListener();
       document.removeEventListener("keydown", onKey);
       tooltipEl.remove();
       root.remove();
