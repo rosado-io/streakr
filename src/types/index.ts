@@ -123,7 +123,7 @@ export interface StreakrOptions {
   /** Element that the component will mount into. */
   target: HTMLElement;
   /** Visual theme. Default: `"dark"`. */
-  theme?: StreakrTheme;
+  theme?: StreakrThemeMode;
   /** Accent color (any CSS color). Default: `"#39d353"`. */
   accent?: string;
   /** When true, the heatmap palette is tinted from `accent`. Default: `true`. */
