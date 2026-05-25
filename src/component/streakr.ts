@@ -109,8 +109,8 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
   function getActiveTheme(): "dark" | "light" {
     if (cfg.theme === "system") {
-      if (typeof window !== "undefined" && window.matchMedia) {
-        return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      if (typeof globalThis.window !== "undefined" && globalThis.matchMedia) {
+        return globalThis.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
       }
       return "dark";
     }
@@ -118,12 +118,12 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   }
 
   function setupThemeListener(): void {
-    if (typeof window === "undefined" || !window.matchMedia) return;
+    if (typeof globalThis.window === "undefined" || !globalThis.matchMedia) return;
 
     cleanupThemeListener();
 
     if (cfg.theme === "system") {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      const mediaQuery = globalThis.matchMedia("(prefers-color-scheme: dark)");
       mediaQueryListener = (e: MediaQueryListEvent) => {
         root.dataset.theme = e.matches ? "dark" : "light";
       };
@@ -132,8 +132,8 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   }
 
   function cleanupThemeListener(): void {
-    if (mediaQueryListener && typeof window !== "undefined" && window.matchMedia) {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    if (mediaQueryListener && typeof globalThis.window !== "undefined" && globalThis.matchMedia) {
+      const mediaQuery = globalThis.matchMedia("(prefers-color-scheme: dark)");
       mediaQuery.removeEventListener("change", mediaQueryListener);
       mediaQueryListener = null;
     }
