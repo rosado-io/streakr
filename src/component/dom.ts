@@ -86,7 +86,13 @@ export function h(tag: string, attrs?: ElAttrs, children?: ElChild | ElChild[]):
     ? document.createElementNS(SVG_NS, tag.slice(tag.indexOf(":") + 1))
     : document.createElement(tag);
 
-  Object.entries(attrs ?? {}).forEach(([key, value]) => setAttr(el, key, value));
+  if (attrs) {
+    for (const key in attrs) {
+      if (Object.prototype.hasOwnProperty.call(attrs, key)) {
+        setAttr(el, key, attrs[key]);
+      }
+    }
+  }
 
   if (children !== undefined && children !== null) {
     appendChildren(el, Array.isArray(children) ? children : [children]);

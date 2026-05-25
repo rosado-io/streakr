@@ -7,27 +7,7 @@ export interface StreakrStats {
   current: number;
 }
 
-interface RunningStats extends StreakrStats {
-  run: number;
-}
-
-const LEVEL_THRESHOLDS = [
-  { level: 4, exceeds: 0.8 },
-  { level: 3, exceeds: 0.55 },
-  { level: 2, exceeds: 0.25 },
-  { level: 1, exceeds: null },
-] as const;
-
-function percentile(counts: number[], q: number): number {
-  return counts[Math.min(counts.length - 1, Math.floor(counts.length * q))];
-}
-
-function levelForTotal(total: number, counts: number[]): StreakrLeveledDay["level"] {
-  const match = LEVEL_THRESHOLDS.find(({ exceeds }) =>
-    exceeds == null ? total > 0 : total > percentile(counts, exceeds),
-  );
-  return match?.level ?? 0;
-}
+const LEVEL_PERCENTILES = [0.25, 0.55, 0.8] as const;
 
 export function levelize(days: StreakrDay[]): StreakrLeveledDay[] {
   const counts = days
@@ -35,30 +15,53 @@ export function levelize(days: StreakrDay[]): StreakrLeveledDay[] {
     .filter((total) => total > 0)
     .sort((a, b) => a - b);
 
-  return days.map((day) => ({
-    ...day,
-    level: counts.length ? levelForTotal(day.total, counts) : 0,
-  }));
+  if (!counts.length) {
+    return days.map((day) => ({ ...day, level: 0 }));
+  }
+
+  const p = (q: number) => counts[Math.min(counts.length - 1, Math.floor(counts.length * q))];
+  const t1 = p(LEVEL_PERCENTILES[0]);
+  const t2 = p(LEVEL_PERCENTILES[1]);
+  const t3 = p(LEVEL_PERCENTILES[2]);
+
+  return days.map((day) => {
+    let level: 0 | 1 | 2 | 3 | 4 = 0;
+    if (day.total > 0) level = 1;
+    if (day.total > t1) level = 2;
+    if (day.total > t2) level = 3;
+    if (day.total > t3) level = 4;
+    return { ...day, level };
+  });
 }
 
 export function computeStats(days: StreakrDay[]): StreakrStats {
-  const { run: _run, ...stats } = days.reduce<RunningStats>(
-    (stats, day) => {
-      const active = day.total > 0;
-      const run = active ? stats.run + 1 : 0;
+  let total = 0;
+  let active = 0;
+  let best = 0;
+  let curRun = 0;
 
-      return {
-        total: stats.total + day.total,
-        active: stats.active + Number(active),
-        best: Math.max(stats.best, run),
-        current: run,
-        run,
-      };
-    },
-    { total: 0, active: 0, best: 0, current: 0, run: 0 },
-  );
+  for (const day of days) {
+    const val = day.total;
+    total += val;
+    if (val > 0) {
+      active++;
+      curRun++;
+      if (curRun > best) best = curRun;
+    } else {
+      curRun = 0;
+    }
+  }
 
-  return stats;
+  let current = 0;
+  for (let i = days.length - 1; i >= 0; i--) {
+    if (days[i].total > 0) {
+      current++;
+    } else {
+      break;
+    }
+  }
+
+  return { total, active, best, current };
 }
 
 export function formatTotalLabel(total: number): string {

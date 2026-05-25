@@ -62,10 +62,20 @@ export function normalizeEventsToDaily(events: ContributionDay[]): ContributionD
   const end = new Date(Date.UTC(endY, endM - 1, endD));
 
   while (current <= end) {
-    const dateStr = current.toISOString().slice(0, 10);
+    const dateStr = formatDateYYYYMMDD(current);
     result.push(merged.get(dateStr) ?? { date: dateStr, count: 0 });
     current.setUTCDate(current.getUTCDate() + 1);
   }
 
   return result;
+}
+
+/**
+ * Formats a Date object as a UTC YYYY-MM-DD string efficiently.
+ */
+export function formatDateYYYYMMDD(d: Date): string {
+  const y = d.getUTCFullYear();
+  const m = d.getUTCMonth() + 1;
+  const day = d.getUTCDate();
+  return `${y}-${m < 10 ? "0" + m : m}-${day < 10 ? "0" + day : day}`;
 }
