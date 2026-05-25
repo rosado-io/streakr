@@ -82,16 +82,19 @@ describe("createStreakr", () => {
     it("handles theme: 'system' auto-detection", () => {
       const originalMatchMedia = window.matchMedia;
       const mockMatches = vi.fn().mockReturnValue(true);
-      window.matchMedia = vi.fn().mockImplementation((query) => ({
-        matches: mockMatches(),
-        media: query,
-        onchange: null,
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-      } as unknown as MediaQueryList));
+      window.matchMedia = vi.fn().mockImplementation(
+        (query) =>
+          ({
+            matches: mockMatches(),
+            media: query,
+            onchange: null,
+            addListener: vi.fn(),
+            removeListener: vi.fn(),
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+            dispatchEvent: vi.fn(),
+          }) as unknown as MediaQueryList,
+      );
 
       instance = createStreakr({ target, theme: "system", years, getDays });
       const root = target.querySelector<HTMLElement>(".sk-root");
