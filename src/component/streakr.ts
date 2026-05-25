@@ -110,7 +110,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   function getActiveTheme(): "dark" | "light" {
     if (cfg.theme === "system") {
       if (globalThis.window !== undefined && globalThis.window.matchMedia) {
-        return globalThis.window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        return globalThis.window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
       }
       return "dark";
     }
