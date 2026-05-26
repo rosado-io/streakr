@@ -109,7 +109,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
   function getActiveTheme(): "dark" | "light" {
     if (cfg.theme === "system") {
-      if (globalThis.window !== undefined && globalThis.window.matchMedia) {
+      if (globalThis.window?.matchMedia) {
         return globalThis.window.matchMedia("(prefers-color-scheme: dark)").matches
           ? "dark"
           : "light";
@@ -120,7 +120,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   }
 
   function setupThemeListener(): void {
-    if (globalThis.window === undefined || !globalThis.window.matchMedia) return;
+    if (!globalThis.window?.matchMedia) return;
 
     cleanupThemeListener();
 
@@ -134,7 +134,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   }
 
   function cleanupThemeListener(): void {
-    if (mediaQueryListener && globalThis.window !== undefined && globalThis.window.matchMedia) {
+    if (mediaQueryListener && globalThis.window?.matchMedia) {
       const mediaQuery = globalThis.window.matchMedia("(prefers-color-scheme: dark)");
       mediaQuery.removeEventListener("change", mediaQueryListener);
       mediaQueryListener = null;
