@@ -287,7 +287,7 @@
   background: var(--sk-soft-bg);
   border: 1px solid var(--sk-border);
   border-radius: 10px; padding: 12px;
-  cursor: pointer; text-align: left;
+  cursor: pointer; text-align: center;
   font-family: inherit; color: inherit;
   transition: all 150ms ease;
 }
@@ -297,9 +297,8 @@
   border-color: var(--sk-accent-mid);
   box-shadow: 0 0 16px var(--sk-accent-glow);
 }
-.sk-modal-year-num { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.sk-modal-year-num { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 16px; font-weight: 600; margin-bottom: 0; }
 .sk-modal-year.active .sk-modal-year-num { color: var(--sk-accent); }
-.sk-modal-year-count { font-size: 10.5px; color: var(--sk-text-muted); font-family: 'JetBrains Mono', ui-monospace, monospace; }
 
 /* States */
 .sk-skeleton {

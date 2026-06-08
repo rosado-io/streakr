@@ -34,12 +34,11 @@ const MONTHS = [
 
 const DOW = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-function pad2(n: number): string {
-  return n < 10 ? "0" + n : String(n);
-}
-
 function localDateKey(d: Date): string {
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  const y = d.getFullYear();
+  const m = d.getMonth() + 1;
+  const date = d.getDate();
+  return `${y}-${m < 10 ? "0" + m : m}-${date < 10 ? "0" + date : date}`;
 }
 
 export function padDaysToYear(days: StreakrDay[], year: number): StreakrDay[] {
@@ -49,9 +48,12 @@ export function padDaysToYear(days: StreakrDay[], year: number): StreakrDay[] {
   const end = new Date(year, 11, 31);
 
   while (cur <= end) {
-    const key = localDateKey(cur);
+    const y = cur.getFullYear();
+    const m = cur.getMonth() + 1;
+    const d = cur.getDate();
+    const key = `${y}-${m < 10 ? "0" + m : m}-${d < 10 ? "0" + d : d}`;
     out.push(byDate.get(key) ?? { date: new Date(cur), total: 0, sources: {} });
-    cur.setDate(cur.getDate() + 1);
+    cur.setDate(d + 1);
   }
 
   return out;

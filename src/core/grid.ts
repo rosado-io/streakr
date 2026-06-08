@@ -1,4 +1,5 @@
 import type { ContributionDay, CalendarGrid, CalendarCell, GridOptions } from "../types";
+import { formatDateYYYYMMDD } from "./normalize";
 
 /**
  * Builds a calendar grid (weeks × days) from a daily contribution series.
@@ -50,7 +51,7 @@ export function buildCalendarGrid(days: ContributionDay[], options?: GridOptions
   }
 
   while (current <= end) {
-    const dateStr = current.toISOString().slice(0, 10);
+    const dateStr = formatDateYYYYMMDD(current);
     const count = dayMap.get(dateStr)?.count ?? 0;
     const level = countToLevel(count, thresholds);
 
