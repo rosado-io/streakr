@@ -680,8 +680,6 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       .slice()
       .reverse()
       .forEach((y) => {
-        const days = cfg.getDays(y) || [];
-        const tot = days.reduce((s, d) => s + (d.total || 0), 0);
         grid.appendChild(
           h(
             "button",
@@ -692,13 +690,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
                 closeYearModal();
               },
             },
-            [
-              h("div", { class: "sk-modal-year-num", text: String(y) }),
-              h("div", {
-                class: "sk-modal-year-count",
-                text: tot.toLocaleString() + " contributions",
-              }),
-            ],
+            [h("div", { class: "sk-modal-year-num", text: String(y) })],
           ),
         );
       });
