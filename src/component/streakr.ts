@@ -42,27 +42,8 @@ interface ResolvedConfig {
   onProviderToggle: ((key: string, enabled: boolean, providers: StreakrProviders) => void) | null;
 }
 
-function dayCount(day: StreakrDay, key: string): number {
-  return day.sources?.[key] ?? 0;
-}
+const dayCount = (day: StreakrDay, key: string): number => day.sources?.[key] ?? 0;
 
-/**
- * Creates a stateful Streakr component instance.
- *
- * Mounts a contribution heatmap inside `target`, with year tabs, configurable
- * provider toggles, loading/empty/ready states, an interactive tooltip, and
- * a year picker modal. Returns an object with `update`, `setYear`,
- * `setProviders`, and `destroy` methods.
- *
- * The component is framework-agnostic and uses no global state — it only
- * reads/writes inside the provided `target` element. The tooltip is mounted
- * inside `.sk-root` so it inherits the component's theme tokens and any
- * accent overrides applied via `update()`.
- *
- * @param options - Component mount target, data source, visual settings, and callbacks.
- * @returns A `StreakrInstance` for updating or destroying the component.
- * @throws Error when `options.target` is missing.
- */
 export function createStreakr(options: StreakrOptions): StreakrInstance {
   const cfg: ResolvedConfig = {
     target: options.target,
@@ -80,7 +61,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     onProviderToggle: options.onProviderToggle ?? null,
   };
 
-  if (!cfg.target) throw new Error("streakr: `target` is required");
+  if (!cfg.target) {
+    throw new Error("streakr: `target` is required");
+  }
   if (cfg.year == null && cfg.years.length) {
     cfg.year = cfg.years[cfg.years.length - 1];
   }
@@ -91,15 +74,13 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     yearModalOpen: false,
   };
 
-  function syncProviderState(): void {
+  const syncProviderState = (): void => {
     state.providers = syncProviders(cfg.providers, state.providers);
-  }
+  };
 
   const root = h("div", { class: "sk-root" }) as HTMLElement;
   cfg.target.appendChild(root);
-  // Mount the tooltip inside `.sk-root` so it inherits the component's
-  // scoped CSS tokens (--sk-modal-bg, --sk-text, etc.). It still uses
-  // `position: fixed` so it positions against the viewport.
+
   const tooltipEl = h("div", { class: "sk-tooltip" }) as HTMLElement;
   root.appendChild(tooltipEl);
   let currentDraw: (() => void) | null = null;
@@ -107,23 +88,25 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
   let mediaQueryListener: ((e: MediaQueryListEvent) => void) | null = null;
 
-  function getActiveTheme(): "dark" | "light" {
-    if (cfg.theme === "system") {
-      if (globalThis.window?.matchMedia) {
-        return globalThis.window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
-      }
-      return "dark";
+  const getActiveTheme = (): "dark" | "light" =>
+    cfg.theme === "system"
+      ? globalThis.window?.matchMedia?.("(prefers-color-scheme: dark)")?.matches
+        ? "dark"
+        : "light"
+      : cfg.theme;
+
+  const cleanupThemeListener = (): void => {
+    if (mediaQueryListener && globalThis.window?.matchMedia) {
+      globalThis.window
+        .matchMedia("(prefers-color-scheme: dark)")
+        .removeEventListener("change", mediaQueryListener);
     }
-    return cfg.theme;
-  }
+    mediaQueryListener = null;
+  };
 
-  function setupThemeListener(): void {
+  const setupThemeListener = (): void => {
     if (!globalThis.window?.matchMedia) return;
-
     cleanupThemeListener();
-
     if (cfg.theme === "system") {
       const mediaQuery = globalThis.window.matchMedia("(prefers-color-scheme: dark)");
       mediaQueryListener = (e: MediaQueryListEvent) => {
@@ -131,17 +114,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       };
       mediaQuery.addEventListener("change", mediaQueryListener);
     }
-  }
+  };
 
-  function cleanupThemeListener(): void {
-    if (mediaQueryListener && globalThis.window?.matchMedia) {
-      const mediaQuery = globalThis.window.matchMedia("(prefers-color-scheme: dark)");
-      mediaQuery.removeEventListener("change", mediaQueryListener);
-      mediaQueryListener = null;
-    }
-  }
-
-  function applyAccentVars(el: HTMLElement): void {
+  const applyAccentVars = (el: HTMLElement): void => {
     const a = cfg.accent;
     el.style.setProperty("--sk-accent", a);
     el.style.setProperty("--sk-accent-glow", a + "47");
@@ -158,33 +133,31 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         el.style.removeProperty(v),
       );
     }
-  }
+  };
 
-  function visibleYears(): { visible: number[]; all: number[]; hasMore: boolean } {
+  const visibleYears = (): { visible: number[]; all: number[]; hasMore: boolean } => {
     const all = cfg.years.slice().reverse();
     return {
       visible: all.slice(0, MAX_VISIBLE_YEARS),
       all,
       hasMore: all.length > MAX_VISIBLE_YEARS,
     };
-  }
+  };
 
-  function getCurrentDays(): StreakrDay[] {
-    if (cfg.state !== "ready" || state.year == null) return [];
-    const raw = cfg.getDays(state.year) || [];
-    return raw.map((day) => ({
-      ...day,
-      total: cfg.providers
-        .filter((provider) => state.providers[provider.key])
-        .reduce((total, provider) => total + dayCount(day, provider.key), 0),
-    }));
-  }
+  const getCurrentDays = (): StreakrDay[] =>
+    cfg.state !== "ready" || state.year == null
+      ? []
+      : (cfg.getDays(state.year) || []).map((day) => ({
+          ...day,
+          total: cfg.providers
+            .filter((provider) => state.providers[provider.key])
+            .reduce((total, provider) => total + dayCount(day, provider.key), 0),
+        }));
 
-  function showTooltip(e: MouseEvent, day: StreakrDay): void {
+  const showTooltip = (e: MouseEvent, day: StreakrDay): void => {
     tooltipEl.replaceChildren();
     tooltipEl.appendChild(h("div", { class: "tt-date", text: fmtDateLong(day.date) }));
-    const totalLabel = formatTotalLabel(day.total);
-    tooltipEl.appendChild(h("div", { class: "tt-total", text: totalLabel }));
+    tooltipEl.appendChild(h("div", { class: "tt-total", text: formatTotalLabel(day.total) }));
     cfg.providers
       .filter((provider) => state.providers[provider.key])
       .map((provider) => ({ provider, value: dayCount(day, provider.key) }))
@@ -203,29 +176,29 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     tooltipEl.style.left = e.clientX + 14 + "px";
     tooltipEl.style.top = e.clientY + 14 + "px";
     tooltipEl.classList.add("visible");
-  }
+  };
 
-  function moveTooltip(e: MouseEvent): void {
+  const moveTooltip = (e: MouseEvent): void => {
     tooltipEl.style.left = e.clientX + 14 + "px";
     tooltipEl.style.top = e.clientY + 14 + "px";
-  }
+  };
 
-  function hideTooltip(): void {
+  const hideTooltip = (): void => {
     tooltipEl.classList.remove("visible");
-  }
+  };
 
-  function bindCellEvents(rect: SVGElement, day: StreakrDay): void {
+  const bindCellEvents = (rect: SVGElement, day: StreakrDay): void => {
     rect.addEventListener("mouseenter", (e) => showTooltip(e, day));
     rect.addEventListener("mousemove", (e) => moveTooltip(e));
     rect.addEventListener("mouseleave", hideTooltip);
-  }
+  };
 
-  function buildHeatmapCell(
+  const buildHeatmapCell = (
     day: StreakrLeveledDay | null,
     ri: number,
     sq: number,
     colStep: number,
-  ): SVGElement {
+  ): SVGElement => {
     const rect = svg("rect", {
       class: day ? "sk-heatmap-cell" : null,
       y: ri * colStep,
@@ -235,24 +208,30 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       fill: day ? `var(--sk-heat-${day.level})` : "transparent",
       style: { cursor: day ? "pointer" : "default" },
     });
-    if (day) bindCellEvents(rect, day);
+    if (day) {
+      bindCellEvents(rect, day);
+    }
     return rect;
-  }
+  };
 
-  function buildHeatmapColumn(
+  const buildHeatmapColumn = (
     col: (StreakrLeveledDay | null)[],
     ci: number,
     sq: number,
     colStep: number,
-  ): SVGElement {
+  ): SVGElement => {
     const colG = svg("g", { transform: `translate(${ci * colStep}, 0)` });
     col.forEach((day, ri) => {
       colG.appendChild(buildHeatmapCell(day, ri, sq, colStep));
     });
     return colG;
-  }
+  };
 
-  function renderHeatmap(wrap: HTMLElement, days: StreakrLeveledDay[], containerW: number): void {
+  const renderHeatmap = (
+    wrap: HTMLElement,
+    days: StreakrLeveledDay[],
+    containerW: number,
+  ): void => {
     const cols = gridFromDays(days);
     const headers = monthHeaders(cols);
     const labelsW = 28;
@@ -315,9 +294,8 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     });
     svgEl.appendChild(g);
 
-    const inner = h("div", { class: "sk-heatmap-svg-wrap" }, [svgEl]);
-    wrap.replaceChildren(inner);
-  }
+    wrap.replaceChildren(h("div", { class: "sk-heatmap-svg-wrap" }, [svgEl]));
+  };
 
   type ReadyBody = HTMLElement & {
     __skDraw?: () => void;
@@ -334,14 +312,10 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     stats: StreakrStats;
   }
 
-  function computeRenderFlags(): RenderFlags {
+  const computeRenderFlags = (): RenderFlags => {
     const days = getCurrentDays();
     const stats = computeStats(days);
     const yearTotal = days.reduce((a, d) => a + d.total, 0);
-    // Pad to a full Jan–Dec span so the heatmap keeps a uniform column count
-    // year-over-year (e.g. the in-progress current year doesn't shrink). Stats
-    // stay computed from `days` so the trailing zero pad doesn't reset
-    // "Current Streak".
     const heatmapDays = state.year == null ? days : padDaysToYear(days, state.year);
     const leveled = levelize(heatmapDays);
     const isLoading = cfg.state === "loading";
@@ -352,9 +326,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         ? cfg.providers.filter((p) => days.some((d) => dayCount(d, p.key) > 0)).length
         : 0;
     return { isLoading, isEmpty, allOff, days, providersWithDataCount, leveled, stats };
-  }
+  };
 
-  function renderTitleRow(): HTMLElement {
+  const renderTitleRow = (): HTMLElement => {
     const subtitleText =
       state.year === currentYearLabel() ? "Last 12 months" : String(state.year ?? "");
     return h("div", { class: "sk-title-row" }, [
@@ -364,18 +338,17 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         h("div", { class: "sk-subtitle", text: subtitleText }),
       ]),
     ]);
-  }
+  };
 
-  function buildYearTab(year: number, isLoading: boolean): HTMLElement {
-    return h("button", {
+  const buildYearTab = (year: number, isLoading: boolean): HTMLElement =>
+    h("button", {
       class: "sk-year-tab" + (state.year === year ? " active" : ""),
       onclick: () => setYear(year),
       disabled: isLoading || undefined,
       text: String(year),
     });
-  }
 
-  function renderYearsList(isLoading: boolean): HTMLElement {
+  const renderYearsList = (isLoading: boolean): HTMLElement => {
     const { visible, hasMore } = visibleYears();
     const yearIsHidden = state.year != null && !visible.includes(state.year);
     const list = h("div", { class: "sk-years-list" });
@@ -403,22 +376,16 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       );
     }
     return list;
-  }
+  };
 
-  function shouldRenderProviderRow(flags: RenderFlags): boolean {
-    // Hide the toggle row when ≤1 provider has any contributions for the
-    // current year — clicking the only active chip would otherwise wipe the
-    // calendar and look broken (see issue #84).
-    return (
-      !flags.isLoading &&
-      !flags.isEmpty &&
-      cfg.showProviders &&
-      cfg.providers.length > 0 &&
-      flags.providersWithDataCount > 1
-    );
-  }
+  const shouldRenderProviderRow = (flags: RenderFlags): boolean =>
+    !flags.isLoading &&
+    !flags.isEmpty &&
+    cfg.showProviders &&
+    cfg.providers.length > 0 &&
+    flags.providersWithDataCount > 1;
 
-  function renderYearsBar(flags: RenderFlags): HTMLElement {
+  const renderYearsBar = (flags: RenderFlags): HTMLElement => {
     const yearsBar = h("div", { class: "sk-years" });
     yearsBar.dataset.noProviders = String(!cfg.showProviders);
     yearsBar.appendChild(renderYearsList(flags.isLoading));
@@ -426,21 +393,18 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       yearsBar.appendChild(renderProviderRow());
     }
     return yearsBar;
-  }
+  };
 
-  function renderHeader(flags: RenderFlags): HTMLElement {
+  const renderHeader = (flags: RenderFlags): HTMLElement => {
     const header = h("div", { class: "sk-header" });
     header.appendChild(renderTitleRow());
     header.appendChild(renderYearsBar(flags));
     return header;
-  }
+  };
 
-  function appendBody(card: Element, flags: RenderFlags): void {
+  const appendBody = (card: Element, flags: RenderFlags): void => {
     const stateBody = [
       [flags.isLoading, renderLoadingBody],
-      // Check `allOff` before `isEmpty` so users who explicitly toggled every
-      // provider off see "providers disabled" guidance instead of the
-      // (technically true but misleading) "no contributions" empty state.
       [flags.allOff, renderNoProviders],
       [flags.isEmpty, renderEmpty],
     ].find(([matches]) => matches) as [boolean, () => HTMLElement] | undefined;
@@ -453,24 +417,20 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     const body = renderReadyBody(flags.leveled, flags.stats, flags.days) as ReadyBody;
     card.appendChild(body);
     body.__skDraw?.();
-    if (body.__skObserveTarget) resizeObs.observe(body.__skObserveTarget);
-  }
+    if (body.__skObserveTarget) {
+      resizeObs.observe(body.__skObserveTarget);
+    }
+  };
 
-  function render(): void {
+  const render = (): void => {
     syncProviderState();
-    // Hide any tooltip pinned by a hovered cell that is about to be replaced
-    // when we replace the root contents below — the cell's mouseleave never fires.
     hideTooltip();
-    // Drop the previous heatmap wrap from the observer (the new render will
-    // re-observe the freshly mounted wrap, if any).
     resizeObs.disconnect();
     currentDraw = null;
 
     const wasOpen = state.yearModalOpen;
     const flags = computeRenderFlags();
 
-    // Re-attach the tooltip first. The element reference is preserved so
-    // listeners and pending hover state stay intact across renders.
     root.replaceChildren(tooltipEl);
     root.dataset.theme = getActiveTheme();
     applyAccentVars(root);
@@ -480,10 +440,12 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     card.appendChild(renderHeader(flags));
     appendBody(card, flags);
 
-    if (wasOpen) renderYearModal(card);
-  }
+    if (wasOpen) {
+      renderYearModal(card);
+    }
+  };
 
-  function renderProviderRow(): HTMLElement {
+  const renderProviderRow = (): HTMLElement => {
     const row = h("div", { class: "sk-providers" });
     const totals = computeProviderTotals();
     cfg.providers.forEach((p) => {
@@ -508,27 +470,23 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       row.appendChild(btn);
     });
     return row;
-  }
+  };
 
-  function computeProviderTotals(): Record<string, number> {
-    const totals: Record<string, number> = {};
-    for (const p of cfg.providers) totals[p.key] = 0;
+  const computeProviderTotals = (): Record<string, number> => {
+    const totals = Object.fromEntries(cfg.providers.map((p) => [p.key, 0]));
     if (cfg.state !== "ready" || state.year == null) return totals;
     const raw = cfg.getDays(state.year) || [];
-    for (const d of raw) {
-      for (const p of cfg.providers) {
+    raw.forEach((d) => {
+      cfg.providers.forEach((p) => {
         totals[p.key] += dayCount(d, p.key);
-      }
-    }
+      });
+    });
     return totals;
-  }
+  };
 
-  function renderLoadingBody(): HTMLElement {
+  const renderLoadingBody = (): HTMLElement => {
     const grid = h("div", { class: "sk-skel-grid-cells" });
-    for (let i = 0; i < 53 * 7; i++) {
-      // Deterministic ~40% "on" pattern via Knuth's multiplicative hash —
-      // not for security, just for a non-uniform shimmer that stays stable
-      // across re-renders (avoids the flicker a real PRNG would cause).
+    Array.from({ length: 53 * 7 }).forEach((_, i) => {
       const on = ((i * 2654435761) >>> 0) % 100 < 40;
       grid.appendChild(
         h("div", {
@@ -536,7 +494,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
           style: { animationDelay: (i % 53) * 30 + "ms" },
         }),
       );
-    }
+    });
     const skel = (w: number, hpx: number) =>
       h("div", {
         class: "sk-skeleton",
@@ -552,10 +510,10 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       ]),
       h("div", { class: "sk-stats" }, [stat(), stat(), stat(), stat()]),
     ]);
-  }
+  };
 
-  function renderEmpty(): HTMLElement {
-    return h("div", { class: "sk-empty" }, [
+  const renderEmpty = (): HTMLElement =>
+    h("div", { class: "sk-empty" }, [
       h("div", {
         class: "sk-empty-icon",
         html: trustedHtml(
@@ -575,10 +533,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         text: "When you commit, push, or open PRs across your connected accounts, they'll show up here.",
       }),
     ]);
-  }
 
-  function renderNoProviders(): HTMLElement {
-    return h("div", { class: "sk-noprov" }, [
+  const renderNoProviders = (): HTMLElement =>
+    h("div", { class: "sk-noprov" }, [
       h("span", { class: "sk-noprov-dot" }),
       h("div", {
         style: { flex: "1" },
@@ -590,13 +547,12 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         text: "Enable all",
       }),
     ]);
-  }
 
-  function renderReadyBody(
+  const renderReadyBody = (
     leveled: StreakrLeveledDay[],
     stats: StreakrStats,
     days: StreakrDay[],
-  ): HTMLElement {
+  ): HTMLElement => {
     const body = h("div", { class: "sk-body" }) as ReadyBody;
     body.dataset.noStats = String(!cfg.showStats);
 
@@ -636,27 +592,27 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       );
     }
     return body;
-  }
+  };
 
-  function streakMetricCard(stats: StreakrStats, days: StreakrDay[]): HTMLElement {
-    if (state.year === currentYearLabel()) {
-      return statCard("Current Streak", stats.current, " days");
-    }
-    const activeRate = days.length ? Math.round((stats.active / days.length) * 100) : 0;
-    return statCard("Active Rate", activeRate, "%");
-  }
+  const streakMetricCard = (stats: StreakrStats, days: StreakrDay[]): HTMLElement =>
+    state.year === currentYearLabel()
+      ? statCard("Current Streak", stats.current, " days")
+      : statCard(
+          "Active Rate",
+          days.length ? Math.round((stats.active / days.length) * 100) : 0,
+          "%",
+        );
 
-  function statCard(label: string, value: string | number, suffix?: string): HTMLElement {
-    return h("div", { class: "sk-stat" }, [
+  const statCard = (label: string, value: string | number, suffix?: string): HTMLElement =>
+    h("div", { class: "sk-stat" }, [
       h("div", { class: "sk-stat-label", text: label }),
       h("div", { class: "sk-stat-value" }, [
         document.createTextNode(String(value)),
         suffix ? h("span", { class: "sk-stat-suffix", text: suffix }) : null,
       ]),
     ]);
-  }
 
-  function renderYearModal(card: Element): void {
+  const renderYearModal = (card: Element): void => {
     const overlay = h("div", { class: "sk-modal-overlay", onclick: () => closeYearModal() });
     const modal = h("div", {
       class: "sk-modal",
@@ -697,42 +653,42 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     modal.appendChild(grid);
     overlay.appendChild(modal);
     card.appendChild(overlay);
-  }
+  };
 
-  function currentYearLabel(): number | null {
-    return cfg.years.length ? Math.max(...cfg.years) : null;
-  }
+  const currentYearLabel = (): number | null => (cfg.years.length ? Math.max(...cfg.years) : null);
 
-  function setYear(y: number): void {
+  const setYear = (y: number): void => {
     state.year = y;
     cfg.onYearChange?.(y);
     render();
-  }
+  };
 
-  function toggleProvider(key: string): void {
+  const toggleProvider = (key: string): void => {
     state.providers[key] = !state.providers[key];
     cfg.onProviderToggle?.(key, state.providers[key], { ...state.providers });
     render();
-  }
+  };
 
-  function enableAllProviders(): void {
+  const enableAllProviders = (): void => {
     state.providers = enabledProviderState(cfg.providers);
     render();
-  }
+  };
 
-  function openYearModal(): void {
+  const openYearModal = (): void => {
     state.yearModalOpen = true;
     render();
-  }
+  };
 
-  function closeYearModal(): void {
+  const closeYearModal = (): void => {
     state.yearModalOpen = false;
     render();
-  }
+  };
 
-  function onKey(e: KeyboardEvent): void {
-    if (e.key === "Escape" && state.yearModalOpen) closeYearModal();
-  }
+  const onKey = (e: KeyboardEvent): void => {
+    if (e.key === "Escape" && state.yearModalOpen) {
+      closeYearModal();
+    }
+  };
 
   document.addEventListener("keydown", onKey);
   setupThemeListener();
@@ -740,14 +696,14 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
   return {
     update(patch: Partial<StreakrOptions>): void {
-      // Skip undefined values so callers can spread partial patches without
-      // accidentally clobbering resolved defaults (e.g. theme: undefined).
-      for (const key of Object.keys(patch) as (keyof StreakrOptions)[]) {
-        const value = patch[key];
-        if (value !== undefined) {
-          (cfg as unknown as Record<string, unknown>)[key] = value;
-        }
-      }
+      Object.keys(patch)
+        .map((k) => k as keyof StreakrOptions)
+        .forEach((key) => {
+          const value = patch[key];
+          if (value !== undefined) {
+            (cfg as unknown as Record<string, unknown>)[key] = value;
+          }
+        });
       if (patch.theme !== undefined) {
         setupThemeListener();
       }

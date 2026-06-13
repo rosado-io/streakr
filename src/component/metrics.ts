@@ -9,65 +9,51 @@ export interface StreakrStats {
 
 const LEVEL_PERCENTILES = [0.25, 0.55, 0.8] as const;
 
-export function levelize(days: StreakrDay[]): StreakrLeveledDay[] {
+export const levelize = (days: StreakrDay[]): StreakrLeveledDay[] => {
   const counts = days
     .map((day) => day.total)
     .filter((total) => total > 0)
     .sort((a, b) => a - b);
-
-  if (!counts.length) {
-    return days.map((day) => ({ ...day, level: 0 }));
-  }
 
   const p = (q: number) => counts[Math.min(counts.length - 1, Math.floor(counts.length * q))];
   const t1 = p(LEVEL_PERCENTILES[0]);
   const t2 = p(LEVEL_PERCENTILES[1]);
   const t3 = p(LEVEL_PERCENTILES[2]);
 
-  return days.map((day) => {
-    let level: 0 | 1 | 2 | 3 | 4 = 0;
-    if (day.total > 0) level = 1;
-    if (day.total > t1) level = 2;
-    if (day.total > t2) level = 3;
-    if (day.total > t3) level = 4;
-    return { ...day, level };
-  });
-}
+  return !counts.length
+    ? days.map((day) => ({ ...day, level: 0 }))
+    : days.map((day) => ({
+        ...day,
+        level:
+          day.total <= 0 ? 0 : day.total <= t1 ? 1 : day.total <= t2 ? 2 : day.total <= t3 ? 3 : 4,
+      }));
+};
 
-export function computeStats(days: StreakrDay[]): StreakrStats {
-  let total = 0;
-  let active = 0;
-  let best = 0;
-  let curRun = 0;
-
-  for (const day of days) {
-    const val = day.total;
-    total += val;
-    if (val > 0) {
-      active++;
-      curRun++;
-      if (curRun > best) best = curRun;
-    } else {
-      curRun = 0;
-    }
-  }
-
-  let current = 0;
-  for (let i = days.length - 1; i >= 0; i--) {
-    if (days[i].total > 0) {
-      current++;
-    } else {
-      break;
-    }
-  }
+export const computeStats = (days: StreakrDay[]): StreakrStats => {
+  const total = days.reduce((sum, d) => sum + d.total, 0);
+  const active = days.reduce((count, d) => count + (d.total > 0 ? 1 : 0), 0);
+  const best = days.reduce(
+    (acc, d) => {
+      const curRun = d.total > 0 ? acc.curRun + 1 : 0;
+      return {
+        best: Math.max(acc.best, curRun),
+        curRun,
+      };
+    },
+    { best: 0, curRun: 0 },
+  ).best;
+  const current = days.reduceRight(
+    (acc, d) =>
+      acc.halted
+        ? acc
+        : d.total > 0
+          ? { count: acc.count + 1, halted: false }
+          : { count: acc.count, halted: true },
+    { count: 0, halted: false },
+  ).count;
 
   return { total, active, best, current };
-}
+};
 
-export function formatTotalLabel(total: number): string {
-  const labels = new Map([
-    [0, "No contributions"],
-    [1, "1 contribution"],
-  ]);
-  return labels.get(total) ?? `${total} contributions`;
-}
+export const formatTotalLabel = (total: number): string =>
+  total === 0 ? "No contributions" : total === 1 ? "1 contribution" : `${total} contributions`;

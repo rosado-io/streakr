@@ -1,20 +1,18 @@
 import type { ContributionDay, CalendarGrid, CalendarCell, GridOptions } from "../types";
 import { formatDateYYYYMMDD } from "./normalize";
 
-/**
- * Builds a calendar grid (weeks × days) from a daily contribution series.
- *
- * The grid is structured like GitHub's contribution graph:
- * - Each column is a week
- * - Each row is a day of the week (0 = Sunday … 6 = Saturday, or 1 = Monday … 0 = Sunday)
- * - Cells contain contribution count and an intensity level (0–4)
- * - Empty leading/trailing cells are `null`
- *
- * @param days - Sorted array of ContributionDay (ascending by date)
- * @param options - Grid configuration (start/end dates, week start day)
- * @returns CalendarGrid with 2D cell matrix and total contributions
- */
-export function buildCalendarGrid(days: ContributionDay[], options?: GridOptions): CalendarGrid {
+const computeThresholds = (maxCount: number): [number, number, number] =>
+  maxCount === 0
+    ? [0, 0, 0]
+    : [Math.ceil(maxCount * 0.25), Math.ceil(maxCount * 0.5), Math.ceil(maxCount * 0.75)];
+
+const countToLevel = (count: number, [q1, q2, q3]: [number, number, number]): number =>
+  count === 0 ? 0 : count < q1 ? 1 : count < q2 ? 2 : count < q3 ? 3 : 4;
+
+const adjustedDayOfWeek = (utcDay: number, weekStartsOn: number): number =>
+  (utcDay - weekStartsOn + 7) % 7;
+
+export const buildCalendarGrid = (days: ContributionDay[], options?: GridOptions): CalendarGrid => {
   if (days.length === 0) {
     return { weeks: [], totalContributions: 0 };
   }
@@ -24,83 +22,43 @@ export function buildCalendarGrid(days: ContributionDay[], options?: GridOptions
   const endDate = options?.endDate ?? days[days.length - 1].date;
   const inRange = days.filter((d) => d.date >= startDate && d.date <= endDate);
 
-  const dayMap = new Map<string, ContributionDay>();
-  for (const d of inRange) {
-    dayMap.set(d.date, d);
-  }
-
+  const dayMap = new Map(inRange.map((d) => [d.date, d]));
   const maxCount = inRange.reduce((max, d) => Math.max(max, d.count), 0);
   const thresholds = computeThresholds(maxCount);
 
   const [sY, sM, sD] = startDate.split("-").map(Number);
   const [eY, eM, eD] = endDate.split("-").map(Number);
-  const current = new Date(Date.UTC(sY, sM - 1, sD));
-  const end = new Date(Date.UTC(eY, eM - 1, eD));
+  const startUTC = Date.UTC(sY, sM - 1, sD);
+  const endUTC = Date.UTC(eY, eM - 1, eD);
 
-  if (current > end) {
+  if (startUTC > endUTC) {
     return { weeks: [], totalContributions: 0 };
   }
 
-  const weeks: (CalendarCell | null)[][] = [];
-  let currentWeek: (CalendarCell | null)[] = [];
-  let totalContributions = 0;
+  const dayCount = Math.round((endUTC - startUTC) / (1000 * 60 * 60 * 24)) + 1;
+  const firstDayOfWeek = adjustedDayOfWeek(new Date(startUTC).getUTCDay(), weekStartsOn);
 
-  const firstDayOfWeek = adjustedDayOfWeek(current.getUTCDay(), weekStartsOn);
-  for (let i = 0; i < firstDayOfWeek; i++) {
-    currentWeek.push(null);
-  }
-
-  while (current <= end) {
-    const dateStr = formatDateYYYYMMDD(current);
-    const count = dayMap.get(dateStr)?.count ?? 0;
-    const level = countToLevel(count, thresholds);
-
-    currentWeek.push({ date: dateStr, count, level });
-    totalContributions += count;
-
-    if (currentWeek.length === 7) {
-      weeks.push(currentWeek);
-      currentWeek = [];
-    }
-
-    current.setUTCDate(current.getUTCDate() + 1);
-  }
-
-  if (currentWeek.length > 0) {
-    while (currentWeek.length < 7) {
-      currentWeek.push(null);
-    }
-    weeks.push(currentWeek);
-  }
-
-  return { weeks, totalContributions };
-}
-
-/**
- * Computes quartile-based thresholds for mapping counts to levels 0–4.
- */
-function computeThresholds(maxCount: number): [number, number, number] {
-  if (maxCount === 0) return [0, 0, 0];
-  return [Math.ceil(maxCount * 0.25), Math.ceil(maxCount * 0.5), Math.ceil(maxCount * 0.75)];
-}
-
-/**
- * Maps a contribution count to an intensity level (0–4).
- */
-function countToLevel(count: number, [q1, q2, q3]: [number, number, number]): number {
-  const levels = [
-    { level: 0, matches: count === 0 },
-    { level: 1, matches: count < q1 },
-    { level: 2, matches: count < q2 },
-    { level: 3, matches: count < q3 },
+  const cells = [
+    ...Array<CalendarCell | null>(firstDayOfWeek).fill(null),
+    ...Array.from({ length: dayCount }, (_, i) => {
+      const d = new Date(Date.UTC(sY, sM - 1, sD + i));
+      const dateStr = formatDateYYYYMMDD(d);
+      const count = dayMap.get(dateStr)?.count ?? 0;
+      return { date: dateStr, count, level: countToLevel(count, thresholds) };
+    }),
   ];
 
-  return levels.find(({ matches }) => matches)?.level ?? 4;
-}
+  const totalCells = Math.ceil(cells.length / 7) * 7;
+  const paddedCells = [
+    ...cells,
+    ...Array<CalendarCell | null>(totalCells - cells.length).fill(null),
+  ];
 
-/**
- * Adjusts a UTC day-of-week (0=Sun…6=Sat) relative to the configured week start.
- */
-function adjustedDayOfWeek(utcDay: number, weekStartsOn: number): number {
-  return (utcDay - weekStartsOn + 7) % 7;
-}
+  const weeks = Array.from({ length: paddedCells.length / 7 }, (_, i) =>
+    paddedCells.slice(i * 7, (i + 1) * 7),
+  );
+
+  const totalContributions = inRange.reduce((sum, d) => sum + d.count, 0);
+
+  return { weeks, totalContributions };
+};
