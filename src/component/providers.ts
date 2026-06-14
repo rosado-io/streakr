@@ -15,17 +15,13 @@ export const DEFAULT_PROVIDERS: StreakrProvider[] = [
   { key: "bitbucket", name: "Bitbucket", color: "#2684ff" },
 ];
 
-export function providerIconHtml(provider: StreakrProvider): string | null {
-  return provider.icon ?? BUILTIN_ICONS[provider.key] ?? null;
-}
+export const providerIconHtml = (provider: StreakrProvider): string | null =>
+  provider.icon ?? BUILTIN_ICONS[provider.key] ?? null;
 
-export function enabledProviderState(providers: StreakrProvider[]): StreakrProviders {
-  return Object.fromEntries(providers.map(({ key }) => [key, true]));
-}
+export const enabledProviderState = (providers: StreakrProvider[]): StreakrProviders =>
+  Object.fromEntries(providers.map(({ key }) => [key, true]));
 
-export function syncProviderState(
+export const syncProviderState = (
   providers: StreakrProvider[],
   current: StreakrProviders,
-): StreakrProviders {
-  return Object.fromEntries(providers.map(({ key }) => [key, current[key] ?? true]));
-}
+): StreakrProviders => Object.fromEntries(providers.map(({ key }) => [key, current[key] ?? true]));

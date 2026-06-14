@@ -18,61 +18,54 @@ const simpleAttrSetters: Record<string, (el: Element, value: string) => void> = 
   },
 };
 
-export function trustedHtml(markup: string): TrustedHtml {
-  return { markup, trustedHtml: true };
-}
+export const trustedHtml = (markup: string): TrustedHtml => ({
+  markup,
+  trustedHtml: true,
+});
 
-function isSimple(value: ElAttrValue): value is SimpleAttr {
-  return typeof value === "string" || typeof value === "number" || typeof value === "boolean";
-}
+const isSimple = (value: ElAttrValue): value is SimpleAttr =>
+  typeof value === "string" || typeof value === "number" || typeof value === "boolean";
 
-function isTrustedHtml(value: ElAttrValue): value is TrustedHtml {
-  return typeof value === "object" && value != null && "trustedHtml" in value;
-}
+const isTrustedHtml = (value: ElAttrValue): value is TrustedHtml =>
+  typeof value === "object" && value != null && "trustedHtml" in value;
 
-function setSimpleAttr(el: Element, key: string, value: SimpleAttr): void {
+const setSimpleAttr = (el: Element, key: string, value: SimpleAttr): void => {
   const str = String(value);
   (simpleAttrSetters[key] ?? ((node, attrValue) => node.setAttribute(key, attrValue)))(el, str);
-}
+};
 
-function setStyle(el: Element, value: ElAttrValue): boolean {
-  if (typeof value !== "object") return false;
-  Object.assign((el as HTMLElement).style, value);
-  return true;
-}
+const setStyle = (el: Element, value: ElAttrValue): boolean =>
+  typeof value === "object" && value !== null
+    ? (Object.assign((el as HTMLElement).style, value), true)
+    : false;
 
-function setHtml(el: Element, value: ElAttrValue): boolean {
-  if (!isTrustedHtml(value)) return false;
-  const fragment = document.createRange().createContextualFragment(value.markup);
-  el.replaceChildren(fragment);
-  return true;
-}
+const setHtml = (el: Element, value: ElAttrValue): boolean =>
+  isTrustedHtml(value)
+    ? (el.replaceChildren(document.createRange().createContextualFragment(value.markup)), true)
+    : false;
 
-function setListener(el: Element, key: string, value: ElAttrValue): boolean {
-  if (!key.startsWith("on")) return false;
-  if (typeof value === "function") {
-    el.addEventListener(key.slice(2).toLowerCase(), value);
-  }
-  return true;
-}
+const setListener = (el: Element, key: string, value: ElAttrValue): boolean =>
+  key.startsWith("on")
+    ? (typeof value === "function" && el.addEventListener(key.slice(2).toLowerCase(), value), true)
+    : false;
 
-function setAttr(el: Element, key: string, value: ElAttrValue): void {
+const setAttr = (el: Element, key: string, value: ElAttrValue): void => {
   if (value === false || value == null) return;
-
   const handled =
     (key === "html" && setHtml(el, value)) ||
     (key === "style" && setStyle(el, value)) ||
     setListener(el, key, value);
-  if (!handled && isSimple(value)) setSimpleAttr(el, key, value);
-}
+  if (!handled && isSimple(value)) {
+    setSimpleAttr(el, key, value);
+  }
+};
 
-function appendChildren(el: Element, list: ElChild[]): void {
+const appendChildren = (el: Element, list: ElChild[]): void =>
   list
     .filter((child): child is Node | string => child != null && child !== false)
     .forEach((child) =>
       el.appendChild(typeof child === "string" ? document.createTextNode(child) : child),
     );
-}
 
 export function h<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -87,11 +80,7 @@ export function h(tag: string, attrs?: ElAttrs, children?: ElChild | ElChild[]):
     : document.createElement(tag);
 
   if (attrs) {
-    for (const key in attrs) {
-      if (Object.prototype.hasOwnProperty.call(attrs, key)) {
-        setAttr(el, key, attrs[key]);
-      }
-    }
+    Object.entries(attrs).forEach(([key, val]) => setAttr(el, key, val));
   }
 
   if (children !== undefined && children !== null) {
@@ -101,6 +90,5 @@ export function h(tag: string, attrs?: ElAttrs, children?: ElChild | ElChild[]):
   return el;
 }
 
-export function svg(tag: string, attrs?: ElAttrs, children?: ElChild | ElChild[]): SVGElement {
-  return h("svg:" + tag, attrs, children) as SVGElement;
-}
+export const svg = (tag: string, attrs?: ElAttrs, children?: ElChild | ElChild[]): SVGElement =>
+  h("svg:" + tag, attrs, children) as SVGElement;
