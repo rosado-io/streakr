@@ -1,6 +1,6 @@
 import { svg } from "./dom";
 
-export function logoR(): SVGElement {
+export const logoR = (): SVGElement => {
   const fill = "var(--sk-heat-4, #39d353)";
   const hole = "var(--sk-heat-1, #0e4429)";
   const cells: [number, number, string][] = [
@@ -22,4 +22,4 @@ export function logoR(): SVGElement {
       svg("rect", { x, y, width: 4, height: 4, rx: 1, fill: cellFill }),
     ),
   );
-}
+};
