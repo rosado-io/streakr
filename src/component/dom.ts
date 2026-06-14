@@ -46,9 +46,7 @@ const setHtml = (el: Element, value: ElAttrValue): boolean =>
 
 const setListener = (el: Element, key: string, value: ElAttrValue): boolean =>
   key.startsWith("on")
-    ? (typeof value === "function" &&
-        el.addEventListener(key.slice(2).toLowerCase(), value as EventListener),
-      true)
+    ? (typeof value === "function" && el.addEventListener(key.slice(2).toLowerCase(), value), true)
     : false;
 
 const setAttr = (el: Element, key: string, value: ElAttrValue): void => {

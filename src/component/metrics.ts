@@ -9,6 +9,14 @@ export interface StreakrStats {
 
 const LEVEL_PERCENTILES = [0.25, 0.55, 0.8] as const;
 
+const getDayLevel = (total: number, t1: number, t2: number, t3: number): 0 | 1 | 2 | 3 | 4 => {
+  if (total <= 0) return 0;
+  if (total <= t1) return 1;
+  if (total <= t2) return 2;
+  if (total <= t3) return 3;
+  return 4;
+};
+
 export const levelize = (days: StreakrDay[]): StreakrLeveledDay[] => {
   const counts = days
     .map((day) => day.total)
@@ -20,13 +28,21 @@ export const levelize = (days: StreakrDay[]): StreakrLeveledDay[] => {
   const t2 = p(LEVEL_PERCENTILES[1]);
   const t3 = p(LEVEL_PERCENTILES[2]);
 
-  return !counts.length
+  return counts.length === 0
     ? days.map((day) => ({ ...day, level: 0 }))
     : days.map((day) => ({
         ...day,
-        level:
-          day.total <= 0 ? 0 : day.total <= t1 ? 1 : day.total <= t2 ? 2 : day.total <= t3 ? 3 : 4,
+        level: getDayLevel(day.total, t1, t2, t3),
       }));
+};
+
+const nextStreakState = (
+  acc: { count: number; halted: boolean },
+  total: number,
+): { count: number; halted: boolean } => {
+  if (acc.halted) return acc;
+  if (total > 0) return { count: acc.count + 1, halted: false };
+  return { count: acc.count, halted: true };
 };
 
 export const computeStats = (days: StreakrDay[]): StreakrStats => {
@@ -42,18 +58,16 @@ export const computeStats = (days: StreakrDay[]): StreakrStats => {
     },
     { best: 0, curRun: 0 },
   ).best;
-  const current = days.reduceRight(
-    (acc, d) =>
-      acc.halted
-        ? acc
-        : d.total > 0
-          ? { count: acc.count + 1, halted: false }
-          : { count: acc.count, halted: true },
-    { count: 0, halted: false },
-  ).count;
+  const current = days.reduceRight((acc, d) => nextStreakState(acc, d.total), {
+    count: 0,
+    halted: false,
+  }).count;
 
   return { total, active, best, current };
 };
 
-export const formatTotalLabel = (total: number): string =>
-  total === 0 ? "No contributions" : total === 1 ? "1 contribution" : `${total} contributions`;
+export const formatTotalLabel = (total: number): string => {
+  if (total === 0) return "No contributions";
+  if (total === 1) return "1 contribution";
+  return `${total} contributions`;
+};

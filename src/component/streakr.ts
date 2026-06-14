@@ -88,12 +88,11 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
   let mediaQueryListener: ((e: MediaQueryListEvent) => void) | null = null;
 
-  const getActiveTheme = (): "dark" | "light" =>
-    cfg.theme === "system"
-      ? globalThis.window?.matchMedia?.("(prefers-color-scheme: dark)")?.matches
-        ? "dark"
-        : "light"
-      : cfg.theme;
+  const getActiveTheme = (): "dark" | "light" => {
+    if (cfg.theme !== "system") return cfg.theme;
+    const isDark = globalThis.window?.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
+    return isDark ? "dark" : "light";
+  };
 
   const cleanupThemeListener = (): void => {
     if (mediaQueryListener && globalThis.window?.matchMedia) {
@@ -594,14 +593,13 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     return body;
   };
 
-  const streakMetricCard = (stats: StreakrStats, days: StreakrDay[]): HTMLElement =>
-    state.year === currentYearLabel()
-      ? statCard("Current Streak", stats.current, " days")
-      : statCard(
-          "Active Rate",
-          days.length ? Math.round((stats.active / days.length) * 100) : 0,
-          "%",
-        );
+  const streakMetricCard = (stats: StreakrStats, days: StreakrDay[]): HTMLElement => {
+    if (state.year === currentYearLabel()) {
+      return statCard("Current Streak", stats.current, " days");
+    }
+    const rate = days.length ? Math.round((stats.active / days.length) * 100) : 0;
+    return statCard("Active Rate", rate, "%");
+  };
 
   const statCard = (label: string, value: string | number, suffix?: string): HTMLElement =>
     h("div", { class: "sk-stat" }, [

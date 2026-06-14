@@ -24,14 +24,14 @@ export const toCanonicalDays = (
   days: ContributionDay[],
   start: string,
   end: string,
-): ContributionDay[] =>
-  normalizeEventsToDaily(
-    days.length
-      ? days
-      : start === end
-        ? [{ date: start, count: 0 }]
-        : [
-            { date: start, count: 0 },
-            { date: end, count: 0 },
-          ],
-  );
+): ContributionDay[] => {
+  if (days.length) return normalizeEventsToDaily(days);
+  const anchors =
+    start === end
+      ? [{ date: start, count: 0 }]
+      : [
+          { date: start, count: 0 },
+          { date: end, count: 0 },
+        ];
+  return normalizeEventsToDaily(anchors);
+};

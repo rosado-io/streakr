@@ -6,8 +6,13 @@ const computeThresholds = (maxCount: number): [number, number, number] =>
     ? [0, 0, 0]
     : [Math.ceil(maxCount * 0.25), Math.ceil(maxCount * 0.5), Math.ceil(maxCount * 0.75)];
 
-const countToLevel = (count: number, [q1, q2, q3]: [number, number, number]): number =>
-  count === 0 ? 0 : count < q1 ? 1 : count < q2 ? 2 : count < q3 ? 3 : 4;
+const countToLevel = (count: number, [q1, q2, q3]: [number, number, number]): number => {
+  if (count === 0) return 0;
+  if (count < q1) return 1;
+  if (count < q2) return 2;
+  if (count < q3) return 3;
+  return 4;
+};
 
 const adjustedDayOfWeek = (utcDay: number, weekStartsOn: number): number =>
   (utcDay - weekStartsOn + 7) % 7;
@@ -39,7 +44,7 @@ export const buildCalendarGrid = (days: ContributionDay[], options?: GridOptions
   const firstDayOfWeek = adjustedDayOfWeek(new Date(startUTC).getUTCDay(), weekStartsOn);
 
   const cells = [
-    ...Array<CalendarCell | null>(firstDayOfWeek).fill(null),
+    ...new Array<CalendarCell | null>(firstDayOfWeek).fill(null),
     ...Array.from({ length: dayCount }, (_, i) => {
       const d = new Date(Date.UTC(sY, sM - 1, sD + i));
       const dateStr = formatDateYYYYMMDD(d);
@@ -51,7 +56,7 @@ export const buildCalendarGrid = (days: ContributionDay[], options?: GridOptions
   const totalCells = Math.ceil(cells.length / 7) * 7;
   const paddedCells = [
     ...cells,
-    ...Array<CalendarCell | null>(totalCells - cells.length).fill(null),
+    ...new Array<CalendarCell | null>(totalCells - cells.length).fill(null),
   ];
 
   const weeks = Array.from({ length: paddedCells.length / 7 }, (_, i) =>
