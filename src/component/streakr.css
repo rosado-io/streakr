@@ -313,10 +313,12 @@
 }
 @keyframes sk-shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 
-.sk-skel-grid-cells { display: grid; grid-template-columns: repeat(53, 1fr); gap: 3px; aspect-ratio: 53 / 7; }
-.sk-skel-cell { aspect-ratio: 1; border-radius: 2px; background: var(--sk-soft-bg); }
-.sk-skel-cell.shimmer { animation: sk-cell-pulse 2s ease-in-out infinite; }
-@keyframes sk-cell-pulse { 0%, 100% { background: var(--sk-soft-bg); } 50% { background: var(--sk-hover-bg); } }
+.sk-heatmap-svg--skeleton {
+  opacity: 0.7;
+}
+
+.sk-skel-grid-cells,
+.sk-skel-cell { display: none; }
 
 .sk-empty {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
