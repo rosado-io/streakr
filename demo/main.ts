@@ -156,6 +156,7 @@ function mountComponent(): void {
     state: "ready",
     years: StreakrSampleData.availableYears,
     year: 2026,
+    today: StreakrSampleData.today,
     getDays: StreakrSampleData.getDays,
   });
   slot.dataset.theme = state.theme;

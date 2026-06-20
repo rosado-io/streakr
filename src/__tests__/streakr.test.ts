@@ -394,7 +394,7 @@ describe("createStreakr", () => {
       expect(target.textContent).not.toContain("Active Rate");
     });
 
-    it("replaces Current Streak with Active Rate for historical years", () => {
+    it("keeps the four fixed stat cards for historical years", () => {
       const historicalDays: StreakrDay[] = [
         { date: new Date(2025, 0, 1), total: 1, sources: { github: 1 } },
         { date: new Date(2025, 0, 2), total: 0, sources: {} },
@@ -408,12 +408,9 @@ describe("createStreakr", () => {
         getDays: () => historicalDays,
       });
 
-      expect(target.textContent).toContain("Active Rate");
-      expect(target.textContent).not.toContain("Current Streak");
-      const activeRateCard = Array.from(target.querySelectorAll(".sk-stat")).find((card) =>
-        card.textContent?.includes("Active Rate"),
-      );
-      expect(activeRateCard?.textContent).toContain("50%");
+      expect(target.textContent).toContain("Current Streak");
+      expect(target.textContent).not.toContain("Active Rate");
+      expect(target.querySelectorAll(".sk-stat").length).toBe(4);
     });
 
     it("renders a heatmap SVG", () => {
@@ -421,10 +418,10 @@ describe("createStreakr", () => {
       expect(target.querySelector(".sk-heatmap-svg")).toBeTruthy();
     });
 
-    it("preserves the full Jan–Dec heatmap shell when the year has only partial data", () => {
-      // Regression: issue #82 — current year with only partial-year data
-      // (e.g. through today) used to shrink the heatmap. Padding the heatmap
-      // input to the full year keeps a uniform column count year-over-year.
+    it("keeps a uniform column count between rolling and full-year views", () => {
+      // The current year renders a rolling 12-month window while historical
+      // years render the full calendar year. Both should end up with a similar
+      // number of week columns so the heatmap shell stays stable.
       const fullYear = makeYearDays(2025);
       const partialYear = makeYearDays(2026).filter((d) => {
         const cutoff = new Date(2026, 4, 10); // through May 10
@@ -435,13 +432,41 @@ describe("createStreakr", () => {
         target,
         years: [2025, 2026],
         year: 2025,
+        today: new Date(2026, 4, 10),
         getDays: partialGetDays,
       });
       const fullCols = target.querySelectorAll(".sk-heatmap-svg > g > g").length;
       instance.setYear(2026);
       const partialCols = target.querySelectorAll(".sk-heatmap-svg > g > g").length;
-      expect(partialCols).toBe(fullCols);
       expect(partialCols).toBeGreaterThanOrEqual(52);
+      expect(partialCols).toBeLessThanOrEqual(54);
+      expect(fullCols).toBeGreaterThanOrEqual(52);
+      expect(fullCols).toBeLessThanOrEqual(54);
+    });
+
+    it("shows the current year as a rolling 12-month window spanning the prior year", () => {
+      const today = new Date(2026, 0, 15); // Jan 15, 2026
+      const priorYearDay: StreakrDay = {
+        date: new Date(2025, 11, 25), // Dec 25, 2025 — inside rolling window
+        total: 3,
+        sources: { github: 3 },
+      };
+      const currentYearDay: StreakrDay = {
+        date: new Date(2026, 0, 5),
+        total: 5,
+        sources: { github: 5 },
+      };
+      instance = createStreakr({
+        target,
+        years: [2025, 2026],
+        year: 2026,
+        today,
+        getDays: (year) => (year === 2026 ? [currentYearDay] : [priorYearDay]),
+      });
+
+      // Total must include both the prior-year and current-year days.
+      expect(target.textContent).toContain("8");
+      expect(target.textContent).toContain("Total Contributions");
     });
 
     it("does not let trailing padded zero-days reset the Current Streak stat", () => {
@@ -480,8 +505,11 @@ describe("createStreakr", () => {
   describe("lifecycle states", () => {
     it("renders the loading skeleton when state='loading'", () => {
       instance = createStreakr({ target, years, state: "loading", getDays });
-      expect(target.querySelector(".sk-skel-grid-cells")).toBeTruthy();
-      expect(target.querySelector(".sk-heatmap-svg")).toBeNull();
+      expect(target.querySelector(".sk-heatmap-svg--skeleton")).toBeTruthy();
+      expect(target.querySelector(".sk-legend")).toBeTruthy();
+      expect(target.querySelector(".sk-heatmap-svg")).toBeTruthy();
+      expect(target.querySelectorAll(".sk-stat").length).toBe(4);
+      expect(target.textContent).not.toContain("Loading");
     });
 
     it("renders the empty illustration when state='empty'", () => {
@@ -549,6 +577,7 @@ describe("createStreakr", () => {
       instance = createStreakr({
         target,
         years: [2026],
+        today: new Date(2026, 0, 1),
         getDays: () => [
           {
             date: new Date(2026, 0, 1),
@@ -560,7 +589,12 @@ describe("createStreakr", () => {
 
       instance.setProviders({ gitlab: false });
 
-      const cell = target.querySelector<SVGRectElement>("rect.sk-heatmap-cell");
+      const cells = Array.from(target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell"));
+      const cell = cells.find(
+        (c) =>
+          c.getAttribute("fill")?.includes("--sk-heat-") &&
+          !c.getAttribute("fill")?.includes("--sk-heat-0"),
+      );
       expect(cell).toBeTruthy();
       cell?.dispatchEvent(new MouseEvent("mouseenter", { clientX: 10, clientY: 10 }));
 
