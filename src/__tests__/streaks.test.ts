@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import { computeStreaks } from "../core/streaks";
 import type { ContributionDay } from "../types";
 
-/** Helper to create a ContributionDay with just date + count. */
 function day(date: string, count: number): ContributionDay {
   return { date, count };
 }
@@ -55,7 +54,6 @@ describe("computeStreaks", () => {
   });
 
   it("tracks best streak separately from current streak", () => {
-    // Best streak is 3 (days 1-3), current is 2 (days 5-6)
     const input = [
       day("2025-06-01", 1),
       day("2025-06-02", 1),
@@ -83,7 +81,6 @@ describe("computeStreaks", () => {
   });
 
   it("best and current can be equal", () => {
-    // All days active — best = current = 5
     const input = [
       day("2025-06-01", 1),
       day("2025-06-02", 2),
@@ -128,24 +125,18 @@ describe("computeStreaks", () => {
   });
 
   it("handles a realistic year scenario", () => {
-    // Simulate: 10 active days, 3 off, 5 active, 2 off, 7 active (current)
     const days: ContributionDay[] = [];
     let d = 1;
 
-    // 10 active
     for (let i = 0; i < 10; i++) days.push(day(`2025-01-${String(d++).padStart(2, "0")}`, 2));
-    // 3 off
     for (let i = 0; i < 3; i++) days.push(day(`2025-01-${String(d++).padStart(2, "0")}`, 0));
-    // 5 active
     for (let i = 0; i < 5; i++) days.push(day(`2025-01-${String(d++).padStart(2, "0")}`, 1));
-    // 2 off
     for (let i = 0; i < 2; i++) days.push(day(`2025-01-${String(d++).padStart(2, "0")}`, 0));
-    // 7 active (current)
     for (let i = 0; i < 7; i++) days.push(day(`2025-01-${String(d++).padStart(2, "0")}`, 3));
 
     const result = computeStreaks(days);
     expect(result.bestStreak).toBe(10);
     expect(result.currentStreak).toBe(7);
-    expect(result.total).toBe(10 * 2 + 5 * 1 + 7 * 3); // 20 + 5 + 21 = 46
+    expect(result.total).toBe(46);
   });
 });

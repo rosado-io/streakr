@@ -27,6 +27,8 @@ describe("createStreakr", () => {
   const getDays = (year: number) => makeYearDays(year);
 
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 20));
     target = document.createElement("div");
     document.body.appendChild(target);
   });
@@ -36,9 +38,9 @@ describe("createStreakr", () => {
     instance = null;
     target.remove();
     document.body.querySelectorAll(".sk-tooltip, .sk-root").forEach((el) => el.remove());
+    vi.useRealTimers();
   });
 
-  // ─── mount ─────────────────────────────────────────────────
   describe("mount", () => {
     it("throws when target is missing", () => {
       expect(() =>
@@ -128,8 +130,12 @@ describe("createStreakr", () => {
     it("uses the last entry of `years` when `year` is omitted", () => {
       instance = createStreakr({ target, years: [2022, 2023, 2024], getDays });
       const subtitle = target.querySelector(".sk-subtitle");
-      // 2024 is currentYearLabel → "Last 12 months"
-      expect(subtitle?.textContent).toBe("Last 12 months");
+      expect(subtitle?.textContent).toBe("2024");
+    });
+
+    it("labels the actual current year as year to date", () => {
+      instance = createStreakr({ target, years, year: 2026, getDays });
+      expect(target.querySelector(".sk-subtitle")?.textContent).toBe("Year to date");
     });
 
     it("renders the explicit year as plain number when not the latest", () => {
@@ -143,12 +149,10 @@ describe("createStreakr", () => {
     });
   });
 
-  // ─── year tabs ─────────────────────────────────────────────
   describe("year tabs", () => {
     it("renders one tab per visible year", () => {
       instance = createStreakr({ target, years, getDays });
       const tabs = target.querySelectorAll(".sk-year-tab");
-      // 5 years total — under MAX_VISIBLE_YEARS, no extras.
       expect(tabs.length).toBe(5);
     });
 
@@ -184,7 +188,6 @@ describe("createStreakr", () => {
     });
   });
 
-  // ─── modal ─────────────────────────────────────────────────
   describe("year modal", () => {
     const many = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
 
@@ -232,7 +235,6 @@ describe("createStreakr", () => {
     });
   });
 
-  // ─── providers ────────────────────────────────────────────
   describe("providers", () => {
     it("renders the three default chips", () => {
       instance = createStreakr({ target, years, getDays });
@@ -316,7 +318,6 @@ describe("createStreakr", () => {
     });
 
     it("hides the chip row when only one provider has contributions (issue #84)", () => {
-      // All days come from github only — gitlab/bitbucket sums are zero.
       instance = createStreakr({
         target,
         years,
@@ -340,7 +341,6 @@ describe("createStreakr", () => {
     });
 
     it("recomputes chip-row visibility when the year changes", () => {
-      // 2024 has two providers; 2025 has only github.
       instance = createStreakr({
         target,
         years: [2024, 2025],
@@ -376,7 +376,6 @@ describe("createStreakr", () => {
     });
   });
 
-  // ─── stats / heatmap / legend ─────────────────────────────
   describe("ready body", () => {
     it("renders 4 stat cards by default", () => {
       instance = createStreakr({ target, years, getDays });
@@ -394,7 +393,7 @@ describe("createStreakr", () => {
       expect(target.textContent).not.toContain("Active Rate");
     });
 
-    it("keeps the four fixed stat cards for historical years", () => {
+    it("shows Active Rate instead of Current Streak for historical years", () => {
       const historicalDays: StreakrDay[] = [
         { date: new Date(2025, 0, 1), total: 1, sources: { github: 1 } },
         { date: new Date(2025, 0, 2), total: 0, sources: {} },
@@ -408,8 +407,9 @@ describe("createStreakr", () => {
         getDays: () => historicalDays,
       });
 
-      expect(target.textContent).toContain("Current Streak");
-      expect(target.textContent).not.toContain("Active Rate");
+      expect(target.textContent).toContain("Active Rate");
+      expect(target.textContent).toContain("0.5%");
+      expect(target.textContent).not.toContain("Current Streak");
       expect(target.querySelectorAll(".sk-stat").length).toBe(4);
     });
 
@@ -418,15 +418,10 @@ describe("createStreakr", () => {
       expect(target.querySelector(".sk-heatmap-svg")).toBeTruthy();
     });
 
-    it("keeps a uniform column count between rolling and full-year views", () => {
-      // The current year renders a rolling 12-month window while historical
-      // years render the full calendar year. Both should end up with a similar
-      // number of week columns so the heatmap shell stays stable.
+    it("renders the current year as year-to-date instead of a full year", () => {
       const fullYear = makeYearDays(2025);
-      const partialYear = makeYearDays(2026).filter((d) => {
-        const cutoff = new Date(2026, 4, 10); // through May 10
-        return d.date <= cutoff;
-      });
+      const cutoff = new Date(2026, 4, 10);
+      const partialYear = makeYearDays(2026).filter((d) => d.date <= cutoff);
       const partialGetDays = (year: number) => (year === 2026 ? partialYear : fullYear);
       instance = createStreakr({
         target,
@@ -438,16 +433,17 @@ describe("createStreakr", () => {
       const fullCols = target.querySelectorAll(".sk-heatmap-svg > g > g").length;
       instance.setYear(2026);
       const partialCols = target.querySelectorAll(".sk-heatmap-svg > g > g").length;
-      expect(partialCols).toBeGreaterThanOrEqual(52);
-      expect(partialCols).toBeLessThanOrEqual(54);
+      expect(partialCols).toBeLessThan(fullCols);
+      expect(partialCols).toBeGreaterThanOrEqual(19);
+      expect(partialCols).toBeLessThanOrEqual(21);
       expect(fullCols).toBeGreaterThanOrEqual(52);
       expect(fullCols).toBeLessThanOrEqual(54);
     });
 
-    it("shows the current year as a rolling 12-month window spanning the prior year", () => {
-      const today = new Date(2026, 0, 15); // Jan 15, 2026
+    it("excludes prior-year days from the current year", () => {
+      const today = new Date(2026, 0, 15);
       const priorYearDay: StreakrDay = {
-        date: new Date(2025, 11, 25), // Dec 25, 2025 — inside rolling window
+        date: new Date(2025, 11, 25),
         total: 3,
         sources: { github: 3 },
       };
@@ -464,9 +460,8 @@ describe("createStreakr", () => {
         getDays: (year) => (year === 2026 ? [currentYearDay] : [priorYearDay]),
       });
 
-      // Total must include both the prior-year and current-year days.
-      expect(target.textContent).toContain("8");
-      expect(target.textContent).toContain("Total Contributions");
+      const statValues = target.querySelectorAll<HTMLElement>(".sk-stat-value");
+      expect(statValues[0].textContent?.trim()).toBe("5");
     });
 
     it("renders total-only days when sources are omitted", () => {
@@ -500,7 +495,7 @@ describe("createStreakr", () => {
       expect(target.textContent).toContain("Total Contributions");
     });
 
-    it("includes rolling prior-year days in provider chip totals", () => {
+    it("excludes prior-year days from current-year provider chip totals", () => {
       const today = new Date(2026, 0, 15);
       instance = createStreakr({
         target,
@@ -516,12 +511,10 @@ describe("createStreakr", () => {
       const counts = Array.from(target.querySelectorAll(".sk-provider-count")).map(
         (el) => el.textContent,
       );
-      expect(counts).toEqual(["8", "9", "0"]);
+      expect(counts).toEqual(["5", "7", "0"]);
     });
 
-    it("does not let trailing padded zero-days reset the Current Streak stat", () => {
-      // Regression: stats must be computed from real data, not the padded
-      // shell — otherwise the trailing zeros would always force current=0.
+    it("does not let future days reset the Current Streak stat", () => {
       const days: StreakrDay[] = [];
       for (let i = 0; i < 5; i++) {
         days.push({
@@ -534,10 +527,10 @@ describe("createStreakr", () => {
         target,
         years: [2026],
         year: 2026,
+        today: new Date(2026, 0, 5),
         getDays: () => days,
       });
       const statValues = target.querySelectorAll<HTMLElement>(".sk-stat-value");
-      // Order: Total, Best Streak, Current Streak, Active Days
       const currentStreak = statValues[2]?.textContent ?? "";
       expect(currentStreak.trim().startsWith("5")).toBe(true);
     });
@@ -551,7 +544,6 @@ describe("createStreakr", () => {
     });
   });
 
-  // ─── states ───────────────────────────────────────────────
   describe("lifecycle states", () => {
     it("renders the loading skeleton when state='loading'", () => {
       instance = createStreakr({ target, years, state: "loading", getDays });
@@ -589,12 +581,10 @@ describe("createStreakr", () => {
     });
   });
 
-  // ─── tooltip ──────────────────────────────────────────────
   describe("tooltip", () => {
     it("appears on cell mouseenter for a non-empty cell", () => {
       instance = createStreakr({ target, years, getDays });
       const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell");
-      // pick a cell that has data (rects are created in column-major order)
       const cell = cells[3];
       cell.dispatchEvent(new MouseEvent("mouseenter", { clientX: 50, clientY: 50 }));
       const tooltip = target.querySelector(".sk-tooltip");
@@ -618,7 +608,6 @@ describe("createStreakr", () => {
       cell?.dispatchEvent(new MouseEvent("mouseenter", { clientX: 10, clientY: 10 }));
       const tooltip = target.querySelector(".sk-tooltip");
       expect(tooltip?.classList.contains("visible")).toBe(true);
-      // any state change re-renders
       instance.setYear(years[0]);
       expect(tooltip?.classList.contains("visible")).toBe(false);
     });
@@ -655,7 +644,6 @@ describe("createStreakr", () => {
     });
   });
 
-  // ─── instance API ─────────────────────────────────────────
   describe("instance API", () => {
     it("update() applies a partial patch", () => {
       instance = createStreakr({ target, years, getDays });
@@ -696,7 +684,6 @@ describe("createStreakr", () => {
       target.querySelector<HTMLButtonElement>(".sk-year-more")?.click();
       instance.destroy();
       instance = null;
-      // After destroy, hitting Escape shouldn't throw — root is gone.
       expect(() =>
         document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })),
       ).not.toThrow();

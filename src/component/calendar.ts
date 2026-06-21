@@ -70,46 +70,10 @@ export const padDaysToRange = (days: StreakrDay[], start: Date, end: Date): Stre
   return out;
 };
 
-export const mergeDayRanges = (a: StreakrDay[], b: StreakrDay[]): StreakrDay[] => {
-  const byDate = new Map<string, StreakrDay>();
-  for (const day of a) {
-    byDate.set(localDateKey(day.date), day);
-  }
-  for (const day of b) {
-    const key = localDateKey(day.date);
-    const existing = byDate.get(key);
-    if (existing) {
-      const total = (existing.total || 0) + (day.total || 0);
-      const sourceKeys = [
-        ...(existing.sources ? Object.keys(existing.sources) : []),
-        ...(day.sources ? Object.keys(day.sources) : []),
-      ];
-      const sources = Object.fromEntries(
-        [...new Set(sourceKeys)].map((source) => [
-          source,
-          (existing.sources?.[source] ?? 0) + (day.sources?.[source] ?? 0),
-        ]),
-      );
-      byDate.set(
-        key,
-        sourceKeys.length
-          ? { date: existing.date, total, sources }
-          : { date: existing.date, total },
-      );
-    } else {
-      byDate.set(key, day);
-    }
-  }
-  return Array.from(byDate.values()).sort((x, y) => x.date.getTime() - y.date.getTime());
-};
-
-export const rolling12MonthRange = (today: Date): { start: Date; end: Date } => {
-  const end = new Date(today);
-  const start = new Date(today);
-  start.setDate(start.getDate() - 365);
-  start.setDate(start.getDate() - start.getDay());
-  return { start, end };
-};
+export const yearToDateRange = (today: Date): { start: Date; end: Date } => ({
+  start: new Date(today.getFullYear(), 0, 1),
+  end: new Date(today),
+});
 
 export const gridFromDays = <T extends StreakrDay>(days: T[]): (T | null)[][] =>
   days.length === 0

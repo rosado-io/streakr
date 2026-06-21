@@ -11,11 +11,10 @@ import {
   DAY_LABELS,
   fmtDateLong,
   gridFromDays,
-  mergeDayRanges,
   monthHeaders,
   padDaysToRange,
   padDaysToYear,
-  rolling12MonthRange,
+  yearToDateRange,
 } from "./calendar";
 import { h, svg, trustedHtml } from "./dom";
 import { logoR } from "./logo";
@@ -168,14 +167,8 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       total: activeDayTotal(day),
     }));
     if (!isCurrentYear()) return currentYearDays;
-    const { start } = rolling12MonthRange(cfg.today);
-    const prevYear = state.year - 1;
-    if (start.getFullYear() !== prevYear) return currentYearDays;
-    const priorYearDays = (cfg.getDays(prevYear) || []).map((day) => ({
-      ...day,
-      total: activeDayTotal(day),
-    }));
-    return mergeDayRanges(priorYearDays, currentYearDays);
+    const { start, end } = yearToDateRange(cfg.today);
+    return currentYearDays.filter((day) => day.date >= start && day.date <= end);
   };
 
   const showTooltip = (e: MouseEvent, day: StreakrDay): void => {
@@ -280,7 +273,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       viewBox: `0 0 ${W} ${H}`,
       role: "img",
       "aria-label": isCurrentYear()
-        ? "Contribution heatmap for the last 12 months"
+        ? `Contribution heatmap for ${state.year ?? "selected year"} year to date`
         : `Contribution heatmap for ${state.year ?? "selected year"}`,
     });
 
@@ -340,12 +333,12 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     stats: StreakrStats;
   }
 
-  const isCurrentYear = (): boolean => state.year === currentYearLabel();
+  const isCurrentYear = (): boolean => state.year === cfg.today.getFullYear();
 
   const getHeatmapDays = (days: StreakrDay[]): StreakrDay[] => {
     if (state.year == null) return days;
     if (isCurrentYear()) {
-      const { start, end } = rolling12MonthRange(cfg.today);
+      const { start, end } = yearToDateRange(cfg.today);
       return padDaysToRange(days, start, end);
     }
     return padDaysToYear(days, state.year);
@@ -353,9 +346,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
   const computeRenderFlags = (): RenderFlags => {
     const days = getCurrentDays();
-    const stats = computeStats(days);
-    const yearTotal = days.reduce((a, d) => a + d.total, 0);
     const heatmapDays = getHeatmapDays(days);
+    const stats = computeStats(heatmapDays);
+    const yearTotal = heatmapDays.reduce((a, d) => a + d.total, 0);
     const leveled = levelize(heatmapDays);
     const isLoading = cfg.state === "loading";
     const isEmpty = cfg.state === "empty" || (cfg.state === "ready" && yearTotal === 0);
@@ -372,7 +365,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   };
 
   const renderTitleRow = (): HTMLElement => {
-    const subtitleText = isCurrentYear() ? "Last 12 months" : String(state.year ?? "");
+    const subtitleText = isCurrentYear() ? "Year to date" : String(state.year ?? "");
     return h("div", { class: "sk-title-row" }, [
       h("div", { class: "sk-brand" }, [
         h("div", { class: "sk-logo" }, [logoR()]),
@@ -660,7 +653,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         class: "sk-empty-title",
         text:
           "No contributions in " +
-          (isCurrentYear() ? "the last 12 months" : String(state.year ?? "")),
+          (isCurrentYear() ? "the year to date" : String(state.year ?? "")),
       }),
       h("div", {
         class: "sk-empty-sub",
@@ -712,11 +705,14 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     body.__skObserveTarget = heatmapWrap;
 
     if (cfg.showStats) {
+      const contextualStat = isCurrentYear()
+        ? statCard("Current Streak", stats.current, " days")
+        : statCard("Active Rate", formatActiveRate(stats.active, state.year), "%");
       body.appendChild(
         h("div", { class: "sk-stats" }, [
           statCard("Total Contributions", stats.total.toLocaleString()),
           statCard("Best Streak", stats.best, " days"),
-          statCard("Current Streak", stats.current, " days"),
+          contextualStat,
           statCard("Active Days", stats.active.toLocaleString()),
         ]),
       );
@@ -732,6 +728,12 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         suffix ? h("span", { class: "sk-stat-suffix", text: suffix }) : null,
       ]),
     ]);
+
+  const formatActiveRate = (activeDays: number, year: number | null): string => {
+    if (year == null) return "0";
+    const totalDays = padDaysToYear([], year).length;
+    return ((activeDays / totalDays) * 100).toFixed(1);
+  };
 
   const renderYearModal = (card: Element): void => {
     const overlay = h("div", { class: "sk-modal-overlay", onclick: () => closeYearModal() });
@@ -778,8 +780,6 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     overlay.appendChild(modal);
     card.appendChild(overlay);
   };
-
-  const currentYearLabel = (): number | null => (cfg.years.length ? Math.max(...cfg.years) : null);
 
   const setYear = (y: number): void => {
     state.year = y;
