@@ -79,12 +79,23 @@ export const mergeDayRanges = (a: StreakrDay[], b: StreakrDay[]): StreakrDay[] =
     const key = localDateKey(day.date);
     const existing = byDate.get(key);
     if (existing) {
-      const sources = { ...(existing.sources ?? {}), ...(day.sources ?? {}) };
       const total = (existing.total || 0) + (day.total || 0);
-      for (const key of Object.keys(sources)) {
-        sources[key] = (existing.sources?.[key] ?? 0) + (day.sources?.[key] ?? 0);
-      }
-      byDate.set(key, { date: existing.date, total, sources });
+      const sourceKeys = [
+        ...(existing.sources ? Object.keys(existing.sources) : []),
+        ...(day.sources ? Object.keys(day.sources) : []),
+      ];
+      const sources = Object.fromEntries(
+        [...new Set(sourceKeys)].map((source) => [
+          source,
+          (existing.sources?.[source] ?? 0) + (day.sources?.[source] ?? 0),
+        ]),
+      );
+      byDate.set(
+        key,
+        sourceKeys.length
+          ? { date: existing.date, total, sources }
+          : { date: existing.date, total },
+      );
     } else {
       byDate.set(key, day);
     }

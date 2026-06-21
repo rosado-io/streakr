@@ -359,7 +359,11 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     const leveled = levelize(heatmapDays);
     const isLoading = cfg.state === "loading";
     const isEmpty = cfg.state === "empty" || (cfg.state === "ready" && yearTotal === 0);
-    const allOff = cfg.providers.length > 0 && cfg.providers.every((p) => !state.providers[p.key]);
+    const hasTotalOnlyDays = days.some((day) => day.sources == null && day.total > 0);
+    const allOff =
+      !hasTotalOnlyDays &&
+      cfg.providers.length > 0 &&
+      cfg.providers.every((p) => !state.providers[p.key]);
     const providersWithDataCount =
       cfg.state === "ready"
         ? cfg.providers.filter((p) => days.some((d) => dayCount(d, p.key) > 0)).length

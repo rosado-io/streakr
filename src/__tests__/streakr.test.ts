@@ -483,6 +483,23 @@ describe("createStreakr", () => {
       expect(target.textContent).toContain("Total Contributions");
     });
 
+    it("keeps total-only days visible when all providers are disabled", () => {
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        today: new Date(2026, 0, 15),
+        getDays: (year) => (year === 2026 ? [{ date: new Date(2026, 0, 5), total: 4 }] : []),
+      });
+
+      instance.setProviders({ github: false, gitlab: false, bitbucket: false });
+
+      expect(target.querySelector(".sk-noprov")).toBeNull();
+      expect(target.querySelector(".sk-empty")).toBeNull();
+      expect(target.textContent).toContain("4");
+      expect(target.textContent).toContain("Total Contributions");
+    });
+
     it("includes rolling prior-year days in provider chip totals", () => {
       const today = new Date(2026, 0, 15);
       instance = createStreakr({
