@@ -101,6 +101,7 @@ describe("GitHubProvider", () => {
     };
 
     expect(body.query).toContain("contributionsCollection");
+    expect(body.query).toMatch(/}\s*rateLimit\s*{/);
     expect(body.variables).toEqual({
       login: "octocat",
       from: "2025-06-01T00:00:00Z",

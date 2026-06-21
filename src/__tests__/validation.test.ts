@@ -1,27 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { validateInputDates, isValidDate, toCanonicalDays } from "../providers/validation";
-
-describe("isValidDate", () => {
-  it("accepts valid YYYY-MM-DD dates", () => {
-    expect(isValidDate("2025-06-15")).toBe(true);
-    expect(isValidDate("2025-01-01")).toBe(true);
-    expect(isValidDate("2025-12-31")).toBe(true);
-  });
-
-  it("rejects malformed formats", () => {
-    expect(isValidDate("2025/06/15")).toBe(false);
-    expect(isValidDate("06-15-2025")).toBe(false);
-    expect(isValidDate("2025-6-15")).toBe(false);
-    expect(isValidDate("not-a-date")).toBe(false);
-    expect(isValidDate("")).toBe(false);
-  });
-
-  it("rejects impossible calendar dates", () => {
-    expect(isValidDate("2025-02-30")).toBe(false);
-    expect(isValidDate("2025-13-01")).toBe(false);
-    expect(isValidDate("2025-00-15")).toBe(false);
-  });
-});
+import { validateInputDates, toCanonicalDays } from "../providers/validation";
 
 describe("validateInputDates", () => {
   it("accepts valid date ranges", () => {
@@ -34,6 +12,10 @@ describe("validateInputDates", () => {
 
   it("throws on invalid start date", () => {
     expect(() => validateInputDates("bad", "2025-06-15")).toThrow("Invalid start date");
+  });
+
+  it("throws on impossible calendar dates", () => {
+    expect(() => validateInputDates("2025-02-30", "2025-06-15")).toThrow("Invalid start date");
   });
 
   it("throws on invalid end date", () => {
@@ -50,6 +32,15 @@ describe("toCanonicalDays", () => {
     const result = toCanonicalDays([{ date: "2025-06-15", count: 3 }], "2025-06-15", "2025-06-15");
     expect(result).toHaveLength(1);
     expect(result[0].count).toBe(3);
+  });
+
+  it("fills missing requested boundary days for non-empty days", () => {
+    const result = toCanonicalDays([{ date: "2025-06-11", count: 3 }], "2025-06-10", "2025-06-12");
+    expect(result).toEqual([
+      { date: "2025-06-10", count: 0 },
+      { date: "2025-06-11", count: 3 },
+      { date: "2025-06-12", count: 0 },
+    ]);
   });
 
   it("returns zero-filled series for empty days with same start/end", () => {

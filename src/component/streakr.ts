@@ -89,6 +89,13 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     state.providers = syncProviders(cfg.providers, state.providers);
   };
 
+  const activeDayTotal = (day: StreakrDay): number =>
+    day.sources == null
+      ? day.total
+      : cfg.providers
+          .filter((provider) => state.providers[provider.key])
+          .reduce((total, provider) => total + dayCount(day, provider.key), 0);
+
   const root = h("div", { class: "sk-root" }) as HTMLElement;
   cfg.target.appendChild(root);
 
@@ -158,9 +165,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     if (cfg.state !== "ready" || state.year == null) return [];
     const currentYearDays = (cfg.getDays(state.year) || []).map((day) => ({
       ...day,
-      total: cfg.providers
-        .filter((provider) => state.providers[provider.key])
-        .reduce((total, provider) => total + dayCount(day, provider.key), 0),
+      total: activeDayTotal(day),
     }));
     if (!isCurrentYear()) return currentYearDays;
     const { start } = rolling12MonthRange(cfg.today);
@@ -168,9 +173,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     if (start.getFullYear() !== prevYear) return currentYearDays;
     const priorYearDays = (cfg.getDays(prevYear) || []).map((day) => ({
       ...day,
-      total: cfg.providers
-        .filter((provider) => state.providers[provider.key])
-        .reduce((total, provider) => total + dayCount(day, provider.key), 0),
+      total: activeDayTotal(day),
     }));
     return mergeDayRanges(priorYearDays, currentYearDays);
   };
@@ -275,6 +278,10 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       width: W,
       height: H,
       viewBox: `0 0 ${W} ${H}`,
+      role: "img",
+      "aria-label": isCurrentYear()
+        ? "Contribution heatmap for the last 12 months"
+        : `Contribution heatmap for ${state.year ?? "selected year"}`,
     });
 
     headers.forEach((hd) => {
@@ -352,7 +359,11 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     const leveled = levelize(heatmapDays);
     const isLoading = cfg.state === "loading";
     const isEmpty = cfg.state === "empty" || (cfg.state === "ready" && yearTotal === 0);
-    const allOff = cfg.providers.length > 0 && cfg.providers.every((p) => !state.providers[p.key]);
+    const hasTotalOnlyDays = days.some((day) => day.sources == null && day.total > 0);
+    const allOff =
+      !hasTotalOnlyDays &&
+      cfg.providers.length > 0 &&
+      cfg.providers.every((p) => !state.providers[p.key]);
     const providersWithDataCount =
       cfg.state === "ready"
         ? cfg.providers.filter((p) => days.some((d) => dayCount(d, p.key) > 0)).length
@@ -481,12 +492,15 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     const totals = computeProviderTotals();
     cfg.providers.forEach((p) => {
       const active = !!state.providers[p.key];
+      const total = totals[p.key].toLocaleString();
       const iconHtml = providerIconHtml(p);
       const btn = h(
         "button",
         {
           class: "sk-provider" + (active ? " active" : ""),
-          title: p.name + " — " + totals[p.key].toLocaleString(),
+          title: p.name + " — " + total,
+          "aria-label": `${p.name}: ${total} contributions, ${active ? "enabled" : "disabled"}`,
+          "aria-pressed": active,
           onclick: () => toggleProvider(p.key),
         },
         [
@@ -495,7 +509,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
             html: iconHtml ? trustedHtml(iconHtml) : undefined,
             style: iconHtml ? undefined : { background: p.color, borderRadius: "50%" },
           }),
-          h("span", { class: "sk-provider-count", text: totals[p.key].toLocaleString() }),
+          h("span", { class: "sk-provider-count", text: total }),
         ],
       );
       row.appendChild(btn);
@@ -506,7 +520,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   const computeProviderTotals = (): Record<string, number> => {
     const totals = Object.fromEntries(cfg.providers.map((p) => [p.key, 0]));
     if (cfg.state !== "ready" || state.year == null) return totals;
-    const raw = cfg.getDays(state.year) || [];
+    const raw = getCurrentDays();
     raw.forEach((d) => {
       cfg.providers.forEach((p) => {
         totals[p.key] += dayCount(d, p.key);
@@ -533,6 +547,8 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       width: W,
       height: H,
       viewBox: `0 0 ${W} ${H}`,
+      role: "img",
+      "aria-label": "Loading contribution heatmap",
     });
 
     const months = [
@@ -721,6 +737,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     const overlay = h("div", { class: "sk-modal-overlay", onclick: () => closeYearModal() });
     const modal = h("div", {
       class: "sk-modal",
+      role: "dialog",
+      "aria-modal": true,
+      "aria-label": "Select year",
       onclick: (e: Event) => e.stopPropagation(),
     });
     modal.appendChild(

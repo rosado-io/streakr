@@ -17,12 +17,12 @@ const CONTRIBUTIONS_QUERY = `
           }
         }
       }
-      rateLimit {
-        limit
-        remaining
-        resetAt
-        cost
-      }
+    }
+    rateLimit {
+      limit
+      remaining
+      resetAt
+      cost
     }
   }
 `;
