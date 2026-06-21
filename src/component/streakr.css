@@ -215,12 +215,13 @@
   background: var(--sk-surface-2);
   border: 1px solid var(--sk-border-subtle);
   border-radius: 12px;
-  padding: 18px 16px 12px;
+  padding: 20px 16px 12px;
   overflow: hidden;
   position: relative;
-  display: flex; flex-direction: column; justify-content: space-between;
+  display: grid;
+  grid-template-rows: 1fr auto;
 }
-.sk-heatmap-svg-wrap { width: 100%; display: flex; justify-content: center; }
+.sk-heatmap-svg-wrap { width: 100%; display: flex; align-items: center; justify-content: center; }
 .sk-heatmap-svg { display: block; max-width: 100%; }
 .sk-legend {
   display: flex; align-items: center; gap: 4px;

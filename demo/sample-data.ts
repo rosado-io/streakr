@@ -58,18 +58,8 @@ YEARS_LIST.forEach((y, i) => {
 const TODAY = new Date(2026, 3, 26);
 YEARS[2026] = YEARS[2026].filter((d) => d.date <= TODAY);
 
-function rolling12(): StreakrDay[] {
-  const all = [...(YEARS[2024] ?? []), ...(YEARS[2025] ?? []), ...(YEARS[2026] ?? [])];
-  const cutoff = new Date(TODAY);
-  cutoff.setDate(cutoff.getDate() - 371);
-  cutoff.setDate(cutoff.getDate() - cutoff.getDay());
-  return all.filter((d) => d.date >= cutoff && d.date <= TODAY);
-}
-
 export const StreakrSampleData = {
   availableYears: YEARS_LIST,
-  getDays: (year: number): StreakrDay[] =>
-    year === 2026 ? rolling12() : YEARS[year] ?? [],
-  rolling12,
+  getDays: (year: number): StreakrDay[] => YEARS[year] ?? [],
   today: TODAY,
 };

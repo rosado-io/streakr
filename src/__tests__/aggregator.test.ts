@@ -3,7 +3,6 @@ import { aggregate } from "../providers/aggregator";
 import type { Provider } from "../providers/types";
 import type { ContributionDay, FetchParams } from "../types";
 
-/** Helper to create a mock Provider. */
 function mockProvider(name: string, days: ContributionDay[]): Provider {
   return {
     name,
@@ -11,7 +10,6 @@ function mockProvider(name: string, days: ContributionDay[]): Provider {
   };
 }
 
-/** Helper to create a failing Provider. */
 function failingProvider(name: string): Provider {
   return {
     name,
@@ -51,7 +49,7 @@ describe("aggregate", () => {
     const gitlab = mockProvider("gitlab", [{ date: "2025-06-15", count: 2 }]);
 
     const result = await aggregate([github, gitlab], params);
-    expect(result).toHaveLength(2); // One entry per provider, not merged yet
+    expect(result).toHaveLength(2);
     expect(result[0].sources).toEqual({ github: 3 });
     expect(result[1].sources).toEqual({ gitlab: 2 });
   });
@@ -116,7 +114,6 @@ describe("aggregate", () => {
 
     const result = await aggregate([slow, fast], params);
     expect(result).toHaveLength(2);
-    // Both started before slow finished → concurrent
     expect(callOrder.indexOf("fast-start")).toBeLessThan(callOrder.indexOf("slow-end"));
   });
 

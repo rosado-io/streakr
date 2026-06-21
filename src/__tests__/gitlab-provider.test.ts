@@ -8,7 +8,6 @@ const baseParams: FetchParams = {
   end: "2025-06-03",
 };
 
-/** Build a mock fetch that returns different responses per URL substring. */
 function buildFetchMock(
   responses: Array<{ match: string; body: unknown; headers?: Record<string, string> }>,
 ) {
@@ -35,7 +34,7 @@ describe("GitLabProvider", () => {
           { created_at: "2025-06-01T10:00:00.000Z" },
           { created_at: "2025-06-01T14:00:00.000Z" },
           { created_at: "2025-06-03T09:00:00.000Z" },
-          { created_at: "2025-05-31T23:59:59.000Z" }, // outside range — filtered
+          { created_at: "2025-05-31T23:59:59.000Z" },
         ],
       },
     ]);
@@ -106,7 +105,6 @@ describe("GitLabProvider", () => {
         });
       }
 
-      // First events page — has a next link
       return new Response(JSON.stringify([{ created_at: "2025-06-01T10:00:00.000Z" }]), {
         status: 200,
         headers: { link: `<${previousUrl}>; rel="prev", <${page2Url}>; rel="next"` },
@@ -121,7 +119,7 @@ describe("GitLabProvider", () => {
       { date: "2025-06-02", count: 0 },
       { date: "2025-06-03", count: 1 },
     ]);
-    expect(fetchMock).toHaveBeenCalledTimes(3); // user lookup + page 1 + page 2
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
   it("throws when GitLab user is not found", async () => {
