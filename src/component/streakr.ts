@@ -575,10 +575,12 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
   const renderSkeletonHeatmap = (containerW: number): SVGElement => {
     const skeletonYear = state.year ?? cfg.today.getFullYear();
-    const skeletonDays = padDaysToYear([], skeletonYear).map((day): StreakrLeveledDay => ({
-      ...day,
-      level: 0,
-    }));
+    const skeletonDays = padDaysToYear([], skeletonYear).map(
+      (day): StreakrLeveledDay => ({
+        ...day,
+        level: 0,
+      }),
+    );
     const cols = gridFromDays(skeletonDays);
     const headers = monthHeaders(cols);
     const { labelsW, sq, colStep, height, width, fontSize } = getHeatmapGeometry(
