@@ -1,3 +1,14 @@
+## [0.4.0](https://github.com/rosado-io/streakr/compare/v0.3.0...v0.4.0) (2026-06-21)
+
+### Features
+
+* feat: add true system theme auto-detection and media query listener (#99) ([`8a4fddf`](https://github.com/rosado-io/streakr/commit/8a4fddf83bf2327a7ca3283836913869ac84dab0)) by ****
+* feat: rolling 12-month view for current year and structural skeleton (#108) ([`dc75eb6`](https://github.com/rosado-io/streakr/commit/dc75eb672bf03f166ccdcc8c75a65e6b7b38dcd4)) by ****
+
+### Performance Improvements
+
+* perf: defer loading of inactive years and optimize date loops (#103) (#105) ([`b928a75`](https://github.com/rosado-io/streakr/commit/b928a75a42e9e49daa786f9978a531bb33bae873)) by ****
+
 ## [0.3.0](https://github.com/rosado-io/streakr/compare/v0.2.4...v0.3.0) (2026-05-18)
 
 ### Features
