@@ -56,6 +56,50 @@ export const padDaysToYear = (days: StreakrDay[], year: number): StreakrDay[] =>
 export const padGridColumns = <T>(cols: (T | null)[][]): (T | null)[][] =>
   cols.map((col) => [...col, ...new Array<T | null>(Math.max(0, 7 - col.length)).fill(null)]);
 
+export const padDaysToRange = (days: StreakrDay[], start: Date, end: Date): StreakrDay[] => {
+  const byDate = new Map(days.map((day) => [localDateKey(day.date), day]));
+  const out: StreakrDay[] = [];
+  const cur = new Date(start);
+
+  while (cur <= end) {
+    const key = localDateKey(cur);
+    out.push(byDate.get(key) ?? { date: new Date(cur), total: 0, sources: {} });
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  return out;
+};
+
+export const mergeDayRanges = (a: StreakrDay[], b: StreakrDay[]): StreakrDay[] => {
+  const byDate = new Map<string, StreakrDay>();
+  for (const day of a) {
+    byDate.set(localDateKey(day.date), day);
+  }
+  for (const day of b) {
+    const key = localDateKey(day.date);
+    const existing = byDate.get(key);
+    if (existing) {
+      const sources = { ...(existing.sources ?? {}), ...(day.sources ?? {}) };
+      const total = (existing.total || 0) + (day.total || 0);
+      for (const key of Object.keys(sources)) {
+        sources[key] = (existing.sources?.[key] ?? 0) + (day.sources?.[key] ?? 0);
+      }
+      byDate.set(key, { date: existing.date, total, sources });
+    } else {
+      byDate.set(key, day);
+    }
+  }
+  return Array.from(byDate.values()).sort((x, y) => x.date.getTime() - y.date.getTime());
+};
+
+export const rolling12MonthRange = (today: Date): { start: Date; end: Date } => {
+  const end = new Date(today);
+  const start = new Date(today);
+  start.setDate(start.getDate() - 365);
+  start.setDate(start.getDate() - start.getDay());
+  return { start, end };
+};
+
 export const gridFromDays = <T extends StreakrDay>(days: T[]): (T | null)[][] =>
   days.length === 0
     ? []
