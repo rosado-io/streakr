@@ -649,23 +649,33 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     return svgEl;
   };
 
-  const renderLoadingBody = (): HTMLElement => {
+  const createReadyBodyShell = (): {
+    body: ReadyBody;
+    heatmapWrap: HTMLElement;
+    heatmapInner: HTMLElement;
+  } => {
     const body = h("div", { class: "sk-body" }) as ReadyBody;
     body.dataset.noStats = String(!cfg.showStats);
 
     const heatmapWrap = h("div", { class: "sk-heatmap-wrap" });
     const heatmapInner = h("div", { class: "sk-heatmap-stage" });
     heatmapWrap.appendChild(heatmapInner);
-
-    const legend = h("div", { class: "sk-legend" }, [
-      h("span", { text: "Less" }),
-      ...[0, 1, 2, 3, 4].map((i) =>
-        h("span", { class: "sk-legend-sq", style: { background: `var(--sk-heat-${i})` } }),
-      ),
-      h("span", { text: "More" }),
-    ]);
-    heatmapWrap.appendChild(legend);
+    heatmapWrap.appendChild(
+      h("div", { class: "sk-legend" }, [
+        h("span", { text: "Less" }),
+        ...[0, 1, 2, 3, 4].map((i) =>
+          h("span", { class: "sk-legend-sq", style: { background: `var(--sk-heat-${i})` } }),
+        ),
+        h("span", { text: "More" }),
+      ]),
+    );
     body.appendChild(heatmapWrap);
+
+    return { body, heatmapWrap, heatmapInner };
+  };
+
+  const renderLoadingBody = (): HTMLElement => {
+    const { body, heatmapWrap, heatmapInner } = createReadyBodyShell();
 
     const draw = () => {
       const w = heatmapWrap.clientWidth - 32;
@@ -730,21 +740,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     ]);
 
   const renderReadyBody = (leveled: StreakrLeveledDay[], stats: StreakrStats): HTMLElement => {
-    const body = h("div", { class: "sk-body" }) as ReadyBody;
-    body.dataset.noStats = String(!cfg.showStats);
-
-    const heatmapWrap = h("div", { class: "sk-heatmap-wrap" });
-    const heatmapInner = h("div", { class: "sk-heatmap-stage" });
-    heatmapWrap.appendChild(heatmapInner);
-    const legend = h("div", { class: "sk-legend" }, [
-      h("span", { text: "Less" }),
-      ...[0, 1, 2, 3, 4].map((i) =>
-        h("span", { class: "sk-legend-sq", style: { background: `var(--sk-heat-${i})` } }),
-      ),
-      h("span", { text: "More" }),
-    ]);
-    heatmapWrap.appendChild(legend);
-    body.appendChild(heatmapWrap);
+    const { body, heatmapWrap, heatmapInner } = createReadyBodyShell();
 
     const draw = () => {
       try {
