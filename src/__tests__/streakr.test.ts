@@ -27,6 +27,8 @@ describe("createStreakr", () => {
   const getDays = (year: number) => makeYearDays(year);
 
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 20));
     target = document.createElement("div");
     document.body.appendChild(target);
   });
@@ -36,6 +38,7 @@ describe("createStreakr", () => {
     instance = null;
     target.remove();
     document.body.querySelectorAll(".sk-tooltip, .sk-root").forEach((el) => el.remove());
+    vi.useRealTimers();
   });
 
   // ─── mount ─────────────────────────────────────────────────
@@ -128,8 +131,12 @@ describe("createStreakr", () => {
     it("uses the last entry of `years` when `year` is omitted", () => {
       instance = createStreakr({ target, years: [2022, 2023, 2024], getDays });
       const subtitle = target.querySelector(".sk-subtitle");
-      // 2024 is currentYearLabel → "Last 12 months"
-      expect(subtitle?.textContent).toBe("Last 12 months");
+      expect(subtitle?.textContent).toBe("2024");
+    });
+
+    it("labels the actual current year as year to date", () => {
+      instance = createStreakr({ target, years, year: 2026, getDays });
+      expect(target.querySelector(".sk-subtitle")?.textContent).toBe("Year to date");
     });
 
     it("renders the explicit year as plain number when not the latest", () => {
@@ -394,7 +401,7 @@ describe("createStreakr", () => {
       expect(target.textContent).not.toContain("Active Rate");
     });
 
-    it("keeps the four fixed stat cards for historical years", () => {
+    it("shows Active Rate instead of Current Streak for historical years", () => {
       const historicalDays: StreakrDay[] = [
         { date: new Date(2025, 0, 1), total: 1, sources: { github: 1 } },
         { date: new Date(2025, 0, 2), total: 0, sources: {} },
@@ -408,8 +415,9 @@ describe("createStreakr", () => {
         getDays: () => historicalDays,
       });
 
-      expect(target.textContent).toContain("Current Streak");
-      expect(target.textContent).not.toContain("Active Rate");
+      expect(target.textContent).toContain("Active Rate");
+      expect(target.textContent).toContain("0.5%");
+      expect(target.textContent).not.toContain("Current Streak");
       expect(target.querySelectorAll(".sk-stat").length).toBe(4);
     });
 
@@ -418,10 +426,7 @@ describe("createStreakr", () => {
       expect(target.querySelector(".sk-heatmap-svg")).toBeTruthy();
     });
 
-    it("keeps a uniform column count between rolling and full-year views", () => {
-      // The current year renders a rolling 12-month window while historical
-      // years render the full calendar year. Both should end up with a similar
-      // number of week columns so the heatmap shell stays stable.
+    it("renders the current year as year-to-date instead of a full year", () => {
       const fullYear = makeYearDays(2025);
       const partialYear = makeYearDays(2026).filter((d) => {
         const cutoff = new Date(2026, 4, 10); // through May 10
@@ -438,16 +443,17 @@ describe("createStreakr", () => {
       const fullCols = target.querySelectorAll(".sk-heatmap-svg > g > g").length;
       instance.setYear(2026);
       const partialCols = target.querySelectorAll(".sk-heatmap-svg > g > g").length;
-      expect(partialCols).toBeGreaterThanOrEqual(52);
-      expect(partialCols).toBeLessThanOrEqual(54);
+      expect(partialCols).toBeLessThan(fullCols);
+      expect(partialCols).toBeGreaterThanOrEqual(19);
+      expect(partialCols).toBeLessThanOrEqual(21);
       expect(fullCols).toBeGreaterThanOrEqual(52);
       expect(fullCols).toBeLessThanOrEqual(54);
     });
 
-    it("shows the current year as a rolling 12-month window spanning the prior year", () => {
+    it("excludes prior-year days from the current year", () => {
       const today = new Date(2026, 0, 15); // Jan 15, 2026
       const priorYearDay: StreakrDay = {
-        date: new Date(2025, 11, 25), // Dec 25, 2025 — inside rolling window
+        date: new Date(2025, 11, 25),
         total: 3,
         sources: { github: 3 },
       };
@@ -464,9 +470,8 @@ describe("createStreakr", () => {
         getDays: (year) => (year === 2026 ? [currentYearDay] : [priorYearDay]),
       });
 
-      // Total must include both the prior-year and current-year days.
-      expect(target.textContent).toContain("8");
-      expect(target.textContent).toContain("Total Contributions");
+      const statValues = target.querySelectorAll<HTMLElement>(".sk-stat-value");
+      expect(statValues[0].textContent?.trim()).toBe("5");
     });
 
     it("renders total-only days when sources are omitted", () => {
@@ -500,7 +505,7 @@ describe("createStreakr", () => {
       expect(target.textContent).toContain("Total Contributions");
     });
 
-    it("includes rolling prior-year days in provider chip totals", () => {
+    it("excludes prior-year days from current-year provider chip totals", () => {
       const today = new Date(2026, 0, 15);
       instance = createStreakr({
         target,
@@ -516,12 +521,12 @@ describe("createStreakr", () => {
       const counts = Array.from(target.querySelectorAll(".sk-provider-count")).map(
         (el) => el.textContent,
       );
-      expect(counts).toEqual(["8", "9", "0"]);
+      expect(counts).toEqual(["5", "7", "0"]);
     });
 
-    it("does not let trailing padded zero-days reset the Current Streak stat", () => {
+    it("does not let future days reset the Current Streak stat", () => {
       // Regression: stats must be computed from real data, not the padded
-      // shell — otherwise the trailing zeros would always force current=0.
+      // full-year shell — otherwise future zeros would always force current=0.
       const days: StreakrDay[] = [];
       for (let i = 0; i < 5; i++) {
         days.push({
@@ -534,6 +539,7 @@ describe("createStreakr", () => {
         target,
         years: [2026],
         year: 2026,
+        today: new Date(2026, 0, 5),
         getDays: () => days,
       });
       const statValues = target.querySelectorAll<HTMLElement>(".sk-stat-value");

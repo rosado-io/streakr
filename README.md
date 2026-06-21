@@ -101,6 +101,7 @@ variables (`--sk-*`).
 | `state` | `"loading" \| "empty" \| "ready"` | `"ready"` | Override the lifecycle state. |
 | `years` | `number[]` | required | Years offered in the year tabs / picker. |
 | `year` | `number` | last `years` entry | Currently selected year. |
+| `today` | `Date` | `new Date()` | Reference date for the current-year year-to-date view. |
 | `getDays` | `(year) => StreakrDay[]` | required | Returns the days for a given year. |
 | `providers` | `StreakrProvider[]` | `[github, gitlab, bitbucket]` | Provider configuration (see below). |
 | `onYearChange` | `(year) => void` | — | Fires after the user picks a different year. |

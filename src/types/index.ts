@@ -68,7 +68,7 @@ export interface StreakrOptions {
   state?: StreakrState;
   years: number[];
   year?: number;
-  /** Reference "today" date used for the rolling 12-month window. Default: `new Date()`. */
+  /** Reference "today" date used for the current-year year-to-date window. Default: `new Date()`. */
   today?: Date;
   getDays: (year: number) => StreakrDay[];
   providers?: StreakrProvider[];
