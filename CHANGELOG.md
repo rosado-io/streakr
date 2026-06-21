@@ -1,3 +1,9 @@
+## [0.4.2](https://github.com/rosado-io/streakr/compare/v0.4.1...v0.4.2) (2026-06-21)
+
+### Bug Fixes
+
+* fix: show current year year-to-date stats (#110) ([`3b32333`](https://github.com/rosado-io/streakr/commit/3b323337e9f52321c3c5edbc7a3978b9859ad114)) by ****
+
 ## [0.4.1](https://github.com/rosado-io/streakr/compare/v0.4.0...v0.4.1) (2026-06-21)
 
 ### Bug Fixes
