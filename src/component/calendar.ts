@@ -53,7 +53,7 @@ export const padDaysToYear = (days: StreakrDay[], year: number): StreakrDay[] =>
   });
 };
 
-export const padGridColumns = <T>(cols: (T | null)[][]): (T | null)[][] =>
+const padGridColumns = <T>(cols: (T | null)[][]): (T | null)[][] =>
   cols.map((col) => [...col, ...new Array<T | null>(Math.max(0, 7 - col.length)).fill(null)]);
 
 export const padDaysToRange = (days: StreakrDay[], start: Date, end: Date): StreakrDay[] => {

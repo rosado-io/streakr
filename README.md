@@ -8,9 +8,9 @@
 ## What is Streakr?
 
 Streakr is a framework-agnostic, drop-in contribution-calendar component. It
-unifies activity from GitHub, GitLab, Bitbucket, self-hosted GitLab, or your own
-providers into one themeable heatmap with year tabs, provider toggles,
-loading/empty/ready states, stats, and an interactive tooltip.
+unifies activity from GitHub, GitLab, self-hosted GitLab, or your own providers
+into one themeable heatmap with year tabs, provider toggles, loading/empty/ready
+states, stats, and an interactive tooltip.
 
 The package is written in vanilla TypeScript and ships without React, Vue, or
 other runtime dependencies. Use the component directly from DOM code, wrap it in
@@ -36,10 +36,10 @@ Or load the ESM build and CSS from a CDN. Pin the version in production:
 
 <link
   rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/@rosado-io/streakr@0.2.4/dist/streakr.css"
+  href="https://cdn.jsdelivr.net/npm/@rosado-io/streakr@0.4.0/dist/streakr.css"
 />
 <script type="module">
-  import { createStreakr } from "https://esm.sh/@rosado-io/streakr@0.2.4";
+  import { createStreakr } from "https://esm.sh/@rosado-io/streakr@0.4.0";
 
   createStreakr({
     target: document.getElementById("streakr"),
@@ -93,7 +93,7 @@ variables (`--sk-*`).
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
 | `target` | `HTMLElement` | required | Where to mount the component. |
-| `theme` | `"dark" \| "light"` | `"dark"` | Visual theme. |
+| `theme` | `"dark" \| "light" \| "system"` | `"dark"` | Visual theme. `"system"` follows `prefers-color-scheme`. |
 | `accent` | `string` (CSS color) | `"#39d353"` | Drives chip/stat highlights and (optionally) the heatmap palette. |
 | `tintHeatmap` | `boolean` | `true` | When true, the heatmap palette is derived from `accent`. |
 | `showProviders` | `boolean` | `true` | Toggle the provider chip row. |
@@ -125,8 +125,10 @@ interface StreakrDay {
 }
 ```
 
-The component recomputes `total` based on which providers are toggled on, so
-the value you pass in should be the "all providers" total.
+When `sources` is present, the component recomputes `total` based on which
+providers are toggled on, so the value you pass in should be the "all providers"
+total. When `sources` is omitted, `total` is rendered as-is and provider toggles
+cannot split that day by source.
 
 ### `StreakrProvider`
 
@@ -141,8 +143,9 @@ interface StreakrProvider {
 
 ## Custom providers
 
-Built-in icons cover GitHub, GitLab, and Bitbucket. To support arbitrary
-providers, pass your own `providers` array — anything goes:
+Built-in display icons cover GitHub, GitLab, and Bitbucket. Data-fetching
+providers ship for GitHub and GitLab; for other sources, pass your own
+`providers` array and return matching `sources` keys from `getDays`:
 
 ```ts
 createStreakr({
@@ -301,9 +304,11 @@ const days = normalizeEventsToDaily(events).map((day) => ({
 }));
 ```
 
-`aggregate(providers, params)` returns a merged array; failed providers are
-skipped. See [docs/providers.md](docs/providers.md) for authentication,
-self-hosted GitLab, rate-limit notes, and writing your own provider.
+`aggregate(providers, params)` fetches providers concurrently, tags each returned
+day in `sources`, and skips failed providers. Call `normalizeEventsToDaily()` to
+merge same-date entries into one daily series. See [docs/providers.md](docs/providers.md)
+for authentication, self-hosted GitLab, rate-limit notes, and writing your own
+provider.
 
 ### Utilities
 
@@ -350,8 +355,8 @@ Treat tokens as secrets:
 Streakr follows [semver](https://semver.org/), with one caveat: while the
 package is pre-1.0, **minor releases (`0.x.0`) may include breaking changes**.
 
-If you want to pin against breakage, use a tilde range (`~0.2.0`) instead of a
-caret (`^0.2.0`) until 1.0.
+If you want to pin against breakage, use a tilde range (`~0.4.0`) instead of a
+caret (`^0.4.0`) until 1.0.
 
 ## Development
 
@@ -359,6 +364,7 @@ caret (`^0.2.0`) until 1.0.
 pnpm install
 pnpm dev      # runs the demo / landing
 pnpm test
+pnpm audit:dead-code
 pnpm build
 ```
 

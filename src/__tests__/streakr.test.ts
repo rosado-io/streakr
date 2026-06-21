@@ -469,6 +469,39 @@ describe("createStreakr", () => {
       expect(target.textContent).toContain("Total Contributions");
     });
 
+    it("renders total-only days when sources are omitted", () => {
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        today: new Date(2026, 0, 15),
+        getDays: (year) => (year === 2026 ? [{ date: new Date(2026, 0, 5), total: 4 }] : []),
+      });
+
+      expect(target.querySelector(".sk-empty")).toBeNull();
+      expect(target.textContent).toContain("4");
+      expect(target.textContent).toContain("Total Contributions");
+    });
+
+    it("includes rolling prior-year days in provider chip totals", () => {
+      const today = new Date(2026, 0, 15);
+      instance = createStreakr({
+        target,
+        years: [2025, 2026],
+        year: 2026,
+        today,
+        getDays: (year) =>
+          year === 2026
+            ? [{ date: new Date(2026, 0, 5), total: 12, sources: { github: 5, gitlab: 7 } }]
+            : [{ date: new Date(2025, 11, 25), total: 5, sources: { github: 3, gitlab: 2 } }],
+      });
+
+      const counts = Array.from(target.querySelectorAll(".sk-provider-count")).map(
+        (el) => el.textContent,
+      );
+      expect(counts).toEqual(["8", "9", "0"]);
+    });
+
     it("does not let trailing padded zero-days reset the Current Streak stat", () => {
       // Regression: stats must be computed from real data, not the padded
       // shell — otherwise the trailing zeros would always force current=0.
