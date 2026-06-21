@@ -192,8 +192,10 @@ const days = normalizeEventsToDaily(raw);
 ```
 
 Each successful provider's events are tagged in `sources` with the provider name.
-If one provider fails, `aggregate()` skips it and returns data from the providers
-that succeeded.
+`aggregate()` returns those tagged provider entries; `normalizeEventsToDaily()`
+then merges same-date entries into a single daily series and fills gaps. If one
+provider fails, `aggregate()` skips it and returns data from the providers that
+succeeded.
 
 If you need fail-fast behavior, call each provider's `fetchEvents()` directly and
 handle errors in your application.

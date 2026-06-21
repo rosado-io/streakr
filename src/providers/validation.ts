@@ -3,7 +3,7 @@ import type { ContributionDay } from "../types";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-export const isValidDate = (value: string): boolean => {
+const isValidDate = (value: string): boolean => {
   const parsed = DATE_RE.test(value) ? new Date(`${value}T00:00:00Z`) : null;
   return !!parsed && !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 };
@@ -25,7 +25,6 @@ export const toCanonicalDays = (
   start: string,
   end: string,
 ): ContributionDay[] => {
-  if (days.length) return normalizeEventsToDaily(days);
   const anchors =
     start === end
       ? [{ date: start, count: 0 }]
@@ -33,5 +32,5 @@ export const toCanonicalDays = (
           { date: start, count: 0 },
           { date: end, count: 0 },
         ];
-  return normalizeEventsToDaily(anchors);
+  return normalizeEventsToDaily([...anchors, ...days]);
 };
