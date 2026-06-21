@@ -1,3 +1,9 @@
+## [0.4.1](https://github.com/rosado-io/streakr/compare/v0.4.0...v0.4.1) (2026-06-21)
+
+### Bug Fixes
+
+* fix: improve provider consistency and package quality (#109) ([`c5bdec9`](https://github.com/rosado-io/streakr/commit/c5bdec9bb4e8f78ccf5e6bc4404e8f8ea89a2e4f)) by ****
+
 ## [0.4.0](https://github.com/rosado-io/streakr/compare/v0.3.0...v0.4.0) (2026-06-21)
 
 ### Features
