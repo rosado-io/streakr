@@ -244,6 +244,42 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     return colG;
   };
 
+  const getHeatmapGeometry = (
+    colsLength: number,
+    containerW: number,
+    wrap?: HTMLElement,
+  ): {
+    labelsW: number;
+    trailingW: number;
+    sq: number;
+    colStep: number;
+    height: number;
+    width: number;
+    fontSize: number;
+  } => {
+    const labelsW = 28;
+    const trailingW = 8;
+    const gridW = Math.max(
+      0,
+      (containerW || wrap?.getBoundingClientRect().width || 820) - labelsW - trailingW,
+    );
+    const targetGap = 3;
+    const rawSq = gridW / Math.max(1, colsLength) - targetGap;
+    const sq = Math.max(9, Math.min(11, rawSq));
+    const gap = Math.max(2, Math.min(3, Math.round(sq * 0.25)));
+    const colStep = sq + gap;
+
+    return {
+      labelsW,
+      trailingW,
+      sq,
+      colStep,
+      height: 7 * colStep + 24,
+      width: labelsW + colsLength * colStep + trailingW,
+      fontSize: Math.max(9, Math.min(11, sq * 0.82)),
+    };
+  };
+
   const renderHeatmap = (
     wrap: HTMLElement,
     days: StreakrLeveledDay[],
@@ -251,26 +287,17 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   ): void => {
     const cols = gridFromDays(days);
     const headers = monthHeaders(cols);
-    const labelsW = 28;
-    const trailingW = 8;
-    const gridW = Math.max(
-      0,
-      (containerW || wrap.getBoundingClientRect().width || 820) - labelsW - trailingW,
+    const { labelsW, sq, colStep, height, width, fontSize } = getHeatmapGeometry(
+      cols.length,
+      containerW,
+      wrap,
     );
-    const targetGap = 3;
-    const rawSq = gridW / Math.max(1, cols.length) - targetGap;
-    const sq = Math.max(9, Math.min(11, rawSq));
-    const gap = Math.max(2, Math.min(3, Math.round(sq * 0.25)));
-    const colStep = sq + gap;
-    const H = 7 * colStep + 24;
-    const W = labelsW + cols.length * colStep + trailingW;
-    const fontSize = Math.max(9, Math.min(11, sq * 0.82));
 
     const svgEl = svg("svg", {
       class: "sk-heatmap-svg",
-      width: W,
-      height: H,
-      viewBox: `0 0 ${W} ${H}`,
+      width,
+      height,
+      viewBox: `0 0 ${width} ${height}`,
       role: "img",
       "aria-label": isCurrentYear()
         ? `Contribution heatmap for ${state.year ?? "selected year"} year to date`
@@ -337,6 +364,11 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
   const getHeatmapDays = (days: StreakrDay[]): StreakrDay[] => {
     if (state.year == null) return days;
+    return padDaysToYear(days, state.year);
+  };
+
+  const getStatsDays = (days: StreakrDay[]): StreakrDay[] => {
+    if (state.year == null) return days;
     if (isCurrentYear()) {
       const { start, end } = yearToDateRange(cfg.today);
       return padDaysToRange(days, start, end);
@@ -347,8 +379,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   const computeRenderFlags = (): RenderFlags => {
     const days = getCurrentDays();
     const heatmapDays = getHeatmapDays(days);
-    const stats = computeStats(heatmapDays);
-    const yearTotal = heatmapDays.reduce((a, d) => a + d.total, 0);
+    const statsDays = getStatsDays(days);
+    const stats = computeStats(statsDays);
+    const yearTotal = statsDays.reduce((a, d) => a + d.total, 0);
     const leveled = levelize(heatmapDays);
     const isLoading = cfg.state === "loading";
     const isEmpty = cfg.state === "empty" || (cfg.state === "ready" && yearTotal === 0);
@@ -414,18 +447,18 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   };
 
   const shouldRenderProviderRow = (flags: RenderFlags): boolean =>
-    !flags.isLoading &&
-    !flags.isEmpty &&
     cfg.showProviders &&
     cfg.providers.length > 0 &&
-    flags.providersWithDataCount > 1;
+    (flags.isLoading
+      ? cfg.providers.length > 1
+      : !flags.isEmpty && flags.providersWithDataCount > 1);
 
   const renderYearsBar = (flags: RenderFlags): HTMLElement => {
     const yearsBar = h("div", { class: "sk-years" });
     yearsBar.dataset.noProviders = String(!cfg.showProviders);
     yearsBar.appendChild(renderYearsList(flags.isLoading));
     if (shouldRenderProviderRow(flags)) {
-      yearsBar.appendChild(renderProviderRow());
+      yearsBar.appendChild(renderProviderRow(flags.isLoading));
     }
     return yearsBar;
   };
@@ -445,7 +478,12 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     ].find(([matches]) => matches) as [boolean, () => HTMLElement] | undefined;
 
     if (stateBody) {
-      card.appendChild(stateBody[1]());
+      const body = stateBody[1]() as ReadyBody;
+      card.appendChild(body);
+      body.__skDraw?.();
+      if (body.__skObserveTarget) {
+        resizeObs.observe(body.__skObserveTarget);
+      }
       return;
     }
 
@@ -480,19 +518,23 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     }
   };
 
-  const renderProviderRow = (): HTMLElement => {
+  const renderProviderRow = (isLoading = false): HTMLElement => {
     const row = h("div", { class: "sk-providers" });
     const totals = computeProviderTotals();
     cfg.providers.forEach((p) => {
       const active = !!state.providers[p.key];
       const total = totals[p.key].toLocaleString();
+      const title = isLoading ? p.name : p.name + " — " + total;
+      const ariaLabel = isLoading
+        ? `${p.name}: loading contributions, ${active ? "enabled" : "disabled"}`
+        : `${p.name}: ${total} contributions, ${active ? "enabled" : "disabled"}`;
       const iconHtml = providerIconHtml(p);
       const btn = h(
         "button",
         {
           class: "sk-provider" + (active ? " active" : ""),
-          title: p.name + " — " + total,
-          "aria-label": `${p.name}: ${total} contributions, ${active ? "enabled" : "disabled"}`,
+          title,
+          "aria-label": ariaLabel,
           "aria-pressed": active,
           onclick: () => toggleProvider(p.key),
         },
@@ -502,7 +544,16 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
             html: iconHtml ? trustedHtml(iconHtml) : undefined,
             style: iconHtml ? undefined : { background: p.color, borderRadius: "50%" },
           }),
-          h("span", { class: "sk-provider-count", text: total }),
+          h(
+            "span",
+            { class: "sk-provider-count" },
+            isLoading
+              ? h("span", {
+                  class: "sk-skeleton sk-provider-count-skeleton",
+                  "aria-hidden": true,
+                })
+              : total,
+          ),
         ],
       );
       row.appendChild(btn);
@@ -523,56 +574,42 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   };
 
   const renderSkeletonHeatmap = (containerW: number): SVGElement => {
-    const cols = 53;
-    const labelsW = 28;
-    const trailingW = 8;
-    const targetGap = 3;
-    const rawSq = (containerW - labelsW - trailingW) / cols - targetGap;
-    const sq = Math.max(9, Math.min(11, rawSq));
-    const gap = Math.max(2, Math.min(3, Math.round(sq * 0.25)));
-    const colStep = sq + gap;
-    const H = 7 * colStep + 24;
-    const W = labelsW + cols * colStep + trailingW;
-    const fontSize = Math.max(9, Math.min(11, sq * 0.82));
+    const skeletonYear = state.year ?? cfg.today.getFullYear();
+    const skeletonDays = padDaysToYear([], skeletonYear).map((day): StreakrLeveledDay => ({
+      ...day,
+      level: 0,
+    }));
+    const cols = gridFromDays(skeletonDays);
+    const headers = monthHeaders(cols);
+    const { labelsW, sq, colStep, height, width, fontSize } = getHeatmapGeometry(
+      cols.length,
+      containerW,
+    );
 
     const svgEl = svg("svg", {
       class: "sk-heatmap-svg sk-heatmap-svg--skeleton",
-      width: W,
-      height: H,
-      viewBox: `0 0 ${W} ${H}`,
+      width,
+      height,
+      viewBox: `0 0 ${width} ${height}`,
       role: "img",
       "aria-label": "Loading contribution heatmap",
     });
 
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-    for (let i = 0; i < months.length; i++) {
+    headers.forEach((hd) => {
       svgEl.appendChild(
         svg(
           "text",
           {
-            x: labelsW + i * Math.floor(cols / 12) * colStep,
+            x: labelsW + hd.col * colStep,
             y: 10,
             fill: "var(--sk-text-muted)",
             "font-size": fontSize,
             "font-family": "'Geist', sans-serif",
           },
-          months[i],
+          hd.label,
         ),
       );
-    }
+    });
 
     [1, 3, 5].forEach((d, i) => {
       svgEl.appendChild(
@@ -591,30 +628,31 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     });
 
     const g = svg("g", { transform: `translate(${labelsW}, 18)` });
-    for (let ci = 0; ci < cols; ci++) {
+    cols.forEach((col, ci) => {
       const colG = svg("g", { transform: `translate(${ci * colStep}, 0)` });
-      for (let ri = 0; ri < 7; ri++) {
+      col.forEach((day, ri) => {
         colG.appendChild(
           svg("rect", {
             y: ri * colStep,
             width: sq,
             height: sq,
             rx: Math.max(2, sq * 0.22),
-            fill: "var(--sk-heat-0)",
+            fill: day ? "var(--sk-heat-0)" : "transparent",
           }),
         );
-      }
+      });
       g.appendChild(colG);
-    }
+    });
     svgEl.appendChild(g);
     return svgEl;
   };
 
   const renderLoadingBody = (): HTMLElement => {
+    const body = h("div", { class: "sk-body" }) as ReadyBody;
+    body.dataset.noStats = String(!cfg.showStats);
+
     const heatmapWrap = h("div", { class: "sk-heatmap-wrap" });
-    const heatmapInner = h("div", { class: "sk-heatmap-svg-wrap" });
-    const svgEl = renderSkeletonHeatmap(Math.max(200, heatmapWrap.clientWidth - 32));
-    heatmapInner.appendChild(svgEl);
+    const heatmapInner = h("div", { class: "sk-heatmap-stage" });
     heatmapWrap.appendChild(heatmapInner);
 
     const legend = h("div", { class: "sk-legend" }, [
@@ -625,18 +663,32 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       h("span", { text: "More" }),
     ]);
     heatmapWrap.appendChild(legend);
+    body.appendChild(heatmapWrap);
 
-    const skel = (w: number, hpx: number) =>
-      h("div", {
-        class: "sk-skeleton",
-        style: { width: w + "px", height: hpx + "px", marginBottom: "10px" },
-      });
-    const stat = () => h("div", { class: "sk-stat" }, [skel(90, 11), skel(60, 26)]);
+    const draw = () => {
+      const w = heatmapWrap.clientWidth - 32;
+      const svgEl = renderSkeletonHeatmap(Math.max(200, w));
+      heatmapInner.replaceChildren(h("div", { class: "sk-heatmap-svg-wrap" }, [svgEl]));
+    };
+    body.__skDraw = draw;
+    currentDraw = draw;
+    body.__skObserveTarget = heatmapWrap;
 
-    return h("div", { class: "sk-body" }, [
-      heatmapWrap,
-      h("div", { class: "sk-stats" }, [stat(), stat(), stat(), stat()]),
-    ]);
+    if (cfg.showStats) {
+      const contextualStat = isCurrentYear()
+        ? loadingStatCard("Current Streak", " days", 2)
+        : loadingStatCard("Active Rate", "%", 2);
+      body.appendChild(
+        h("div", { class: "sk-stats" }, [
+          loadingStatCard("Total Contributions", undefined, 3),
+          loadingStatCard("Best Streak", " days", 2),
+          contextualStat,
+          loadingStatCard("Active Days", undefined, 2),
+        ]),
+      );
+    }
+
+    return body;
   };
 
   const renderEmpty = (): HTMLElement =>
@@ -680,7 +732,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     body.dataset.noStats = String(!cfg.showStats);
 
     const heatmapWrap = h("div", { class: "sk-heatmap-wrap" });
-    const heatmapInner = h("div");
+    const heatmapInner = h("div", { class: "sk-heatmap-stage" });
     heatmapWrap.appendChild(heatmapInner);
     const legend = h("div", { class: "sk-legend" }, [
       h("span", { text: "Less" }),
@@ -719,6 +771,18 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     }
     return body;
   };
+
+  const loadingStatCard = (label: string, suffix?: string, digits: 2 | 3 = 2): HTMLElement =>
+    h("div", { class: "sk-stat" }, [
+      h("div", { class: "sk-stat-label", text: label }),
+      h("div", { class: "sk-stat-value sk-stat-value--loading" }, [
+        h("span", {
+          class: `sk-skeleton sk-stat-value-skeleton sk-stat-value-skeleton--${digits}`,
+          "aria-hidden": true,
+        }),
+        suffix ? h("span", { class: "sk-stat-suffix", text: suffix }) : null,
+      ]),
+    ]);
 
   const statCard = (label: string, value: string | number, suffix?: string): HTMLElement =>
     h("div", { class: "sk-stat" }, [

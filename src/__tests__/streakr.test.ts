@@ -418,7 +418,7 @@ describe("createStreakr", () => {
       expect(target.querySelector(".sk-heatmap-svg")).toBeTruthy();
     });
 
-    it("renders the current year as year-to-date instead of a full year", () => {
+    it("renders the current-year heatmap with a full-year footprint", () => {
       const fullYear = makeYearDays(2025);
       const cutoff = new Date(2026, 4, 10);
       const partialYear = makeYearDays(2026).filter((d) => d.date <= cutoff);
@@ -432,10 +432,10 @@ describe("createStreakr", () => {
       });
       const fullCols = target.querySelectorAll(".sk-heatmap-svg > g > g").length;
       instance.setYear(2026);
-      const partialCols = target.querySelectorAll(".sk-heatmap-svg > g > g").length;
-      expect(partialCols).toBeLessThan(fullCols);
-      expect(partialCols).toBeGreaterThanOrEqual(19);
-      expect(partialCols).toBeLessThanOrEqual(21);
+      const currentCols = target.querySelectorAll(".sk-heatmap-svg > g > g").length;
+      const currentCells = target.querySelectorAll("rect.sk-heatmap-cell").length;
+      expect(currentCols).toBe(fullCols);
+      expect(currentCells).toBe(365);
       expect(fullCols).toBeGreaterThanOrEqual(52);
       expect(fullCols).toBeLessThanOrEqual(54);
     });
@@ -548,10 +548,59 @@ describe("createStreakr", () => {
     it("renders the loading skeleton when state='loading'", () => {
       instance = createStreakr({ target, years, state: "loading", getDays });
       expect(target.querySelector(".sk-heatmap-svg--skeleton")).toBeTruthy();
+      expect(target.querySelector(".sk-heatmap-stage > .sk-heatmap-svg-wrap")).toBeTruthy();
       expect(target.querySelector(".sk-legend")).toBeTruthy();
       expect(target.querySelector(".sk-heatmap-svg")).toBeTruthy();
+      expect(target.querySelectorAll(".sk-provider").length).toBe(3);
+      expect(target.querySelectorAll(".sk-provider-count .sk-skeleton").length).toBe(3);
       expect(target.querySelectorAll(".sk-stat").length).toBe(4);
+      expect(target.textContent).toContain("Total Contributions");
+      expect(target.textContent).toContain("Best Streak");
+      expect(target.textContent).toContain("Current Streak");
+      expect(target.textContent).toContain("Active Days");
+      expect(target.querySelectorAll(".sk-stat-label .sk-skeleton").length).toBe(0);
+      expect(target.querySelectorAll(".sk-stat-value .sk-skeleton").length).toBe(4);
+      expect(target.querySelectorAll(".sk-stat-value-skeleton--3").length).toBe(1);
+      expect(target.querySelectorAll(".sk-stat-value-skeleton--2").length).toBe(3);
       expect(target.textContent).not.toContain("Loading");
+    });
+
+    it("keeps heatmap geometry stable between ready and loading", () => {
+      const monthLabels = new Set([
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ]);
+      const heatmapSnapshot = () => {
+        const svg = target.querySelector<SVGSVGElement>(".sk-heatmap-svg");
+        const columns = Array.from(svg?.querySelectorAll(":scope > g > g") ?? []);
+        const months = Array.from(svg?.querySelectorAll("text") ?? [])
+          .filter((label) => monthLabels.has(label.textContent ?? ""))
+          .map((label) => `${label.textContent}:${label.getAttribute("x")}`);
+        return {
+          width: svg?.getAttribute("width"),
+          height: svg?.getAttribute("height"),
+          viewBox: svg?.getAttribute("viewBox"),
+          firstColumn: columns[0]?.getAttribute("transform"),
+          lastColumn: columns[columns.length - 1]?.getAttribute("transform"),
+          months,
+        };
+      };
+
+      instance = createStreakr({ target, years: [2026], year: 2026, getDays });
+      const ready = heatmapSnapshot();
+      instance.update({ state: "loading" });
+
+      expect(heatmapSnapshot()).toEqual(ready);
     });
 
     it("renders the empty illustration when state='empty'", () => {

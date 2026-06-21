@@ -22,27 +22,20 @@ function generateYear(year: number, seed: number): StreakrDay[] {
     const total = Math.max(0, Math.round(rand() * 8 * weekendBias * burst * empty));
     let github = 0;
     let gitlab = 0;
-    let bitbucket = 0;
     if (total > 0) {
       const r = rand();
-      if (r < 0.55) {
+      if (r < 0.6) {
         github = Math.round(total * (0.6 + rand() * 0.4));
-        gitlab = Math.max(0, total - github - Math.round(rand()));
-        bitbucket = Math.max(0, total - github - gitlab);
-      } else if (r < 0.85) {
+        gitlab = Math.max(0, total - github);
+      } else {
         gitlab = Math.round(total * (0.5 + rand() * 0.4));
         github = Math.max(0, total - gitlab - Math.round(rand()));
-        bitbucket = Math.max(0, total - github - gitlab);
-      } else {
-        bitbucket = Math.round(total * (0.4 + rand() * 0.4));
-        github = Math.max(0, total - bitbucket - Math.round(rand()));
-        gitlab = Math.max(0, total - github - bitbucket);
       }
     }
     days.push({
       date: new Date(cur),
-      total: github + gitlab + bitbucket,
-      sources: { github, gitlab, bitbucket },
+      total: github + gitlab,
+      sources: { github, gitlab },
     });
     cur.setDate(cur.getDate() + 1);
   }
