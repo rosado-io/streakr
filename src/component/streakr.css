@@ -238,7 +238,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transform: translateY(3px);
+  transform: translateY(-1px);
 }
 .sk-heatmap-svg { display: block; max-width: 100%; }
 .sk-legend {
