@@ -1,3 +1,9 @@
+## [0.5.1](https://github.com/rosado-io/streakr/compare/v0.5.0...v0.5.1) (2026-06-22)
+
+### Bug Fixes
+
+* fix: fine-tune heatmap vertical offset (#114) ([`794d6df`](https://github.com/rosado-io/streakr/commit/794d6df67224b35c3c03927bd4f4cbdb7929959b)) by ****
+
 ## [0.5.0](https://github.com/rosado-io/streakr/compare/v0.4.2...v0.5.0) (2026-06-22)
 
 ### Features
