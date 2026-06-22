@@ -1,3 +1,9 @@
+## [0.5.0](https://github.com/rosado-io/streakr/compare/v0.4.2...v0.5.0) (2026-06-22)
+
+### Features
+
+* feat: stabilize loading heatmap layout (#111) ([`b8cc228`](https://github.com/rosado-io/streakr/commit/b8cc2287e0018b3c0b5bb853d51b9e990d81437c)) by ****
+
 ## [0.4.2](https://github.com/rosado-io/streakr/compare/v0.4.1...v0.4.2) (2026-06-21)
 
 ### Bug Fixes
