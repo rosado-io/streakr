@@ -17,7 +17,7 @@ jobs:
     outputs:
       released: ${{ steps.semantic.outputs.new_release_published }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
