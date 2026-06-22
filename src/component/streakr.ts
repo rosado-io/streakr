@@ -568,10 +568,11 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     cfg.providers.forEach((p) => {
       const active = !!state.providers[p.key];
       const total = totals[p.key].toLocaleString();
+      const activeState = active ? "enabled" : "disabled";
       const title = isLoading ? p.name : p.name + " — " + total;
       const ariaLabel = isLoading
-        ? `${p.name}: loading contributions, ${active ? "enabled" : "disabled"}`
-        : `${p.name}: ${total} contributions, ${active ? "enabled" : "disabled"}`;
+        ? `${p.name}: loading contributions, ${activeState}`
+        : `${p.name}: ${total} contributions, ${activeState}`;
       const iconHtml = providerIconHtml(p);
       const btn = h(
         "button",
