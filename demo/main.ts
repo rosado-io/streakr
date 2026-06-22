@@ -1,5 +1,11 @@
 import "./styles.css";
-import { createStreakr, type StreakrInstance, type StreakrTheme } from "../src/index";
+import {
+  createStreakr,
+  type StreakrInstance,
+  type StreakrProvider,
+  type StreakrState,
+  type StreakrTheme,
+} from "../src/index";
 import { StreakrSampleData } from "./sample-data";
 
 const ACCENT_PRESETS: { label: string; value: string }[] = [
@@ -8,6 +14,11 @@ const ACCENT_PRESETS: { label: string; value: string }[] = [
   { label: "Purple", value: "#a371f7" },
   { label: "Orange", value: "#fc6d26" },
   { label: "Pink", value: "#ff5d9e" },
+];
+
+const DEMO_PROVIDERS: StreakrProvider[] = [
+  { key: "github", name: "GitHub", color: "#39d353" },
+  { key: "gitlab", name: "GitLab", color: "#fc6d26" },
 ];
 
 const root = document.getElementById("root");
@@ -37,7 +48,7 @@ root.innerHTML = `
         <span class="lv1-h1-accent">Every platform.</span>
       </h1>
       <p class="lv1-sub">
-        A drop-in heatmap component that unifies GitHub, GitLab, and Bitbucket activity.
+        A drop-in heatmap component that unifies GitHub and GitLab activity.
         Themed, themable, and tiny. No build step.
       </p>
       <div class="lv1-cta">
@@ -139,6 +150,7 @@ const state = {
   accent: "#39d353",
   showProviders: true,
   showStats: true,
+  componentState: "ready" as StreakrState,
 };
 
 let instance: StreakrInstance | null = null;
@@ -153,7 +165,8 @@ function mountComponent(): void {
     tintHeatmap: true,
     showProviders: state.showProviders,
     showStats: state.showStats,
-    state: "ready",
+    state: state.componentState,
+    providers: DEMO_PROVIDERS,
     years: StreakrSampleData.availableYears,
     year: 2026,
     today: StreakrSampleData.today,
@@ -170,6 +183,7 @@ function updateComponent(): void {
     tintHeatmap: true,
     showProviders: state.showProviders,
     showStats: state.showStats,
+    state: state.componentState,
   });
   slot.dataset.theme = state.theme;
 }
@@ -250,6 +264,21 @@ function renderControls(): void {
       svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h18"/></svg>',
       onClick: () => {
         state.showStats = !state.showStats;
+        updateComponent();
+        renderControls();
+      },
+    }),
+  );
+
+  controls.appendChild(makeSep());
+
+  controls.appendChild(
+    makeToggle({
+      tip: state.componentState === "loading" ? "Show ready state" : "Show loading state",
+      active: state.componentState === "loading",
+      svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-6.2-8.56"/><path d="M21 3v6h-6"/></svg>',
+      onClick: () => {
+        state.componentState = state.componentState === "loading" ? "ready" : "loading";
         updateComponent();
         renderControls();
       },
