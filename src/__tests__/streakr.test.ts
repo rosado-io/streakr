@@ -566,20 +566,10 @@ describe("createStreakr", () => {
     });
 
     it("keeps heatmap geometry stable between ready and loading", () => {
-      const monthLabels = new Set([
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ]);
+      const monthFormatter = new Intl.DateTimeFormat("en-US", { month: "short" });
+      const monthLabels = new Set(
+        Array.from({ length: 12 }, (_, month) => monthFormatter.format(new Date(2026, month, 1))),
+      );
       const heatmapSnapshot = () => {
         const svg = target.querySelector<SVGSVGElement>(".sk-heatmap-svg");
         const columns = Array.from(svg?.querySelectorAll(":scope > g > g") ?? []);

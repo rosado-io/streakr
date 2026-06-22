@@ -210,6 +210,25 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     rect.addEventListener("mouseleave", hideTooltip);
   };
 
+  const HEATMAP_DAY_LABEL_ROWS = [1, 3, 5];
+
+  interface HeatmapGeometry {
+    labelsW: number;
+    trailingW: number;
+    sq: number;
+    colStep: number;
+    height: number;
+    width: number;
+    fontSize: number;
+  }
+
+  type HeatmapCellBuilder = (
+    day: StreakrLeveledDay | null,
+    ri: number,
+    sq: number,
+    colStep: number,
+  ) => SVGElement;
+
   const buildHeatmapCell = (
     day: StreakrLeveledDay | null,
     ri: number,
@@ -236,10 +255,11 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     ci: number,
     sq: number,
     colStep: number,
+    buildCell: HeatmapCellBuilder,
   ): SVGElement => {
     const colG = svg("g", { transform: `translate(${ci * colStep}, 0)` });
     col.forEach((day, ri) => {
-      colG.appendChild(buildHeatmapCell(day, ri, sq, colStep));
+      colG.appendChild(buildCell(day, ri, sq, colStep));
     });
     return colG;
   };
@@ -248,15 +268,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     colsLength: number,
     containerW: number,
     wrap?: HTMLElement,
-  ): {
-    labelsW: number;
-    trailingW: number;
-    sq: number;
-    colStep: number;
-    height: number;
-    width: number;
-    fontSize: number;
-  } => {
+  ): HeatmapGeometry => {
     const labelsW = 28;
     const trailingW = 8;
     const gridW = Math.max(
@@ -280,29 +292,12 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     };
   };
 
-  const renderHeatmap = (
-    wrap: HTMLElement,
-    days: StreakrLeveledDay[],
-    containerW: number,
+  const appendHeatmapLabels = (
+    svgEl: SVGElement,
+    headers: { col: number; label: string }[],
+    geometry: HeatmapGeometry,
   ): void => {
-    const cols = gridFromDays(days);
-    const headers = monthHeaders(cols);
-    const { labelsW, sq, colStep, height, width, fontSize } = getHeatmapGeometry(
-      cols.length,
-      containerW,
-      wrap,
-    );
-
-    const svgEl = svg("svg", {
-      class: "sk-heatmap-svg",
-      width,
-      height,
-      viewBox: `0 0 ${width} ${height}`,
-      role: "img",
-      "aria-label": isCurrentYear()
-        ? `Contribution heatmap for ${state.year ?? "selected year"} year to date`
-        : `Contribution heatmap for ${state.year ?? "selected year"}`,
-    });
+    const { labelsW, sq, colStep, fontSize } = geometry;
 
     headers.forEach((hd) => {
       svgEl.appendChild(
@@ -320,7 +315,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       );
     });
 
-    [1, 3, 5].forEach((d, i) => {
+    HEATMAP_DAY_LABEL_ROWS.forEach((d, i) => {
       svgEl.appendChild(
         svg(
           "text",
@@ -335,12 +330,61 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         ),
       );
     });
+  };
+
+  const createHeatmapSvg = (
+    cols: (StreakrLeveledDay | null)[][],
+    {
+      className,
+      ariaLabel,
+      containerW,
+      wrap,
+      buildCell,
+    }: {
+      className: string;
+      ariaLabel: string;
+      containerW: number;
+      wrap?: HTMLElement;
+      buildCell?: HeatmapCellBuilder;
+    },
+  ): SVGElement => {
+    const geometry = getHeatmapGeometry(cols.length, containerW, wrap);
+    const { labelsW, sq, colStep, height, width } = geometry;
+    const svgEl = svg("svg", {
+      class: className,
+      width,
+      height,
+      viewBox: `0 0 ${width} ${height}`,
+      role: "img",
+      "aria-label": ariaLabel,
+    });
+    const cellBuilder = buildCell ?? buildHeatmapCell;
+
+    appendHeatmapLabels(svgEl, monthHeaders(cols), geometry);
 
     const g = svg("g", { transform: `translate(${labelsW}, 18)` });
     cols.forEach((col, ci) => {
-      g.appendChild(buildHeatmapColumn(col, ci, sq, colStep));
+      g.appendChild(buildHeatmapColumn(col, ci, sq, colStep, cellBuilder));
     });
     svgEl.appendChild(g);
+
+    return svgEl;
+  };
+
+  const renderHeatmap = (
+    wrap: HTMLElement,
+    days: StreakrLeveledDay[],
+    containerW: number,
+  ): void => {
+    const cols = gridFromDays(days);
+    const svgEl = createHeatmapSvg(cols, {
+      className: "sk-heatmap-svg",
+      ariaLabel: isCurrentYear()
+        ? `Contribution heatmap for ${state.year ?? "selected year"} year to date`
+        : `Contribution heatmap for ${state.year ?? "selected year"}`,
+      containerW,
+      wrap,
+    });
 
     wrap.replaceChildren(h("div", { class: "sk-heatmap-svg-wrap" }, [svgEl]));
   };
@@ -573,6 +617,15 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     return totals;
   };
 
+  const buildSkeletonHeatmapCell: HeatmapCellBuilder = (day, ri, sq, colStep) =>
+    svg("rect", {
+      y: ri * colStep,
+      width: sq,
+      height: sq,
+      rx: Math.max(2, sq * 0.22),
+      fill: day ? "var(--sk-heat-0)" : "transparent",
+    });
+
   const renderSkeletonHeatmap = (containerW: number): SVGElement => {
     const skeletonYear = state.year ?? cfg.today.getFullYear();
     const skeletonDays = padDaysToYear([], skeletonYear).map(
@@ -582,71 +635,12 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       }),
     );
     const cols = gridFromDays(skeletonDays);
-    const headers = monthHeaders(cols);
-    const { labelsW, sq, colStep, height, width, fontSize } = getHeatmapGeometry(
-      cols.length,
+    return createHeatmapSvg(cols, {
+      className: "sk-heatmap-svg sk-heatmap-svg--skeleton",
+      ariaLabel: "Loading contribution heatmap",
       containerW,
-    );
-
-    const svgEl = svg("svg", {
-      class: "sk-heatmap-svg sk-heatmap-svg--skeleton",
-      width,
-      height,
-      viewBox: `0 0 ${width} ${height}`,
-      role: "img",
-      "aria-label": "Loading contribution heatmap",
+      buildCell: buildSkeletonHeatmapCell,
     });
-
-    headers.forEach((hd) => {
-      svgEl.appendChild(
-        svg(
-          "text",
-          {
-            x: labelsW + hd.col * colStep,
-            y: 10,
-            fill: "var(--sk-text-muted)",
-            "font-size": fontSize,
-            "font-family": "'Geist', sans-serif",
-          },
-          hd.label,
-        ),
-      );
-    });
-
-    [1, 3, 5].forEach((d, i) => {
-      svgEl.appendChild(
-        svg(
-          "text",
-          {
-            x: 0,
-            y: 24 + d * colStep + sq - 2,
-            fill: "var(--sk-text-subtle)",
-            "font-size": Math.max(8.5, fontSize - 1),
-            "font-family": "'Geist', sans-serif",
-          },
-          DAY_LABELS[i],
-        ),
-      );
-    });
-
-    const g = svg("g", { transform: `translate(${labelsW}, 18)` });
-    cols.forEach((col, ci) => {
-      const colG = svg("g", { transform: `translate(${ci * colStep}, 0)` });
-      col.forEach((day, ri) => {
-        colG.appendChild(
-          svg("rect", {
-            y: ri * colStep,
-            width: sq,
-            height: sq,
-            rx: Math.max(2, sq * 0.22),
-            fill: day ? "var(--sk-heat-0)" : "transparent",
-          }),
-        );
-      });
-      g.appendChild(colG);
-    });
-    svgEl.appendChild(g);
-    return svgEl;
   };
 
   const createReadyBodyShell = (): {
