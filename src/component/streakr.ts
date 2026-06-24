@@ -611,7 +611,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       if (target.classList.contains("sk-ring-line--future")) {
         return null;
       }
-      const dateAttr = target.getAttribute("data-date");
+      const dateAttr = target.dataset.date;
       if (!dateAttr) return null;
       return findDayByDate(days, new Date(dateAttr));
     };
@@ -641,20 +641,25 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       svgEl.releasePointerCapture(e.pointerId);
     };
 
-    const handleLinePointerOver = (e: PointerEvent): void => {
-      if (dragging) return;
-      const selected = lineToDay(e.target);
+    const selectLineTarget = (target: EventTarget | null): void => {
+      const selected = lineToDay(target);
       if (selected) {
         selectDay(selected);
       }
     };
 
-    const handleClickOnLine = (e: PointerEvent): void => {
-      if (dragging) return;
-      const selected = lineToDay(e.target);
-      if (selected) {
-        selectDay(selected);
+    const handleLinePointerOver = (e: PointerEvent): void => {
+      if (dragging) {
+        return;
       }
+      selectLineTarget(e.target);
+    };
+
+    const handleClickOnLine = (e: PointerEvent): void => {
+      if (dragging) {
+        return;
+      }
+      selectLineTarget(e.target);
     };
 
     svgEl.addEventListener("pointerdown", handlePointerDown);
