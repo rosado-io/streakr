@@ -312,7 +312,7 @@
   pointer-events: none;
 }
 .sk-ring-hand-line {
-  stroke: rgba(255, 255, 255, 0.86);
+  stroke: var(--sk-text);
   stroke-width: 1.75px;
   stroke-linecap: round;
   filter: drop-shadow(0 0 5px color-mix(in oklab, var(--sk-accent) 45%, transparent));
