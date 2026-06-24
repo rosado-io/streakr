@@ -248,6 +248,131 @@
 }
 .sk-legend-sq { width: 11px; height: 11px; border-radius: 3px; margin: 0 1px; }
 
+/* Contribution ring (mobile view) */
+.sk-ring {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  --sk-ring-guide-width: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+.sk-ring-svg-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sk-ring-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 320px;
+  max-height: 320px;
+  overflow: visible;
+}
+.sk-ring-inner,
+.sk-ring-outer {
+  vector-effect: non-scaling-stroke;
+  stroke-width: var(--sk-ring-guide-width);
+}
+.sk-ring-inner {
+  stroke: var(--sk-heat-1);
+  opacity: 0.95;
+}
+.sk-ring-outer {
+  stroke: var(--sk-heat-0);
+  opacity: 0.95;
+}
+.sk-ring-line {
+  stroke-width: 2.2px;
+  stroke-linecap: round;
+  transition: stroke 120ms ease, stroke-width 120ms ease;
+  cursor: pointer;
+}
+.sk-ring-line--future {
+  pointer-events: none;
+}
+.sk-ring-line:hover {
+  stroke-width: 3.5px;
+  filter: drop-shadow(0 0 4px var(--sk-accent-glow));
+}
+.sk-ring-months text {
+  font-weight: 500;
+}
+.sk-ring-hand {
+  pointer-events: none;
+}
+.sk-ring-hand-line {
+  stroke: var(--sk-text);
+  stroke-width: 1.75px;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 5px color-mix(in oklab, var(--sk-accent) 45%, transparent));
+}
+.sk-ring-center {
+  position: absolute;
+  inset: 0;
+  width: 96px;
+  height: 96px;
+  margin: auto;
+  border-radius: 50%;
+  background: var(--sk-surface-2);
+  border: var(--sk-ring-guide-width) solid var(--sk-heat-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  color: inherit;
+  font-family: inherit;
+  transition: all 180ms ease;
+  box-shadow:
+    0 0 24px -6px var(--sk-accent-glow),
+    inset 0 0 16px -6px color-mix(in oklab, var(--sk-accent) 12%, transparent);
+}
+.sk-ring-center:hover {
+  background: var(--sk-accent-soft);
+  border-color: var(--sk-heat-4);
+  transform: scale(1.03);
+}
+.sk-ring-center:focus-visible {
+  outline: 2px solid var(--sk-accent);
+  outline-offset: 2px;
+}
+.sk-ring-count {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--sk-accent);
+}
+.sk-ring-date {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--sk-text-muted);
+}
+.sk-ring-reset {
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  color: var(--sk-text-subtle);
+  margin-top: 2px;
+}
+.sk-ring-hint {
+  font-size: 11px;
+  color: var(--sk-text-subtle);
+  white-space: nowrap;
+  text-align: center;
+}
+
 /* Stats */
 .sk-stats {
   display: grid;

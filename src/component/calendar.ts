@@ -2,7 +2,7 @@ import type { StreakrDay } from "../types";
 
 export const DAY_LABELS = ["Mon", "Wed", "Fri"];
 
-const MONTH_LABELS_SHORT = [
+export const MONTH_LABELS_SHORT = [
   "Jan",
   "Feb",
   "Mar",
@@ -34,7 +34,7 @@ const MONTHS = [
 
 const DOW = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-const localDateKey = (d: Date): string => {
+export const localDateKey = (d: Date): string => {
   const y = d.getFullYear();
   const m = d.getMonth() + 1;
   const date = d.getDate();
@@ -113,3 +113,35 @@ export const monthHeaders = <T extends StreakrDay>(
 
 export const fmtDateLong = (date: Date): string =>
   `${DOW[date.getDay()]}, ${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+
+export const fmtDateShort = (date: Date): string =>
+  `${MONTH_LABELS_SHORT[date.getMonth()]} ${date.getDate()}`;
+
+/* ─────────────────────────────────────────
+   Ring geometry helpers
+   ───────────────────────────────────────── */
+
+export const dayAngle = (dayIndex: number, totalDays: number): number => {
+  const anglePerDay = (2 * Math.PI) / totalDays;
+  return -Math.PI / 2 + dayIndex * anglePerDay;
+};
+
+export const polarToCartesian = (
+  cx: number,
+  cy: number,
+  r: number,
+  angle: number,
+): { x: number; y: number } => ({
+  x: cx + r * Math.cos(angle),
+  y: cy + r * Math.sin(angle),
+});
+
+export const cartesianToAngle = (cx: number, cy: number, x: number, y: number): number => {
+  const raw = Math.atan2(y - cy, x - cx);
+  return raw;
+};
+
+export const angleToDayIndex = (angle: number, totalDays: number): number => {
+  const normalized = (((angle + Math.PI / 2) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  return Math.round((normalized / (2 * Math.PI)) * totalDays) % totalDays;
+};
