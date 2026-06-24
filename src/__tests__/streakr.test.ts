@@ -23,10 +23,16 @@ function makeYearDays(year: number, fillEvery = 3): StreakrDay[] {
 describe("createStreakr", () => {
   let target: HTMLDivElement;
   let instance: StreakrInstance | null = null;
+  let originalGetBoundingClientRect: typeof HTMLElement.prototype.getBoundingClientRect;
   const years = [2022, 2023, 2024, 2025, 2026];
   const getDays = (year: number) => makeYearDays(year);
 
   beforeEach(() => {
+    originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
+    HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
+      const original = originalGetBoundingClientRect.call(this);
+      return { ...original, width: 1024 } as DOMRect;
+    };
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 5, 20));
     target = document.createElement("div");
@@ -34,6 +40,7 @@ describe("createStreakr", () => {
   });
 
   afterEach(() => {
+    HTMLElement.prototype.getBoundingClientRect = originalGetBoundingClientRect;
     instance?.destroy();
     instance = null;
     target.remove();
@@ -726,6 +733,87 @@ describe("createStreakr", () => {
       expect(() =>
         document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })),
       ).not.toThrow();
+    });
+  });
+
+  describe("mobile contribution ring", () => {
+    const rect = (width: number): DOMRect =>
+      ({
+        width,
+        height: 600,
+        top: 0,
+        left: 0,
+        right: width,
+        bottom: 600,
+        x: 0,
+        y: 0,
+        toJSON: () => "",
+      }) as DOMRect;
+
+    const setContainerWidth = (width: number) => {
+      HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
+        return rect(width);
+      };
+    };
+
+    it("renders the ring instead of the heatmap on narrow containers", () => {
+      setContainerWidth(375);
+      instance = createStreakr({ target, years, getDays });
+      expect(target.querySelector(".sk-ring-svg")).toBeTruthy();
+      expect(target.querySelector(".sk-heatmap-svg")).toBeNull();
+    });
+
+    it("keeps the heatmap on wide containers", () => {
+      setContainerWidth(1024);
+      instance = createStreakr({ target, years, getDays });
+      expect(target.querySelector(".sk-heatmap-svg")).toBeTruthy();
+      expect(target.querySelector(".sk-ring-svg")).toBeNull();
+    });
+
+    it("renders 12 month labels around the ring", () => {
+      setContainerWidth(375);
+      instance = createStreakr({ target, years, getDays });
+      const labels = target.querySelectorAll(".sk-ring-months text");
+      expect(labels.length).toBe(12);
+      expect(Array.from(labels).map((l) => l.textContent)).toEqual([
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ]);
+    });
+
+    it("shows the selected day in the center", () => {
+      setContainerWidth(375);
+      instance = createStreakr({ target, years, year: 2026, getDays });
+      const count = target.querySelector(".sk-ring-count");
+      const date = target.querySelector(".sk-ring-date");
+      expect(count).toBeTruthy();
+      expect(date).toBeTruthy();
+      expect(date?.textContent).toMatch(/^[A-Z][a-z]{2} \d{1,2}$/);
+    });
+
+    it("resets the selected day to today when the center is clicked", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        today: new Date(2026, 5, 20),
+        getDays,
+      });
+      instance.setYear(2026);
+      target.querySelector<HTMLButtonElement>(".sk-ring-center")?.click();
+      const date = target.querySelector(".sk-ring-date");
+      expect(date?.textContent).toBe("Jun 20");
     });
   });
 });

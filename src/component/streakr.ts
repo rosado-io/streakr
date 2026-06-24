@@ -8,12 +8,19 @@ import type {
   StreakrThemeMode,
 } from "../types";
 import {
+  angleToDayIndex,
+  cartesianToAngle,
   DAY_LABELS,
+  dayAngle,
   fmtDateLong,
+  fmtDateShort,
   gridFromDays,
+  localDateKey,
   monthHeaders,
+  MONTH_LABELS_SHORT,
   padDaysToRange,
   padDaysToYear,
+  polarToCartesian,
   yearToDateRange,
 } from "./calendar";
 import { h, svg, trustedHtml } from "./dom";
@@ -32,6 +39,7 @@ interface InternalState {
   year: number | null;
   providers: StreakrProviders;
   yearModalOpen: boolean;
+  selectedDay: Date;
 }
 
 interface ResolvedConfig {
@@ -82,6 +90,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     year: cfg.year,
     providers: enabledProviderState(cfg.providers),
     yearModalOpen: false,
+    selectedDay: cfg.today,
   };
 
   const syncProviderState = (): void => {
@@ -209,6 +218,11 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     rect.addEventListener("mousemove", (e) => moveTooltip(e));
     rect.addEventListener("mouseleave", hideTooltip);
   };
+
+  const MOBILE_BREAKPOINT = 520;
+
+  const isMobileHeatmap = (wrap: HTMLElement): boolean =>
+    wrap.getBoundingClientRect().width < MOBILE_BREAKPOINT;
 
   const HEATMAP_DAY_LABEL_ROWS = [1, 3, 5];
 
@@ -387,6 +401,249 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     });
 
     wrap.replaceChildren(h("div", { class: "sk-heatmap-svg-wrap" }, [svgEl]));
+  };
+
+  const RING_SIZE = 360;
+  const RING_CX = RING_SIZE / 2;
+  const RING_CY = RING_SIZE / 2;
+  const RING_INNER_R = 78;
+  const RING_MAX_LENGTH = 72;
+  const RING_MONTH_LABEL_R = 158;
+  const RING_HAND_START_R = 60;
+  const RING_HAND_END_R = 160;
+
+  const ringLineLength = (level: number): number => {
+    const step = RING_MAX_LENGTH / 4;
+    return Math.max(4, level * step);
+  };
+
+  const ringLineColor = (level: number): string => `var(--sk-heat-${level})`;
+
+  const dayIndexToAngle = (day: Date, totalDays: number): number => {
+    const startOfYear = new Date(day.getFullYear(), 0, 1);
+    const idx = Math.round((day.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+    return dayAngle(Math.max(0, Math.min(totalDays - 1, idx)), totalDays);
+  };
+
+  const renderRingSvg = (days: StreakrLeveledDay[], selectedDay: Date): SVGElement => {
+    const totalDays = days.length;
+    const svgEl = svg("svg", {
+      class: "sk-ring-svg",
+      width: RING_SIZE,
+      height: RING_SIZE,
+      viewBox: `0 0 ${RING_SIZE} ${RING_SIZE}`,
+      role: "img",
+      "aria-label": `Contribution ring for ${state.year ?? "selected year"}`,
+    });
+
+    const ringGroup = svg("g", { class: "sk-ring-days" });
+    days.forEach((day, i) => {
+      const angle = dayAngle(i, totalDays);
+      const length = ringLineLength(day.level);
+      const start = polarToCartesian(RING_CX, RING_CY, RING_INNER_R, angle);
+      const end = polarToCartesian(RING_CX, RING_CY, RING_INNER_R + length, angle);
+      const line = svg("line", {
+        class: "sk-ring-line",
+        x1: start.x,
+        y1: start.y,
+        x2: end.x,
+        y2: end.y,
+        stroke: ringLineColor(day.level),
+        "data-date": day.date.toISOString(),
+      });
+      ringGroup.appendChild(line);
+    });
+
+    const monthLabels = svg("g", { class: "sk-ring-months" });
+    for (let month = 0; month < 12; month++) {
+      const firstDayOfMonth = new Date(state.year ?? cfg.today.getFullYear(), month, 1);
+      const startOfYear = new Date(firstDayOfMonth.getFullYear(), 0, 1);
+      const dayIndex = Math.round(
+        (firstDayOfMonth.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24),
+      );
+      const angle = dayAngle(dayIndex, totalDays);
+      const pos = polarToCartesian(RING_CX, RING_CY, RING_MONTH_LABEL_R, angle);
+      monthLabels.appendChild(
+        svg(
+          "text",
+          {
+            x: pos.x,
+            y: pos.y,
+            "text-anchor": "middle",
+            "dominant-baseline": "middle",
+            fill: "var(--sk-text-subtle)",
+            "font-size": 9,
+            "font-family": "'Geist', sans-serif",
+          },
+          MONTH_LABELS_SHORT[month],
+        ),
+      );
+    }
+
+    const outerRing = svg("circle", {
+      class: "sk-ring-outer",
+      cx: RING_CX,
+      cy: RING_CY,
+      r: RING_MONTH_LABEL_R,
+      fill: "none",
+    });
+
+    const handAngle = dayIndexToAngle(selectedDay, totalDays);
+    const handStart = polarToCartesian(RING_CX, RING_CY, RING_HAND_START_R, handAngle);
+    const handEnd = polarToCartesian(RING_CX, RING_CY, RING_HAND_END_R, handAngle);
+    const hand = svg("g", { class: "sk-ring-hand" });
+    hand.appendChild(
+      svg("line", {
+        class: "sk-ring-hand-line",
+        x1: handStart.x,
+        y1: handStart.y,
+        x2: handEnd.x,
+        y2: handEnd.y,
+      }),
+    );
+    hand.appendChild(
+      svg("circle", {
+        class: "sk-ring-hand-tip",
+        cx: handEnd.x,
+        cy: handEnd.y,
+        r: 2.5,
+      }),
+    );
+
+    svgEl.appendChild(outerRing);
+    svgEl.appendChild(ringGroup);
+    svgEl.appendChild(monthLabels);
+    svgEl.appendChild(hand);
+    return svgEl;
+  };
+
+  const renderRingCenter = (day: StreakrDay): HTMLElement =>
+    h("button", {
+      class: "sk-ring-center",
+      "aria-label": `Selected ${fmtDateLong(day.date)}. Tap to reset to today.`,
+      onclick: () => resetSelectedDay(),
+    }, [
+      h("div", { class: "sk-ring-count", text: String(day.total) }),
+      h("div", { class: "sk-ring-date", text: fmtDateShort(day.date) }),
+      h("div", { class: "sk-ring-reset", text: "TAP TO RESET" }),
+    ]);
+
+  const findDayByAngle = (days: StreakrLeveledDay[], angle: number): StreakrLeveledDay => {
+    const totalDays = days.length;
+    const idx = angleToDayIndex(angle, totalDays);
+    return days[idx] ?? days[0];
+  };
+
+  const findDayByDate = (days: StreakrLeveledDay[], date: Date): StreakrLeveledDay => {
+    const found = days.find((d) => localDateKey(d.date) === localDateKey(date));
+    return found ?? days[0] ?? { date, total: 0, level: 0, sources: {} };
+  };
+
+  const resetSelectedDay = (): void => {
+    state.selectedDay = cfg.today;
+    render();
+  };
+
+  const bindRingEvents = (
+    svgEl: SVGElement,
+    handGroup: SVGGElement,
+    days: StreakrLeveledDay[],
+  ): void => {
+    let dragging = false;
+    let startAngle = 0;
+    let currentRotation = 0;
+
+    const getAngleFromEvent = (e: PointerEvent): number => {
+      const rect = svgEl.getBoundingClientRect();
+      const scaleX = RING_SIZE / rect.width;
+      const scaleY = RING_SIZE / rect.height;
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
+      return cartesianToAngle(RING_CX, RING_CY, x, y);
+    };
+
+    const baseHandRotation = dayIndexToAngle(state.selectedDay, days.length) + Math.PI / 2;
+
+    const setHandRotation = (rotation: number): void => {
+      currentRotation = rotation;
+      handGroup.setAttribute(
+        "transform",
+        `rotate(${(rotation * 180) / Math.PI}, ${RING_CX}, ${RING_CY})`,
+      );
+    };
+
+    setHandRotation(baseHandRotation);
+
+    const handlePointerDown = (e: PointerEvent): void => {
+      e.preventDefault();
+      dragging = true;
+      startAngle = getAngleFromEvent(e) - currentRotation;
+      svgEl.setPointerCapture(e.pointerId);
+    };
+
+    const handlePointerMove = (e: PointerEvent): void => {
+      if (!dragging) return;
+      e.preventDefault();
+      const angle = getAngleFromEvent(e);
+      setHandRotation(angle - startAngle);
+    };
+
+    const handlePointerUp = (e: PointerEvent): void => {
+      if (!dragging) return;
+      dragging = false;
+      svgEl.releasePointerCapture(e.pointerId);
+      const handAngle = currentRotation - Math.PI / 2;
+      const selected = findDayByAngle(days, handAngle);
+      state.selectedDay = selected.date;
+      render();
+    };
+
+    const handleClickOnLine = (e: PointerEvent): void => {
+      if (dragging) return;
+      const target = e.target as SVGElement;
+      if (!target.classList.contains("sk-ring-line")) return;
+      const dateAttr = target.getAttribute("data-date");
+      if (!dateAttr) return;
+      const date = new Date(dateAttr);
+      state.selectedDay = date;
+      render();
+    };
+
+    svgEl.addEventListener("pointerdown", handlePointerDown);
+    svgEl.addEventListener("pointermove", handlePointerMove);
+    svgEl.addEventListener("pointerup", handlePointerUp);
+    svgEl.addEventListener("pointercancel", handlePointerUp);
+    svgEl.addEventListener("pointerleave", handlePointerUp);
+    svgEl.addEventListener("click", handleClickOnLine);
+  };
+
+  const renderRingHeader = (): HTMLElement =>
+    h("div", { class: "sk-ring-header" }, [
+      h("div", { class: "sk-ring-title", text: "CONTRIBUTION RING" }),
+      h("div", { class: "sk-ring-legend" }, [
+        h("span", { text: "Less" }),
+        ...[0, 1, 2, 3, 4].map((i) =>
+          h("span", { class: "sk-ring-legend-sq", style: { background: `var(--sk-heat-${i})` } }),
+        ),
+        h("span", { text: "More" }),
+      ]),
+    ]);
+
+  const renderRing = (wrap: HTMLElement, days: StreakrLeveledDay[]): void => {
+    const selected = findDayByDate(days, state.selectedDay);
+    const svgEl = renderRingSvg(days, selected.date);
+    const handGroup = svgEl.querySelector<SVGGElement>(".sk-ring-hand");
+    if (handGroup) {
+      bindRingEvents(svgEl, handGroup, days);
+    }
+
+    const container = h("div", { class: "sk-ring" }, [
+      renderRingHeader(),
+      h("div", { class: "sk-ring-svg-wrap" }, [svgEl]),
+      renderRingCenter(selected),
+      h("div", { class: "sk-ring-hint", text: "Arrastra la manecilla para recorrer el año" }),
+    ]);
+    wrap.replaceChildren(container);
   };
 
   type ReadyBody = HTMLElement & {
@@ -739,8 +996,13 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
     const draw = () => {
       try {
-        const w = heatmapWrap.clientWidth - 32;
-        renderHeatmap(heatmapInner, leveled, Math.max(200, w));
+        const isMobile = isMobileHeatmap(heatmapWrap);
+        if (isMobile) {
+          renderRing(heatmapInner, leveled);
+        } else {
+          const w = heatmapWrap.clientWidth - 32;
+          renderHeatmap(heatmapInner, leveled, Math.max(200, w));
+        }
       } catch (err) {
         console.error("[streakr] draw failed:", err);
       }

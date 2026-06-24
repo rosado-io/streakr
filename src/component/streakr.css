@@ -248,6 +248,146 @@
 }
 .sk-legend-sq { width: 11px; height: 11px; border-radius: 3px; margin: 0 1px; }
 
+/* Contribution ring (mobile view) */
+.sk-ring {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+.sk-ring-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.sk-ring-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--sk-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sk-ring-legend {
+  display: flex; align-items: center; gap: 3px;
+  font-size: 10px; color: var(--sk-text-muted);
+  flex-shrink: 0;
+}
+.sk-ring-legend-sq { width: 9px; height: 9px; border-radius: 2px; margin: 0 1px; }
+.sk-ring-svg-wrap {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sk-ring-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 320px;
+  max-height: 320px;
+  overflow: visible;
+}
+.sk-ring-outer {
+  stroke: var(--sk-text-subtle);
+  stroke-width: 1px;
+  opacity: 0.35;
+}
+.sk-ring-line {
+  stroke-width: 2.2px;
+  stroke-linecap: round;
+  transition: stroke 120ms ease, stroke-width 120ms ease;
+  cursor: pointer;
+}
+.sk-ring-line:hover {
+  stroke-width: 3.5px;
+  filter: drop-shadow(0 0 4px var(--sk-accent-glow));
+}
+.sk-ring-months text {
+  font-weight: 500;
+}
+.sk-ring-hand {
+  pointer-events: none;
+}
+.sk-ring-hand-line {
+  stroke: var(--sk-accent);
+  stroke-width: 1.5px;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+.sk-ring-hand-tip {
+  fill: var(--sk-accent);
+}
+.sk-ring-center {
+  position: absolute;
+  inset: 0;
+  width: 96px;
+  height: 96px;
+  margin: auto;
+  border-radius: 50%;
+  background: var(--sk-surface-2);
+  border: 1px solid var(--sk-border-strong);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  color: inherit;
+  font-family: inherit;
+  transition: all 180ms ease;
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--sk-accent) 10%, transparent),
+    0 0 24px -6px var(--sk-accent-glow),
+    inset 0 0 16px -6px color-mix(in oklab, var(--sk-accent) 12%, transparent);
+}
+.sk-ring-center:hover {
+  background: var(--sk-accent-soft);
+  border-color: var(--sk-accent-mid);
+  transform: scale(1.03);
+}
+.sk-ring-center:focus-visible {
+  outline: 2px solid var(--sk-accent);
+  outline-offset: 2px;
+}
+.sk-ring-count {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--sk-accent);
+}
+.sk-ring-date {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--sk-text-muted);
+}
+.sk-ring-reset {
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  color: var(--sk-text-subtle);
+  margin-top: 2px;
+}
+.sk-ring-hint {
+  font-size: 11px;
+  color: var(--sk-text-subtle);
+  white-space: nowrap;
+  margin-top: -4px;
+}
+.sk-heatmap-wrap:has(.sk-ring) .sk-legend {
+  display: none;
+}
+
 /* Stats */
 .sk-stats {
   display: grid;
