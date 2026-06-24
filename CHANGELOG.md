@@ -1,3 +1,9 @@
+## [0.6.0](https://github.com/rosado-io/streakr/compare/v0.5.1...v0.6.0) (2026-06-24)
+
+### Features
+
+* feat: Agrega anillo móvil de contribuciones (#116) ([`4a5fd20`](https://github.com/rosado-io/streakr/commit/4a5fd2018014527cb1e02daa05fa4921f6f4ecdf)) by ****
+
 ## [0.5.1](https://github.com/rosado-io/streakr/compare/v0.5.0...v0.5.1) (2026-06-22)
 
 ### Bug Fixes
