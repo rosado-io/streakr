@@ -407,23 +407,28 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   const RING_CX = RING_SIZE / 2;
   const RING_CY = RING_SIZE / 2;
   const RING_INNER_R = 78;
-  const RING_MAX_LENGTH = 72;
-  const RING_MONTH_LABEL_R = 158;
-  const RING_HAND_START_R = 60;
-  const RING_HAND_END_R = 160;
-
-  const ringLineLength = (level: number): number => {
-    const step = RING_MAX_LENGTH / 4;
-    return Math.max(4, level * step);
-  };
+  const RING_OUTER_R = 150;
+  const RING_LINE_OUTER_R = RING_OUTER_R - 1;
+  const RING_MONTH_LABEL_R = 164;
+  const RING_HAND_START_R = 70;
+  const RING_HAND_END_R = 154;
 
   const ringLineColor = (level: number): string => `var(--sk-heat-${level})`;
+
+  const dayStartMs = (day: Date): number =>
+    new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime();
+
+  const isFutureRingDay = (day: Date): boolean =>
+    isCurrentYear() && dayStartMs(day) > dayStartMs(cfg.today);
 
   const dayIndexToAngle = (day: Date, totalDays: number): number => {
     const startOfYear = new Date(day.getFullYear(), 0, 1);
     const idx = Math.round((day.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
     return dayAngle(Math.max(0, Math.min(totalDays - 1, idx)), totalDays);
   };
+
+  const dayToHandRotation = (day: Date, totalDays: number): number =>
+    dayIndexToAngle(day, totalDays) + Math.PI / 2;
 
   const renderRingSvg = (days: StreakrLeveledDay[], selectedDay: Date): SVGElement => {
     const totalDays = days.length;
@@ -439,17 +444,18 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     const ringGroup = svg("g", { class: "sk-ring-days" });
     days.forEach((day, i) => {
       const angle = dayAngle(i, totalDays);
-      const length = ringLineLength(day.level);
+      const future = isFutureRingDay(day.date);
       const start = polarToCartesian(RING_CX, RING_CY, RING_INNER_R, angle);
-      const end = polarToCartesian(RING_CX, RING_CY, RING_INNER_R + length, angle);
+      const end = polarToCartesian(RING_CX, RING_CY, RING_LINE_OUTER_R, angle);
       const line = svg("line", {
-        class: "sk-ring-line",
+        class: "sk-ring-line" + (future ? " sk-ring-line--future" : ""),
         x1: start.x,
         y1: start.y,
         x2: end.x,
         y2: end.y,
-        stroke: ringLineColor(day.level),
+        stroke: future ? "transparent" : ringLineColor(day.level),
         "data-date": day.date.toISOString(),
+        "data-future": future ? "true" : undefined,
       });
       ringGroup.appendChild(line);
     });
@@ -480,18 +486,29 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       );
     }
 
+    const innerRing = svg("circle", {
+      class: "sk-ring-inner",
+      cx: RING_CX,
+      cy: RING_CY,
+      r: RING_INNER_R,
+      fill: "none",
+    });
+
     const outerRing = svg("circle", {
       class: "sk-ring-outer",
       cx: RING_CX,
       cy: RING_CY,
-      r: RING_MONTH_LABEL_R,
+      r: RING_OUTER_R,
       fill: "none",
     });
 
-    const handAngle = dayIndexToAngle(selectedDay, totalDays);
-    const handStart = polarToCartesian(RING_CX, RING_CY, RING_HAND_START_R, handAngle);
-    const handEnd = polarToCartesian(RING_CX, RING_CY, RING_HAND_END_R, handAngle);
+    const handStart = polarToCartesian(RING_CX, RING_CY, RING_HAND_START_R, -Math.PI / 2);
+    const handEnd = polarToCartesian(RING_CX, RING_CY, RING_HAND_END_R, -Math.PI / 2);
     const hand = svg("g", { class: "sk-ring-hand" });
+    hand.setAttribute(
+      "transform",
+      `rotate(${(dayToHandRotation(selectedDay, totalDays) * 180) / Math.PI}, ${RING_CX}, ${RING_CY})`,
+    );
     hand.appendChild(
       svg("line", {
         class: "sk-ring-hand-line",
@@ -501,32 +518,40 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         y2: handEnd.y,
       }),
     );
-    hand.appendChild(
-      svg("circle", {
-        class: "sk-ring-hand-tip",
-        cx: handEnd.x,
-        cy: handEnd.y,
-        r: 2.5,
-      }),
-    );
 
-    svgEl.appendChild(outerRing);
     svgEl.appendChild(ringGroup);
+    svgEl.appendChild(innerRing);
+    svgEl.appendChild(outerRing);
     svgEl.appendChild(monthLabels);
     svgEl.appendChild(hand);
     return svgEl;
   };
 
+  const ringCenterLabel = (day: StreakrDay): string =>
+    `Selected ${fmtDateLong(day.date)}. Tap to reset to today.`;
+
+  const updateRingCenter = (centerEl: HTMLElement, day: StreakrDay): void => {
+    centerEl.setAttribute("aria-label", ringCenterLabel(day));
+    const countEl = centerEl.querySelector<HTMLElement>(".sk-ring-count");
+    const dateEl = centerEl.querySelector<HTMLElement>(".sk-ring-date");
+    if (countEl) countEl.textContent = String(day.total);
+    if (dateEl) dateEl.textContent = fmtDateShort(day.date);
+  };
+
   const renderRingCenter = (day: StreakrDay): HTMLElement =>
-    h("button", {
-      class: "sk-ring-center",
-      "aria-label": `Selected ${fmtDateLong(day.date)}. Tap to reset to today.`,
-      onclick: () => resetSelectedDay(),
-    }, [
-      h("div", { class: "sk-ring-count", text: String(day.total) }),
-      h("div", { class: "sk-ring-date", text: fmtDateShort(day.date) }),
-      h("div", { class: "sk-ring-reset", text: "TAP TO RESET" }),
-    ]);
+    h(
+      "button",
+      {
+        class: "sk-ring-center",
+        "aria-label": ringCenterLabel(day),
+        onclick: () => resetSelectedDay(),
+      },
+      [
+        h("div", { class: "sk-ring-count", text: String(day.total) }),
+        h("div", { class: "sk-ring-date", text: fmtDateShort(day.date) }),
+        h("div", { class: "sk-ring-reset", text: "TAP TO RESET" }),
+      ],
+    );
 
   const findDayByAngle = (days: StreakrLeveledDay[], angle: number): StreakrLeveledDay => {
     const totalDays = days.length;
@@ -547,6 +572,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   const bindRingEvents = (
     svgEl: SVGElement,
     handGroup: SVGGElement,
+    centerEl: HTMLElement,
     days: StreakrLeveledDay[],
   ): void => {
     let dragging = false;
@@ -562,8 +588,6 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       return cartesianToAngle(RING_CX, RING_CY, x, y);
     };
 
-    const baseHandRotation = dayIndexToAngle(state.selectedDay, days.length) + Math.PI / 2;
-
     const setHandRotation = (rotation: number): void => {
       currentRotation = rotation;
       handGroup.setAttribute(
@@ -572,7 +596,27 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       );
     };
 
-    setHandRotation(baseHandRotation);
+    const selectDay = (day: StreakrLeveledDay, syncHand = true): void => {
+      state.selectedDay = day.date;
+      updateRingCenter(centerEl, day);
+      if (syncHand) {
+        setHandRotation(dayToHandRotation(day.date, days.length));
+      }
+    };
+
+    const lineToDay = (target: EventTarget | null): StreakrLeveledDay | null => {
+      if (!(target instanceof SVGElement) || !target.classList.contains("sk-ring-line")) {
+        return null;
+      }
+      if (target.classList.contains("sk-ring-line--future")) {
+        return null;
+      }
+      const dateAttr = target.getAttribute("data-date");
+      if (!dateAttr) return null;
+      return findDayByDate(days, new Date(dateAttr));
+    };
+
+    setHandRotation(dayToHandRotation(state.selectedDay, days.length));
 
     const handlePointerDown = (e: PointerEvent): void => {
       e.preventDefault();
@@ -585,63 +629,59 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       if (!dragging) return;
       e.preventDefault();
       const angle = getAngleFromEvent(e);
-      setHandRotation(angle - startAngle);
+      const rotation = angle - startAngle;
+      const selected = findDayByAngle(days, rotation - Math.PI / 2);
+      setHandRotation(rotation);
+      selectDay(selected, false);
     };
 
     const handlePointerUp = (e: PointerEvent): void => {
       if (!dragging) return;
       dragging = false;
       svgEl.releasePointerCapture(e.pointerId);
-      const handAngle = currentRotation - Math.PI / 2;
-      const selected = findDayByAngle(days, handAngle);
-      state.selectedDay = selected.date;
-      render();
+    };
+
+    const handleLinePointerOver = (e: PointerEvent): void => {
+      if (dragging) return;
+      const selected = lineToDay(e.target);
+      if (selected) {
+        selectDay(selected);
+      }
     };
 
     const handleClickOnLine = (e: PointerEvent): void => {
       if (dragging) return;
-      const target = e.target as SVGElement;
-      if (!target.classList.contains("sk-ring-line")) return;
-      const dateAttr = target.getAttribute("data-date");
-      if (!dateAttr) return;
-      const date = new Date(dateAttr);
-      state.selectedDay = date;
-      render();
+      const selected = lineToDay(e.target);
+      if (selected) {
+        selectDay(selected);
+      }
     };
 
     svgEl.addEventListener("pointerdown", handlePointerDown);
     svgEl.addEventListener("pointermove", handlePointerMove);
+    svgEl.addEventListener("pointerover", handleLinePointerOver);
     svgEl.addEventListener("pointerup", handlePointerUp);
     svgEl.addEventListener("pointercancel", handlePointerUp);
     svgEl.addEventListener("pointerleave", handlePointerUp);
     svgEl.addEventListener("click", handleClickOnLine);
   };
 
-  const renderRingHeader = (): HTMLElement =>
-    h("div", { class: "sk-ring-header" }, [
-      h("div", { class: "sk-ring-title", text: "CONTRIBUTION RING" }),
-      h("div", { class: "sk-ring-legend" }, [
-        h("span", { text: "Less" }),
-        ...[0, 1, 2, 3, 4].map((i) =>
-          h("span", { class: "sk-ring-legend-sq", style: { background: `var(--sk-heat-${i})` } }),
-        ),
-        h("span", { text: "More" }),
-      ]),
-    ]);
+  const renderRingHint = (): HTMLElement =>
+    h("div", { class: "sk-ring-hint", text: "Arrastra el selector para recorrer el año" });
 
   const renderRing = (wrap: HTMLElement, days: StreakrLeveledDay[]): void => {
     const selected = findDayByDate(days, state.selectedDay);
+    state.selectedDay = selected.date;
     const svgEl = renderRingSvg(days, selected.date);
+    const centerEl = renderRingCenter(selected);
     const handGroup = svgEl.querySelector<SVGGElement>(".sk-ring-hand");
     if (handGroup) {
-      bindRingEvents(svgEl, handGroup, days);
+      bindRingEvents(svgEl, handGroup, centerEl, days);
     }
 
     const container = h("div", { class: "sk-ring" }, [
-      renderRingHeader(),
-      h("div", { class: "sk-ring-svg-wrap" }, [svgEl]),
-      renderRingCenter(selected),
-      h("div", { class: "sk-ring-hint", text: "Arrastra la manecilla para recorrer el año" }),
+      renderRingHint(),
+      h("div", { class: "sk-ring-svg-wrap" }, [svgEl, centerEl]),
     ]);
     wrap.replaceChildren(container);
   };

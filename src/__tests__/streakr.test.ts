@@ -791,6 +791,31 @@ describe("createStreakr", () => {
       ]);
     });
 
+    it("places guide circles at the start and end of day lines", () => {
+      setContainerWidth(375);
+      instance = createStreakr({ target, years, getDays });
+      const innerRing = target.querySelector(".sk-ring-inner");
+      const outerRing = target.querySelector(".sk-ring-outer");
+      const daysGroup = target.querySelector(".sk-ring-days");
+      const firstLine = target.querySelector<SVGLineElement>(".sk-ring-line");
+      const monthJan = Array.from(
+        target.querySelectorAll<SVGTextElement>(".sk-ring-months text"),
+      ).find((label) => label.textContent === "Jan");
+      const svgChildren = Array.from(target.querySelector(".sk-ring-svg")?.children ?? []);
+
+      expect(innerRing?.getAttribute("r")).toBe("78");
+      expect(outerRing?.getAttribute("r")).toBe("150");
+      expect(svgChildren.indexOf(innerRing as Element)).toBeGreaterThan(
+        svgChildren.indexOf(daysGroup as Element),
+      );
+      expect(svgChildren.indexOf(outerRing as Element)).toBeGreaterThan(
+        svgChildren.indexOf(daysGroup as Element),
+      );
+      expect(firstLine?.getAttribute("y1")).toBe("102");
+      expect(firstLine?.getAttribute("y2")).toBe("31");
+      expect(monthJan?.getAttribute("y")).toBe("16");
+    });
+
     it("shows the selected day in the center", () => {
       setContainerWidth(375);
       instance = createStreakr({ target, years, year: 2026, getDays });
@@ -799,6 +824,72 @@ describe("createStreakr", () => {
       expect(count).toBeTruthy();
       expect(date).toBeTruthy();
       expect(date?.textContent).toMatch(/^[A-Z][a-z]{2} \d{1,2}$/);
+    });
+
+    it("renders equal-length day lines and leaves future days transparent", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        today: new Date(2026, 0, 5),
+        getDays,
+      });
+
+      const lines = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line"));
+      const futureLines = lines.filter((line) => line.getAttribute("data-future") === "true");
+      const lengths = new Set(
+        lines.map((line) => {
+          const x1 = Number(line.getAttribute("x1"));
+          const y1 = Number(line.getAttribute("y1"));
+          const x2 = Number(line.getAttribute("x2"));
+          const y2 = Number(line.getAttribute("y2"));
+          return Math.hypot(x2 - x1, y2 - y1).toFixed(3);
+        }),
+      );
+
+      expect(lines.length).toBe(365);
+      expect(lengths.size).toBe(1);
+      expect(futureLines.length).toBe(360);
+      expect(futureLines.every((line) => line.getAttribute("stroke") === "transparent")).toBe(true);
+    });
+
+    it("updates the center and selector when a day line is hovered", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        today: new Date(2026, 0, 5),
+        getDays: () => [
+          { date: new Date(2026, 0, 1), total: 9, sources: { github: 9 } },
+          { date: new Date(2026, 0, 5), total: 2, sources: { github: 2 } },
+        ],
+      });
+
+      const jan1Line = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line")).find(
+        (line) => line.getAttribute("data-date")?.startsWith("2026-01-01"),
+      );
+      const handBefore = target.querySelector(".sk-ring-hand")?.getAttribute("transform");
+
+      jan1Line?.dispatchEvent(new Event("pointerover", { bubbles: true }));
+
+      expect(target.querySelector(".sk-ring-count")?.textContent).toBe("9");
+      expect(target.querySelector(".sk-ring-date")?.textContent).toBe("Jan 1");
+      expect(target.querySelector(".sk-ring-hand")?.getAttribute("transform")).not.toBe(handBefore);
+    });
+
+    it("places the mobile hint above the ring and keeps the shared legend below", () => {
+      setContainerWidth(375);
+      instance = createStreakr({ target, years, getDays });
+      const ring = target.querySelector(".sk-ring");
+
+      expect(target.textContent).not.toContain("CONTRIBUTION RING");
+      expect(target.querySelector(".sk-ring-title")).toBeNull();
+      expect(target.querySelector(".sk-ring-legend")).toBeNull();
+      expect(ring?.firstElementChild?.classList.contains("sk-ring-hint")).toBe(true);
+      expect(target.querySelector(".sk-legend")?.textContent).toContain("Less");
+      expect(target.querySelector(".sk-legend")?.textContent).toContain("More");
     });
 
     it("resets the selected day to today when the center is clicked", () => {
