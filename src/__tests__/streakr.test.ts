@@ -160,7 +160,7 @@ describe("createStreakr", () => {
     it("renders one tab per visible year", () => {
       instance = createStreakr({ target, years, getDays });
       const tabs = target.querySelectorAll(".sk-year-tab");
-      expect(tabs.length).toBe(5);
+      expect(tabs).toHaveLength(5);
     });
 
     it("marks the active year with .active", () => {
@@ -208,7 +208,7 @@ describe("createStreakr", () => {
       instance = createStreakr({ target, years: many, getDays });
       target.querySelector<HTMLButtonElement>(".sk-year-more")?.click();
       const cells = target.querySelectorAll(".sk-modal-year");
-      expect(cells.length).toBe(many.length);
+      expect(cells).toHaveLength(many.length);
     });
 
     it("closes when Escape is pressed", () => {
@@ -246,7 +246,7 @@ describe("createStreakr", () => {
     it("renders the three default chips", () => {
       instance = createStreakr({ target, years, getDays });
       const chips = target.querySelectorAll(".sk-provider");
-      expect(chips.length).toBe(3);
+      expect(chips).toHaveLength(3);
     });
 
     it("hides chips when showProviders is false", () => {
@@ -284,7 +284,7 @@ describe("createStreakr", () => {
         ],
       });
       const chips = target.querySelectorAll(".sk-provider");
-      expect(chips.length).toBe(2);
+      expect(chips).toHaveLength(2);
       expect(chips[0].getAttribute("title")).toContain("Gitea");
       expect(chips[1].getAttribute("title")).toContain("Forgejo");
     });
@@ -334,7 +334,7 @@ describe("createStreakr", () => {
         ],
       });
       expect(target.querySelector(".sk-providers")).toBeNull();
-      expect(target.querySelectorAll(".sk-provider").length).toBe(0);
+      expect(target.querySelectorAll(".sk-provider")).toHaveLength(0);
     });
 
     it("shows the chip row when ≥2 providers have contributions", () => {
@@ -344,7 +344,7 @@ describe("createStreakr", () => {
         getDays: (y) => [{ date: new Date(y, 0, 5), total: 3, sources: { github: 2, gitlab: 1 } }],
       });
       expect(target.querySelector(".sk-providers")).toBeTruthy();
-      expect(target.querySelectorAll(".sk-provider").length).toBe(3);
+      expect(target.querySelectorAll(".sk-provider")).toHaveLength(3);
     });
 
     it("recomputes chip-row visibility when the year changes", () => {
@@ -379,14 +379,14 @@ describe("createStreakr", () => {
       ).find((b) => b.textContent === "Enable all");
       enable?.click();
       expect(target.querySelector(".sk-noprov")).toBeNull();
-      expect(target.querySelectorAll(".sk-provider.active").length).toBe(3);
+      expect(target.querySelectorAll(".sk-provider.active")).toHaveLength(3);
     });
   });
 
   describe("ready body", () => {
     it("renders 4 stat cards by default", () => {
       instance = createStreakr({ target, years, getDays });
-      expect(target.querySelectorAll(".sk-stat").length).toBe(4);
+      expect(target.querySelectorAll(".sk-stat")).toHaveLength(4);
     });
 
     it("hides stats when showStats is false", () => {
@@ -417,7 +417,7 @@ describe("createStreakr", () => {
       expect(target.textContent).toContain("Active Rate");
       expect(target.textContent).toContain("0.5%");
       expect(target.textContent).not.toContain("Current Streak");
-      expect(target.querySelectorAll(".sk-stat").length).toBe(4);
+      expect(target.querySelectorAll(".sk-stat")).toHaveLength(4);
     });
 
     it("renders a heatmap SVG", () => {
@@ -545,7 +545,7 @@ describe("createStreakr", () => {
     it("renders the Less/More legend with 5 swatches", () => {
       instance = createStreakr({ target, years, getDays });
       const swatches = target.querySelectorAll(".sk-legend-sq");
-      expect(swatches.length).toBe(5);
+      expect(swatches).toHaveLength(5);
       expect(target.querySelector(".sk-legend")?.textContent).toContain("Less");
       expect(target.querySelector(".sk-legend")?.textContent).toContain("More");
     });
@@ -558,17 +558,17 @@ describe("createStreakr", () => {
       expect(target.querySelector(".sk-heatmap-stage > .sk-heatmap-svg-wrap")).toBeTruthy();
       expect(target.querySelector(".sk-legend")).toBeTruthy();
       expect(target.querySelector(".sk-heatmap-svg")).toBeTruthy();
-      expect(target.querySelectorAll(".sk-provider").length).toBe(3);
-      expect(target.querySelectorAll(".sk-provider-count .sk-skeleton").length).toBe(3);
-      expect(target.querySelectorAll(".sk-stat").length).toBe(4);
+      expect(target.querySelectorAll(".sk-provider")).toHaveLength(3);
+      expect(target.querySelectorAll(".sk-provider-count .sk-skeleton")).toHaveLength(3);
+      expect(target.querySelectorAll(".sk-stat")).toHaveLength(4);
       expect(target.textContent).toContain("Total Contributions");
       expect(target.textContent).toContain("Best Streak");
       expect(target.textContent).toContain("Current Streak");
       expect(target.textContent).toContain("Active Days");
-      expect(target.querySelectorAll(".sk-stat-label .sk-skeleton").length).toBe(0);
-      expect(target.querySelectorAll(".sk-stat-value .sk-skeleton").length).toBe(4);
-      expect(target.querySelectorAll(".sk-stat-value-skeleton--3").length).toBe(1);
-      expect(target.querySelectorAll(".sk-stat-value-skeleton--2").length).toBe(3);
+      expect(target.querySelectorAll(".sk-stat-label .sk-skeleton")).toHaveLength(0);
+      expect(target.querySelectorAll(".sk-stat-value .sk-skeleton")).toHaveLength(4);
+      expect(target.querySelectorAll(".sk-stat-value-skeleton--3")).toHaveLength(1);
+      expect(target.querySelectorAll(".sk-stat-value-skeleton--2")).toHaveLength(3);
       expect(target.textContent).not.toContain("Loading");
     });
 

@@ -648,14 +648,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       }
     };
 
-    const handleLinePointerOver = (e: PointerEvent): void => {
-      if (dragging) {
-        return;
-      }
-      selectLineTarget(e.target);
-    };
-
-    const handleClickOnLine = (e: PointerEvent): void => {
+    const handleLineInteraction = (e: PointerEvent): void => {
       if (dragging) {
         return;
       }
@@ -664,11 +657,11 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
     svgEl.addEventListener("pointerdown", handlePointerDown);
     svgEl.addEventListener("pointermove", handlePointerMove);
-    svgEl.addEventListener("pointerover", handleLinePointerOver);
+    svgEl.addEventListener("pointerover", handleLineInteraction);
     svgEl.addEventListener("pointerup", handlePointerUp);
     svgEl.addEventListener("pointercancel", handlePointerUp);
     svgEl.addEventListener("pointerleave", handlePointerUp);
-    svgEl.addEventListener("click", handleClickOnLine);
+    svgEl.addEventListener("click", handleLineInteraction);
   };
 
   const renderRingHint = (): HTMLElement =>
