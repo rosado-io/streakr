@@ -36,10 +36,10 @@ Or load the ESM build and CSS from a CDN. Pin the version in production:
 
 <link
   rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/@rosado-io/streakr@0.4.0/dist/streakr.css"
+  href="https://cdn.jsdelivr.net/npm/@rosado-io/streakr@0.6.0/dist/streakr.css"
 />
 <script type="module">
-  import { createStreakr } from "https://esm.sh/@rosado-io/streakr@0.4.0";
+  import { createStreakr } from "https://esm.sh/@rosado-io/streakr@0.6.0";
 
   createStreakr({
     target: document.getElementById("streakr"),
@@ -103,7 +103,7 @@ variables (`--sk-*`).
 | `year` | `number` | last `years` entry | Currently selected year. |
 | `today` | `Date` | `new Date()` | Reference date for the current-year year-to-date view. |
 | `getDays` | `(year) => StreakrDay[]` | required | Returns the days for a given year. |
-| `providers` | `StreakrProvider[]` | `[github, gitlab, bitbucket]` | Provider configuration (see below). |
+| `providers` | `StreakrProvider[]` | `[github, gitlab, bitbucket]` | Visual provider chips and source keys (see below). |
 | `onYearChange` | `(year) => void` | — | Fires after the user picks a different year. |
 | `onProviderToggle` | `(key, enabled, all) => void` | — | Fires after a provider chip is toggled. |
 
@@ -144,9 +144,13 @@ interface StreakrProvider {
 
 ## Custom providers
 
-Built-in display icons cover GitHub, GitLab, and Bitbucket. Data-fetching
-providers ship for GitHub and GitLab; for other sources, pass your own
-`providers` array and return matching `sources` keys from `getDays`:
+Built-in display icons cover GitHub, GitLab, and Bitbucket. These are visual
+providers: they control chip labels, icons, colors, and which `sources` keys the
+component can toggle. Data-fetching providers currently ship for GitHub and
+GitLab only; there is no built-in `BitbucketProvider` fetcher.
+
+For other sources, pass your own `providers` array and return matching `sources`
+keys from `getDays`:
 
 ```ts
 createStreakr({
@@ -313,9 +317,20 @@ provider.
 
 ### Utilities
 
-- `normalizeEventsToDaily(events)` — merge duplicates, fill gaps, sort.
-- `computeStreaks(days)` — total, best streak, current streak.
-- `buildCalendarGrid(days, options?)` — week-by-day grid with intensity levels.
+`normalizeEventsToDaily(events)` accepts `ContributionDay[]` with `YYYY-MM-DD`
+date strings. It merges duplicate dates, sums their `count` values, merges
+matching `sources`, sorts by date, and fills missing days between the earliest
+and latest event with zero-count entries.
+
+`computeStreaks(days)` accepts daily `ContributionDay[]` sorted in the order you
+want to evaluate. It returns `total`, `bestStreak`, and `currentStreak`, where a
+streak is any consecutive run of days with `count > 0`.
+
+`buildCalendarGrid(days, options?)` creates a week-by-day grid for custom UIs.
+`options.startDate` and `options.endDate` constrain the inclusive date range;
+when omitted, the first and last input dates are used. `options.weekStartsOn`
+defaults to `0` (Sunday) and also accepts `1` (Monday). Each rendered cell gets a
+`level` from `0` to `4` based on contribution intensity.
 
 These are independent helpers — useful if you want to plug custom data into
 `createStreakr` or build something different on top.
@@ -356,8 +371,8 @@ Treat tokens as secrets:
 Streakr follows [semver](https://semver.org/), with one caveat: while the
 package is pre-1.0, **minor releases (`0.x.0`) may include breaking changes**.
 
-If you want to pin against breakage, use a tilde range (`~0.4.0`) instead of a
-caret (`^0.4.0`) until 1.0.
+If you want to pin against breakage, use a tilde range (`~0.6.0`) instead of a
+caret (`^0.6.0`) until 1.0.
 
 ## Development
 
