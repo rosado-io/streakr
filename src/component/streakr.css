@@ -261,7 +261,7 @@
   gap: 8px;
   user-select: none;
   -webkit-user-select: none;
-  touch-action: none;
+  touch-action: manipulation;
 }
 .sk-ring-svg-wrap {
   position: relative;
@@ -293,7 +293,6 @@
   opacity: 0.95;
 }
 .sk-ring-line {
-  stroke-width: 2.2px;
   stroke-linecap: round;
   transition: stroke 120ms ease, stroke-width 120ms ease;
   cursor: pointer;
@@ -365,12 +364,6 @@
   letter-spacing: 0.08em;
   color: var(--sk-text-subtle);
   margin-top: 2px;
-}
-.sk-ring-hint {
-  font-size: 11px;
-  color: var(--sk-text-subtle);
-  white-space: nowrap;
-  text-align: center;
 }
 
 /* Stats */
