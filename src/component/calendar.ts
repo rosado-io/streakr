@@ -135,13 +135,3 @@ export const polarToCartesian = (
   x: cx + r * Math.cos(angle),
   y: cy + r * Math.sin(angle),
 });
-
-export const cartesianToAngle = (cx: number, cy: number, x: number, y: number): number => {
-  const raw = Math.atan2(y - cy, x - cx);
-  return raw;
-};
-
-export const angleToDayIndex = (angle: number, totalDays: number): number => {
-  const normalized = (((angle + Math.PI / 2) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-  return Math.round((normalized / (2 * Math.PI)) * totalDays) % totalDays;
-};
