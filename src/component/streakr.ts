@@ -8,8 +8,6 @@ import type {
   StreakrThemeMode,
 } from "../types";
 import {
-  angleToDayIndex,
-  cartesianToAngle,
   DAY_LABELS,
   dayAngle,
   fmtDateLong,
@@ -412,6 +410,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   const RING_MONTH_LABEL_R = 164;
   const RING_HAND_START_R = 70;
   const RING_HAND_END_R = 154;
+  const RING_DAY_STROKE_WIDTH = 2.85;
+  const RING_CLICK_DRAG_TOLERANCE = 6;
+  const RING_SUPPRESS_CLICK_MS = 350;
 
   const ringLineColor = (level: number): string => `var(--sk-heat-${level})`;
 
@@ -453,6 +454,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         y1: start.y,
         x2: end.x,
         y2: end.y,
+        "stroke-width": RING_DAY_STROKE_WIDTH,
         stroke: future ? "transparent" : ringLineColor(day.level),
         "data-date": day.date.toISOString(),
         "data-future": future ? "true" : undefined,
@@ -519,9 +521,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       }),
     );
 
-    svgEl.appendChild(ringGroup);
     svgEl.appendChild(innerRing);
     svgEl.appendChild(outerRing);
+    svgEl.appendChild(ringGroup);
     svgEl.appendChild(monthLabels);
     svgEl.appendChild(hand);
     return svgEl;
@@ -549,15 +551,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       [
         h("div", { class: "sk-ring-count", text: String(day.total) }),
         h("div", { class: "sk-ring-date", text: fmtDateShort(day.date) }),
-        h("div", { class: "sk-ring-reset", text: "TAP TO RESET" }),
+        h("div", { class: "sk-ring-reset", text: "RESET" }),
       ],
     );
-
-  const findDayByAngle = (days: StreakrLeveledDay[], angle: number): StreakrLeveledDay => {
-    const totalDays = days.length;
-    const idx = angleToDayIndex(angle, totalDays);
-    return days[idx] ?? days[0];
-  };
 
   const findDayByDate = (days: StreakrLeveledDay[], date: Date): StreakrLeveledDay => {
     const found = days.find((d) => localDateKey(d.date) === localDateKey(date));
@@ -575,21 +571,11 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     centerEl: HTMLElement,
     days: StreakrLeveledDay[],
   ): void => {
-    let dragging = false;
-    let startAngle = 0;
-    let currentRotation = 0;
-
-    const getAngleFromEvent = (e: PointerEvent): number => {
-      const rect = svgEl.getBoundingClientRect();
-      const scaleX = RING_SIZE / rect.width;
-      const scaleY = RING_SIZE / rect.height;
-      const x = (e.clientX - rect.left) * scaleX;
-      const y = (e.clientY - rect.top) * scaleY;
-      return cartesianToAngle(RING_CX, RING_CY, x, y);
-    };
+    let pointerDownPoint: { x: number; y: number } | null = null;
+    let suppressNextClick = false;
+    let suppressResetTimer: ReturnType<typeof setTimeout> | null = null;
 
     const setHandRotation = (rotation: number): void => {
-      currentRotation = rotation;
       handGroup.setAttribute(
         "transform",
         `rotate(${(rotation * 180) / Math.PI}, ${RING_CX}, ${RING_CY})`,
@@ -618,27 +604,49 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
     setHandRotation(dayToHandRotation(state.selectedDay, days.length));
 
+    const clearSuppressResetTimer = (): void => {
+      if (suppressResetTimer) {
+        clearTimeout(suppressResetTimer);
+        suppressResetTimer = null;
+      }
+    };
+
+    const resetSuppressedClickAfterDrag = (): void => {
+      clearSuppressResetTimer();
+      suppressResetTimer = setTimeout(() => {
+        suppressNextClick = false;
+        suppressResetTimer = null;
+      }, RING_SUPPRESS_CLICK_MS);
+    };
+
+    const hasMovedBeyondClickTolerance = (e: PointerEvent): boolean => {
+      if (!pointerDownPoint) return false;
+      return (
+        Math.hypot(e.clientX - pointerDownPoint.x, e.clientY - pointerDownPoint.y) >
+        RING_CLICK_DRAG_TOLERANCE
+      );
+    };
+
     const handlePointerDown = (e: PointerEvent): void => {
-      e.preventDefault();
-      dragging = true;
-      startAngle = getAngleFromEvent(e) - currentRotation;
-      svgEl.setPointerCapture(e.pointerId);
+      clearSuppressResetTimer();
+      suppressNextClick = false;
+      pointerDownPoint = { x: e.clientX, y: e.clientY };
     };
 
     const handlePointerMove = (e: PointerEvent): void => {
-      if (!dragging) return;
-      e.preventDefault();
-      const angle = getAngleFromEvent(e);
-      const rotation = angle - startAngle;
-      const selected = findDayByAngle(days, rotation - Math.PI / 2);
-      setHandRotation(rotation);
-      selectDay(selected, false);
+      if (hasMovedBeyondClickTolerance(e)) {
+        suppressNextClick = true;
+      }
     };
 
     const handlePointerUp = (e: PointerEvent): void => {
-      if (!dragging) return;
-      dragging = false;
-      svgEl.releasePointerCapture(e.pointerId);
+      if (hasMovedBeyondClickTolerance(e)) {
+        suppressNextClick = true;
+      }
+      pointerDownPoint = null;
+      if (suppressNextClick) {
+        resetSuppressedClickAfterDrag();
+      }
     };
 
     const selectLineTarget = (target: EventTarget | null): void => {
@@ -649,7 +657,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     };
 
     const handleLineInteraction = (e: PointerEvent): void => {
-      if (dragging) {
+      if (suppressNextClick) {
+        suppressNextClick = false;
+        clearSuppressResetTimer();
         return;
       }
       selectLineTarget(e.target);
@@ -657,15 +667,11 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
     svgEl.addEventListener("pointerdown", handlePointerDown);
     svgEl.addEventListener("pointermove", handlePointerMove);
-    svgEl.addEventListener("pointerover", handleLineInteraction);
     svgEl.addEventListener("pointerup", handlePointerUp);
     svgEl.addEventListener("pointercancel", handlePointerUp);
     svgEl.addEventListener("pointerleave", handlePointerUp);
     svgEl.addEventListener("click", handleLineInteraction);
   };
-
-  const renderRingHint = (): HTMLElement =>
-    h("div", { class: "sk-ring-hint", text: "Arrastra el selector para recorrer el año" });
 
   const renderRing = (wrap: HTMLElement, days: StreakrLeveledDay[]): void => {
     const selected = findDayByDate(days, state.selectedDay);
@@ -678,7 +684,6 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     }
 
     const container = h("div", { class: "sk-ring" }, [
-      renderRingHint(),
       h("div", { class: "sk-ring-svg-wrap" }, [svgEl, centerEl]),
     ]);
     wrap.replaceChildren(container);
