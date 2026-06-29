@@ -1,3 +1,6 @@
+## [0.6.1](https://github.com/rosado-io/streakr/compare/v0.6.0...v0.6.1) (2026-06-27)
+* fix(component): Corrige interacción del anillo móvil (#120) ([`1f3f711`](https://github.com/rosado-io/streakr/commit/1f3f7117eb92f425b1ecdcf1121fcd0d4ad721f2)) by ****
+
 ## [0.6.0](https://github.com/rosado-io/streakr/compare/v0.5.1...v0.6.0) (2026-06-24)
 
 ### Features
