@@ -322,9 +322,12 @@ date strings. It merges duplicate dates, sums their `count` values, merges
 matching `sources`, sorts by date, and fills missing days between the earliest
 and latest event with zero-count entries.
 
-`computeStreaks(days)` accepts daily `ContributionDay[]` sorted in the order you
-want to evaluate. It returns `total`, `bestStreak`, and `currentStreak`, where a
-streak is any consecutive run of days with `count > 0`.
+`computeStreaks(days)` accepts a contiguous daily `ContributionDay[]` series,
+sorted in the order you want to evaluate. Fill missing calendar dates with
+zero-count entries first, for example with `normalizeEventsToDaily`; sparse
+positive dates across a gap are otherwise treated as adjacent entries. The
+helper returns `total`, `bestStreak`, and `currentStreak`, where a streak is any
+consecutive run of entries with `count > 0`.
 
 `buildCalendarGrid(days, options?)` creates a week-by-day grid for custom UIs.
 `options.startDate` and `options.endDate` constrain the inclusive date range;
