@@ -241,7 +241,7 @@ function syncMobileState(): void {
   if (!mobileReady || !mobileIframe?.contentWindow) return;
   mobileIframe.contentWindow.postMessage(
     { type: "streakr-demo-state", payload: state },
-    "*"
+    window.location.origin
   );
 }
 
@@ -489,6 +489,7 @@ function makeToggle({ tip, active, svg, onClick }: ToggleOpts): HTMLElement {
 }
 
 window.addEventListener("message", (event) => {
+  if (event.origin !== window.location.origin) return;
   if (event.data?.type !== "streakr-mobile-ready") return;
   mobileReady = true;
   syncMobileState();
