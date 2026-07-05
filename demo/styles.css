@@ -15,6 +15,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Dark, slim scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #0a0a0a; }
+::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
+html { scrollbar-color: #2a2a2a #0a0a0a; scrollbar-width: thin; }
+
 /* ============================================================
    Landing — Vercel-style: monochrome, big type, dark
    Lifted from the redesign source and namespaced under .lv1-*
@@ -64,7 +71,7 @@ body {
 }
 
 .lv1-hero {
-  padding: 96px 56px 56px;
+  padding: 80px 56px 40px;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -140,11 +147,11 @@ body {
 
 /* Playground section */
 .lv1-pg-section {
-  padding: 56px 56px 72px;
+  padding: 40px 56px 72px;
   text-align: center;
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
-.lv1-pg-section .lv1-eyebrow { margin-bottom: 36px; }
+.lv1-pg-section .lv1-eyebrow { margin-bottom: 28px; }
 .lv1-component-slot {
   max-width: 1080px;
   margin: 0 auto;
@@ -154,6 +161,49 @@ body {
   transition: background 200ms;
 }
 .lv1-component-slot[data-theme="light"] { background: #f0f2f5; }
+.lv1-component-slot.mobile-preview {
+  max-width: 390px;
+  height: 760px;
+  background: #0a0a0a;
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 8px;
+  display: flex;
+  justify-content: center;
+}
+.lv1-component-slot.mobile-preview iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 12px;
+  background: #000;
+}
+
+/* Playground view toggle */
+.lv1-pg-view {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 999px;
+  margin-bottom: 20px;
+}
+.lv1-pg-view button {
+  background: transparent;
+  border: 0;
+  color: rgba(255,255,255,0.5);
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 120ms;
+}
+.lv1-pg-view button:hover { color: #fff; }
+.lv1-pg-view button.active {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
 
 /* Playground bar */
 .lv1-pg-bar {
