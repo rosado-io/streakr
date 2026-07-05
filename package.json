@@ -26,6 +26,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build && node -e \"require('fs').copyFileSync('src/component/streakr.css','dist/streakr.css')\"",
+    "build:demo": "vite build --config vite.demo.config.ts",
     "test": "vitest",
     "test:ci": "vitest run --coverage",
     "lint": "eslint src/",
