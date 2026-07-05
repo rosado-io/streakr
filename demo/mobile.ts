@@ -58,9 +58,15 @@ function update(options: Partial<DemoState>): void {
   });
 }
 
-const g = globalThis as unknown as typeof window;
+interface DemoGlobal extends EventTarget {
+  location: Location;
+  parent: DemoGlobal;
+  postMessage(message: unknown, targetOrigin: string): void;
+}
 
-g.addEventListener("message", (event) => {
+const g = globalThis as unknown as DemoGlobal;
+
+g.addEventListener("message", (event: MessageEvent) => {
   if (event.origin !== g.location.origin) return;
   if (event.data?.type !== "streakr-demo-state") return;
   update(event.data.payload ?? {});

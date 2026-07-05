@@ -203,13 +203,12 @@ function formatStars(n: number): string {
   return String(n);
 }
 
-(async function loadStars() {
-  const count = await fetchGitHubStars();
-  if (count == null) return;
+const count = await fetchGitHubStars();
+if (count != null) {
   document.querySelectorAll<HTMLElement>("[data-real-stars]").forEach((el) => {
     el.textContent = formatStars(count);
   });
-})();
+}
 
 document.querySelectorAll<HTMLElement>("[data-logo]").forEach((el) => {
   el.innerHTML = logoSvg();
@@ -231,7 +230,13 @@ let instance: StreakrInstance | null = null;
 let mobileIframe: HTMLIFrameElement | null = null;
 let mobileReady = false;
 
-const g = globalThis as unknown as typeof window;
+interface DemoGlobal extends EventTarget {
+  location: Location;
+  parent: DemoGlobal;
+  postMessage(message: unknown, targetOrigin: string): void;
+}
+
+const g = globalThis as unknown as DemoGlobal;
 
 function getMobileUrl(): string {
   const base = import.meta.env.BASE_URL.endsWith("/")

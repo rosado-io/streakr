@@ -191,7 +191,7 @@ html { scrollbar-color: #2a2a2a #0a0a0a; scrollbar-width: thin; }
 .lv1-pg-view button {
   background: transparent;
   border: 0;
-  color: rgba(255,255,255,0.75);
+  color: #aaa;
   font-family: inherit;
   font-size: 12px;
   padding: 6px 12px;
@@ -201,7 +201,7 @@ html { scrollbar-color: #2a2a2a #0a0a0a; scrollbar-width: thin; }
 }
 .lv1-pg-view button:hover { color: #fff; }
 .lv1-pg-view button.active {
-  background: rgba(255,255,255,0.1);
+  background: #2a2a2a;
   color: #fff;
 }
 
