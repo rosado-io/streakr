@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 import "./styles.css";
 import {
   createStreakr,
@@ -21,6 +23,62 @@ const DEMO_PROVIDERS: StreakrProvider[] = [
   { key: "gitlab", name: "GitLab", color: "#fc6d26" },
 ];
 
+const INSTALL_SNIPPETS: Record<string, string> = {
+  npm: `<span class="c-c"># install</span>
+<span class="c-k">npm</span> install @rosado-io/streakr
+
+<span class="c-c">// mount</span>
+<span class="c-k">import</span> { createStreakr } <span class="c-k">from</span> <span class="c-s">'@rosado-io/streakr'</span>
+<span class="c-k">import</span> <span class="c-s">'@rosado-io/streakr/styles.css'</span>
+
+<span class="c-fn">createStreakr</span>({
+  target: <span class="c-fn">document</span>.querySelector(<span class="c-s">'#streakr'</span>),
+  theme: <span class="c-s">'dark'</span>,
+  years: [2024, 2025, 2026],
+  getDays: (year) =&gt; <span class="c-fn">fetchActivity</span>(year),
+})`,
+  pnpm: `<span class="c-c"># install</span>
+<span class="c-k">pnpm</span> add @rosado-io/streakr
+
+<span class="c-c">// mount</span>
+<span class="c-k">import</span> { createStreakr } <span class="c-k">from</span> <span class="c-s">'@rosado-io/streakr'</span>
+<span class="c-k">import</span> <span class="c-s">'@rosado-io/streakr/styles.css'</span>
+
+<span class="c-fn">createStreakr</span>({
+  target: <span class="c-fn">document</span>.querySelector(<span class="c-s">'#streakr'</span>),
+  theme: <span class="c-s">'dark'</span>,
+  years: [2024, 2025, 2026],
+  getDays: (year) =&gt; <span class="c-fn">fetchActivity</span>(year),
+})`,
+  yarn: `<span class="c-c"># install</span>
+<span class="c-k">yarn</span> add @rosado-io/streakr
+
+<span class="c-c">// mount</span>
+<span class="c-k">import</span> { createStreakr } <span class="c-k">from</span> <span class="c-s">'@rosado-io/streakr'</span>
+<span class="c-k">import</span> <span class="c-s">'@rosado-io/streakr/styles.css'</span>
+
+<span class="c-fn">createStreakr</span>({
+  target: <span class="c-fn">document</span>.querySelector(<span class="c-s">'#streakr'</span>),
+  theme: <span class="c-s">'dark'</span>,
+  years: [2024, 2025, 2026],
+  getDays: (year) =&gt; <span class="c-fn">fetchActivity</span>(year),
+})`,
+  cdn: `<span class="c-c">&lt;!-- CSS --&gt;</span>
+&lt;<span class="c-k">link</span> rel=<span class="c-s">"stylesheet"</span> href=<span class="c-s">"https://cdn.jsdelivr.net/npm/@rosado-io/streakr@latest/dist/streakr.css"</span>&gt;
+
+<span class="c-c">&lt;!-- Module --&gt;</span>
+&lt;<span class="c-k">script</span> type=<span class="c-s">"module"</span>&gt;
+  <span class="c-k">import</span> { createStreakr } <span class="c-k">from</span> <span class="c-s">'https://cdn.jsdelivr.net/npm/@rosado-io/streakr@latest/dist/streakr.es.js'</span>
+
+  <span class="c-fn">createStreakr</span>({
+    target: <span class="c-fn">document</span>.querySelector(<span class="c-s">'#streakr'</span>),
+    theme: <span class="c-s">'dark'</span>,
+    years: [2024, 2025, 2026],
+    getDays: (year) =&gt; <span class="c-fn">fetchActivity</span>(year),
+  })
+&lt;/<span class="c-k">script</span>&gt;`,
+};
+
 const root = document.getElementById("root");
 if (!root) throw new Error("Landing root not found");
 
@@ -38,7 +96,7 @@ root.innerHTML = `
       <a href="https://github.com/rosado-io/streakr" class="lv1-star" target="_blank" rel="noreferrer">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
         <span>Star</span>
-        <span class="lv1-star-count">2.4k</span>
+        <span class="lv1-star-count" data-real-stars>—</span>
       </a>
     </header>
 
@@ -55,6 +113,7 @@ root.innerHTML = `
         <a href="https://github.com/rosado-io/streakr" target="_blank" rel="noreferrer" class="lv1-btn lv1-btn-primary">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
           Star on GitHub
+          <span class="lv1-star-count" data-real-stars></span>
         </a>
         <a href="#install" class="lv1-btn lv1-btn-ghost">
           <code>npm i @rosado-io/streakr</code>
@@ -67,6 +126,7 @@ root.innerHTML = `
         <span class="lv1-eyebrow-dot"></span>
         Playground
       </div>
+      <div class="lv1-pg-view" id="pg-view"></div>
       <div class="lv1-component-slot" id="component-slot" data-theme="dark"></div>
       <div class="lv1-pg-bar">
         <div class="lv1-pg-controls" id="pg-controls"></div>
@@ -79,24 +139,13 @@ root.innerHTML = `
         Install
       </div>
       <div class="lv1-install-card">
-        <div class="lv1-install-tabs">
-          <button class="lv1-tab active">npm</button>
-          <button class="lv1-tab">pnpm</button>
-          <button class="lv1-tab">CDN</button>
+        <div class="lv1-install-tabs" id="install-tabs">
+          <button class="lv1-tab active" data-tab="npm">npm</button>
+          <button class="lv1-tab" data-tab="pnpm">pnpm</button>
+          <button class="lv1-tab" data-tab="yarn">yarn</button>
+          <button class="lv1-tab" data-tab="cdn">CDN</button>
         </div>
-        <pre class="lv1-code"><code><span class="c-c"># install</span>
-<span class="c-k">npm</span> install @rosado-io/streakr
-
-<span class="c-c">// mount</span>
-<span class="c-k">import</span> { createStreakr } <span class="c-k">from</span> <span class="c-s">'@rosado-io/streakr'</span>
-<span class="c-k">import</span> <span class="c-s">'@rosado-io/streakr/styles.css'</span>
-
-<span class="c-fn">createStreakr</span>({
-  target: <span class="c-fn">document</span>.querySelector(<span class="c-s">'#streakr'</span>),
-  theme: <span class="c-s">'dark'</span>,
-  years: [2024, 2025, 2026],
-  getDays: (year) =&gt; fetchActivity(year),
-})</code></pre>
+        <pre class="lv1-code" id="install-code"><code></code></pre>
       </div>
     </section>
 
@@ -138,6 +187,29 @@ function logoSvg(): string {
   `;
 }
 
+async function fetchGitHubStars(): Promise<number | null> {
+  try {
+    const res = await fetch("https://api.github.com/repos/rosado-io/streakr");
+    if (!res.ok) return null;
+    const data = (await res.json()) as { stargazers_count?: unknown };
+    return typeof data.stargazers_count === "number" ? data.stargazers_count : null;
+  } catch {
+    return null;
+  }
+}
+
+function formatStars(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k`;
+  return String(n);
+}
+
+const count = await fetchGitHubStars();
+if (count != null) {
+  document.querySelectorAll<HTMLElement>("[data-real-stars]").forEach((el) => {
+    el.textContent = formatStars(count);
+  });
+}
+
 document.querySelectorAll<HTMLElement>("[data-logo]").forEach((el) => {
   el.innerHTML = logoSvg();
 });
@@ -151,13 +223,46 @@ const state = {
   showProviders: true,
   showStats: true,
   componentState: "ready" as StreakrState,
+  view: "desktop" as "desktop" | "mobile",
 };
 
 let instance: StreakrInstance | null = null;
+let mobileIframe: HTMLIFrameElement | null = null;
+let mobileReady = false;
+
+interface DemoGlobal extends EventTarget {
+  location: Location;
+  parent: DemoGlobal;
+  postMessage(message: unknown, targetOrigin: string): void;
+}
+
+const g = globalThis as unknown as DemoGlobal;
+
+function getMobileUrl(): string {
+  const base = import.meta.env.BASE_URL.endsWith("/")
+    ? import.meta.env.BASE_URL
+    : `${import.meta.env.BASE_URL}/`;
+  return new URL("demo/mobile.html", g.location.origin + base).href;
+}
+
+function syncMobileState(): void {
+  if (!mobileReady || !mobileIframe?.contentWindow) return;
+  mobileIframe.contentWindow.postMessage(
+    { type: "streakr-demo-state", payload: state },
+    g.location.origin
+  );
+}
 
 function mountComponent(): void {
   if (instance) instance.destroy();
+  instance = null;
+  if (mobileIframe) {
+    mobileIframe.remove();
+    mobileIframe = null;
+  }
+  mobileReady = false;
   slot.innerHTML = "";
+  slot.classList.remove("mobile-preview");
   instance = createStreakr({
     target: slot,
     theme: state.theme,
@@ -175,17 +280,81 @@ function mountComponent(): void {
   slot.dataset.theme = state.theme;
 }
 
-function updateComponent(): void {
-  if (!instance) return mountComponent();
-  instance.update({
-    theme: state.theme,
-    accent: state.accent,
-    tintHeatmap: true,
-    showProviders: state.showProviders,
-    showStats: state.showStats,
-    state: state.componentState,
-  });
+function mountMobilePreview(): void {
+  if (instance) {
+    instance.destroy();
+    instance = null;
+  }
+  if (mobileIframe) {
+    mobileIframe.remove();
+    mobileIframe = null;
+  }
+  mobileReady = false;
+  slot.innerHTML = "";
+  slot.classList.add("mobile-preview");
   slot.dataset.theme = state.theme;
+
+  const iframe = document.createElement("iframe");
+  iframe.src = getMobileUrl();
+  iframe.title = "streakr mobile preview";
+  iframe.setAttribute("aria-label", "Mobile preview of the streakr component");
+  iframe.addEventListener("load", () => {
+    if (!mobileReady) syncMobileState();
+  });
+  slot.appendChild(iframe);
+  mobileIframe = iframe;
+}
+
+function renderComponent(): void {
+  if (state.view === "desktop") mountComponent();
+  else mountMobilePreview();
+}
+
+function updateComponent(): void {
+  if (state.view === "desktop") {
+    if (!instance) return mountComponent();
+    instance.update({
+      theme: state.theme,
+      accent: state.accent,
+      tintHeatmap: true,
+      showProviders: state.showProviders,
+      showStats: state.showStats,
+      state: state.componentState,
+    });
+  } else {
+    syncMobileState();
+  }
+  slot.dataset.theme = state.theme;
+}
+
+function renderViewToggle(): void {
+  const viewWrap = document.getElementById("pg-view") as HTMLElement;
+  viewWrap.innerHTML = "";
+
+  const desktopBtn = document.createElement("button");
+  desktopBtn.textContent = "Desktop";
+  desktopBtn.className = state.view === "desktop" ? "active" : "";
+  desktopBtn.addEventListener("click", () => {
+    if (state.view === "desktop") return;
+    state.view = "desktop";
+    renderViewToggle();
+    renderComponent();
+    renderControls();
+  });
+
+  const mobileBtn = document.createElement("button");
+  mobileBtn.textContent = "Mobile";
+  mobileBtn.className = state.view === "mobile" ? "active" : "";
+  mobileBtn.addEventListener("click", () => {
+    if (state.view === "mobile") return;
+    state.view = "mobile";
+    renderViewToggle();
+    renderComponent();
+    renderControls();
+  });
+
+  viewWrap.appendChild(desktopBtn);
+  viewWrap.appendChild(mobileBtn);
 }
 
 function renderControls(): void {
@@ -286,6 +455,22 @@ function renderControls(): void {
   );
 }
 
+function renderInstallTabs(): void {
+  const tabs = document.querySelectorAll<HTMLButtonElement>("#install-tabs .lv1-tab");
+  const codeEl = document.querySelector<HTMLElement>("#install-code code");
+  if (!codeEl) return;
+
+  let active = "npm";
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      active = tab.dataset.tab ?? "npm";
+      tabs.forEach((t) => t.classList.toggle("active", t.dataset.tab === active));
+      codeEl.innerHTML = INSTALL_SNIPPETS[active] ?? "";
+    });
+  });
+  codeEl.innerHTML = INSTALL_SNIPPETS[active];
+}
+
 function makeSep(): HTMLElement {
   const sep = document.createElement("div");
   sep.className = "lv1-fc-sep";
@@ -311,5 +496,14 @@ function makeToggle({ tip, active, svg, onClick }: ToggleOpts): HTMLElement {
   return wrap;
 }
 
-mountComponent();
+g.addEventListener("message", (event) => {
+  if (event.origin !== g.location.origin) return;
+  if (event.data?.type !== "streakr-mobile-ready") return;
+  mobileReady = true;
+  syncMobileState();
+});
+
+renderComponent();
 renderControls();
+renderViewToggle();
+renderInstallTabs();
