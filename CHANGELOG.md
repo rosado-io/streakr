@@ -1,3 +1,6 @@
+## [0.7.0](https://github.com/rosado-io/streakr/compare/v0.6.1...v0.7.0) (2026-07-05)
+* feat(demo): real GitHub stars, desktop/mobile toggle, install tabs, dark scrollbar, English changelog (#122) ([`3f06fc2`](https://github.com/rosado-io/streakr/commit/3f06fc2c4aba65d42e3b6b71e8707718954f3f70)) by ****
+
 # Changelog
 
 ## [0.6.1](https://github.com/rosado-io/streakr/compare/v0.6.0...v0.6.1) (2026-06-27)
