@@ -20,6 +20,6 @@ jobs:
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_STREAKR_JS }}'
+          firebaseServiceAccount: '${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}'
           firebaseToolsVersion: 15.22.1
           projectId: streakr-js
