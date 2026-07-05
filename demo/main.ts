@@ -203,12 +203,13 @@ function formatStars(n: number): string {
   return String(n);
 }
 
-fetchGitHubStars().then((count) => {
+(async function loadStars() {
+  const count = await fetchGitHubStars();
   if (count == null) return;
   document.querySelectorAll<HTMLElement>("[data-real-stars]").forEach((el) => {
     el.textContent = formatStars(count);
   });
-});
+})();
 
 document.querySelectorAll<HTMLElement>("[data-logo]").forEach((el) => {
   el.innerHTML = logoSvg();
@@ -230,18 +231,20 @@ let instance: StreakrInstance | null = null;
 let mobileIframe: HTMLIFrameElement | null = null;
 let mobileReady = false;
 
+const g = globalThis as unknown as typeof window;
+
 function getMobileUrl(): string {
   const base = import.meta.env.BASE_URL.endsWith("/")
     ? import.meta.env.BASE_URL
     : `${import.meta.env.BASE_URL}/`;
-  return new URL("demo/mobile.html", window.location.origin + base).href;
+  return new URL("demo/mobile.html", g.location.origin + base).href;
 }
 
 function syncMobileState(): void {
   if (!mobileReady || !mobileIframe?.contentWindow) return;
   mobileIframe.contentWindow.postMessage(
     { type: "streakr-demo-state", payload: state },
-    window.location.origin
+    g.location.origin
   );
 }
 
@@ -488,8 +491,8 @@ function makeToggle({ tip, active, svg, onClick }: ToggleOpts): HTMLElement {
   return wrap;
 }
 
-window.addEventListener("message", (event) => {
-  if (event.origin !== window.location.origin) return;
+g.addEventListener("message", (event) => {
+  if (event.origin !== g.location.origin) return;
   if (event.data?.type !== "streakr-mobile-ready") return;
   mobileReady = true;
   syncMobileState();

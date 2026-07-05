@@ -58,11 +58,13 @@ function update(options: Partial<DemoState>): void {
   });
 }
 
-window.addEventListener("message", (event) => {
-  if (event.origin !== window.location.origin) return;
+const g = globalThis as unknown as typeof window;
+
+g.addEventListener("message", (event) => {
+  if (event.origin !== g.location.origin) return;
   if (event.data?.type !== "streakr-demo-state") return;
   update(event.data.payload ?? {});
 });
 
 mount();
-window.parent.postMessage({ type: "streakr-mobile-ready" }, window.location.origin);
+g.parent.postMessage({ type: "streakr-mobile-ready" }, g.location.origin);
