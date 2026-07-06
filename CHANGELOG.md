@@ -1,11 +1,16 @@
+## [0.7.0](https://github.com/rosado-io/streakr/compare/v0.6.1...v0.7.0) (2026-07-05)
+* feat(demo): real GitHub stars, desktop/mobile toggle, install tabs, dark scrollbar, English changelog (#122) ([`3f06fc2`](https://github.com/rosado-io/streakr/commit/3f06fc2c4aba65d42e3b6b71e8707718954f3f70)) by ****
+
+# Changelog
+
 ## [0.6.1](https://github.com/rosado-io/streakr/compare/v0.6.0...v0.6.1) (2026-06-27)
-* fix(component): Corrige interacción del anillo móvil (#120) ([`1f3f711`](https://github.com/rosado-io/streakr/commit/1f3f7117eb92f425b1ecdcf1121fcd0d4ad721f2)) by ****
+* fix(component): fix mobile contribution ring interaction (#120) ([`1f3f711`](https://github.com/rosado-io/streakr/commit/1f3f7117eb92f425b1ecdcf1121fcd0d4ad721f2)) by ****
 
 ## [0.6.0](https://github.com/rosado-io/streakr/compare/v0.5.1...v0.6.0) (2026-06-24)
 
 ### Features
 
-* feat: Agrega anillo móvil de contribuciones (#116) ([`4a5fd20`](https://github.com/rosado-io/streakr/commit/4a5fd2018014527cb1e02daa05fa4921f6f4ecdf)) by ****
+* feat: add mobile contribution ring (#116) ([`4a5fd20`](https://github.com/rosado-io/streakr/commit/4a5fd2018014527cb1e02daa05fa4921f6f4ecdf)) by ****
 
 ## [0.5.1](https://github.com/rosado-io/streakr/compare/v0.5.0...v0.5.1) (2026-06-22)
 
@@ -83,5 +88,3 @@
 ### Features
 
 * feat: clean restart with v0.1.0 and README badges (#67) ([`76c51b4`](https://github.com/rosado-io/streakr/commit/76c51b4448b161505fecb9b31bb8ea8ccfe6a687)) by ****
-
-# Changelog
