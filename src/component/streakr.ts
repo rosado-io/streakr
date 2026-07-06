@@ -929,12 +929,10 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
   const renderSkeletonHeatmap = (containerW: number): SVGElement => {
     const skeletonYear = state.year ?? cfg.today.getFullYear();
-    const skeletonDays = padDaysToYear([], skeletonYear).map(
-      (day): StreakrLeveledDay => ({
-        ...day,
-        level: 0,
-      }),
-    );
+    const skeletonDays = padDaysToYear([], skeletonYear).map((day): StreakrLeveledDay => ({
+      ...day,
+      level: 0,
+    }));
     const cols = gridFromDays(skeletonDays);
     return createHeatmapSvg(cols, {
       className: "sk-heatmap-svg sk-heatmap-svg--skeleton",
