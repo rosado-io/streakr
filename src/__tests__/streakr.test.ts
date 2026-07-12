@@ -549,6 +549,38 @@ describe("createStreakr", () => {
       expect(target.querySelector(".sk-legend")?.textContent).toContain("Less");
       expect(target.querySelector(".sk-legend")?.textContent).toContain("More");
     });
+
+    it("applies the enter animation class and staggered animationDelay on first paint", () => {
+      instance = createStreakr({ target, years, getDays });
+      const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell--enter");
+      expect(cells.length).toBeGreaterThan(0);
+      const first = cells[0];
+      expect(first.getAttribute("class")).toContain("sk-heatmap-cell--enter");
+      expect(first.style.animationDelay).not.toBe("");
+    });
+
+    it("does not re-apply the enter animation on update() re-render", () => {
+      instance = createStreakr({ target, years, getDays });
+      expect(target.querySelector("rect.sk-heatmap-cell--enter")).toBeTruthy();
+
+      instance.update({ theme: "light" });
+
+      expect(target.querySelector("rect.sk-heatmap-cell--enter")).toBeNull();
+      const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell");
+      expect(cells.length).toBeGreaterThan(0);
+      expect(cells[0].style.animationDelay).toBe("");
+    });
+
+    it("re-applies the enter animation on the loading→ready transition", () => {
+      instance = createStreakr({ target, years, state: "loading", getDays });
+      expect(target.querySelector("rect.sk-heatmap-cell--enter")).toBeNull();
+
+      instance.update({ state: "ready" });
+
+      const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell--enter");
+      expect(cells.length).toBeGreaterThan(0);
+      expect(cells[0].style.animationDelay).not.toBe("");
+    });
   });
 
   describe("lifecycle states", () => {

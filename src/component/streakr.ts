@@ -108,7 +108,16 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   const tooltipEl = h("div", { class: "sk-tooltip" }) as HTMLElement;
   root.appendChild(tooltipEl);
   let currentDraw: (() => void) | null = null;
-  const resizeObs = new ResizeObserver(() => currentDraw?.());
+  let skipNextResizeRedraw = false;
+  const resizeObs = new ResizeObserver(() => {
+    if (skipNextResizeRedraw) {
+      skipNextResizeRedraw = false;
+      return;
+    }
+    currentDraw?.();
+  });
+  let previousState: "loading" | "empty" | "ready" | null = null;
+  let enterAnimationActive = false;
 
   let mediaQueryListener: ((e: MediaQueryListEvent) => void) | null = null;
 
@@ -239,6 +248,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     ri: number,
     sq: number,
     colStep: number,
+    ci: number,
   ) => SVGElement;
 
   const buildHeatmapCell = (
@@ -246,15 +256,23 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     ri: number,
     sq: number,
     colStep: number,
+    ci: number,
   ): SVGElement => {
     const rect = svg("rect", {
-      class: day ? "sk-heatmap-cell" : null,
+      class: day
+        ? enterAnimationActive
+          ? "sk-heatmap-cell sk-heatmap-cell--enter"
+          : "sk-heatmap-cell"
+        : null,
       y: ri * colStep,
       width: sq,
       height: sq,
       rx: Math.max(2, sq * 0.22),
       fill: day ? `var(--sk-heat-${day.level})` : "transparent",
-      style: { cursor: day ? "pointer" : "default" },
+      style: {
+        cursor: day ? "pointer" : "default",
+        ...(day && enterAnimationActive ? { animationDelay: `${ci * 12}ms` } : {}),
+      },
     });
     if (day) {
       bindCellEvents(rect, day);
@@ -271,7 +289,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   ): SVGElement => {
     const colG = svg("g", { transform: `translate(${ci * colStep}, 0)` });
     col.forEach((day, ri) => {
-      colG.appendChild(buildCell(day, ri, sq, colStep));
+      colG.appendChild(buildCell(day, ri, sq, colStep, ci));
     });
     return colG;
   };
@@ -870,6 +888,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       card.appendChild(body);
       body.__skDraw?.();
       if (body.__skObserveTarget) {
+        skipNextResizeRedraw = true;
         resizeObs.observe(body.__skObserveTarget);
       }
       return;
@@ -879,6 +898,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     card.appendChild(body);
     body.__skDraw?.();
     if (body.__skObserveTarget) {
+      skipNextResizeRedraw = true;
       resizeObs.observe(body.__skObserveTarget);
     }
   };
@@ -888,6 +908,11 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     hideTooltip();
     resizeObs.disconnect();
     currentDraw = null;
+
+    enterAnimationActive =
+      cfg.state === "ready" &&
+      (previousState === null || previousState === "loading");
+    previousState = cfg.state;
 
     const wasOpen = state.yearModalOpen;
     const flags = computeRenderFlags();
@@ -1099,6 +1124,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       } catch (err) {
         console.error("[streakr] draw failed:", err);
       }
+      enterAnimationActive = false;
     };
     body.__skDraw = draw;
     currentDraw = draw;
