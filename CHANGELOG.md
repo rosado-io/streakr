@@ -1,3 +1,6 @@
+## [0.7.2](https://github.com/rosado-io/streakr/compare/v0.7.1...v0.7.2) (2026-07-12)
+* fix(core): unify divergent leveling algorithms between buildCalendarGrid and levelize (#133) ([`a1f14b7`](https://github.com/rosado-io/streakr/commit/a1f14b736bbea69fc2f3e5daa6060497b44f67a0)) by ****
+
 ## [0.7.1](https://github.com/rosado-io/streakr/compare/v0.7.0...v0.7.1) (2026-07-12)
 * fix(mobile): render ring guide circles above contribution lines (#130) ([`1e9d941`](https://github.com/rosado-io/streakr/commit/1e9d941a5d62f18fe2141c22c29985041ea5d367)) by ****
 
