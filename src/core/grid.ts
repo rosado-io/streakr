@@ -1,18 +1,6 @@
 import type { ContributionDay, CalendarGrid, CalendarCell, GridOptions } from "../types";
 import { formatDateYYYYMMDD } from "./normalize";
-
-const computeThresholds = (maxCount: number): [number, number, number] =>
-  maxCount === 0
-    ? [0, 0, 0]
-    : [Math.ceil(maxCount * 0.25), Math.ceil(maxCount * 0.5), Math.ceil(maxCount * 0.75)];
-
-const countToLevel = (count: number, [q1, q2, q3]: [number, number, number]): number => {
-  if (count === 0) return 0;
-  if (count < q1) return 1;
-  if (count < q2) return 2;
-  if (count < q3) return 3;
-  return 4;
-};
+import { computeLevelThresholds, countToLevel } from "./leveling";
 
 const adjustedDayOfWeek = (utcDay: number, weekStartsOn: number): number =>
   (utcDay - weekStartsOn + 7) % 7;
@@ -28,8 +16,7 @@ export const buildCalendarGrid = (days: ContributionDay[], options?: GridOptions
   const inRange = days.filter((d) => d.date >= startDate && d.date <= endDate);
 
   const dayMap = new Map(inRange.map((d) => [d.date, d]));
-  const maxCount = inRange.reduce((max, d) => Math.max(max, d.count), 0);
-  const thresholds = computeThresholds(maxCount);
+  const thresholds = computeLevelThresholds(inRange.map((d) => d.count));
 
   const [sY, sM, sD] = startDate.split("-").map(Number);
   const [eY, eM, eD] = endDate.split("-").map(Number);
