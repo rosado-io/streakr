@@ -23,7 +23,7 @@ describe("buildCalendarGrid", () => {
     expect(result.weeks[0][0]).toEqual({
       date: "2025-06-15",
       count: 5,
-      level: 4,
+      level: 1,
     });
     for (let i = 1; i < 7; i++) {
       expect(result.weeks[0][i]).toBeNull();
@@ -77,22 +77,25 @@ describe("buildCalendarGrid", () => {
     }
   });
 
-  it("assigns intensity levels 0–4 based on quartiles", () => {
+  it("assigns intensity levels 0–4 based on the active-day distribution", () => {
     const input = [
       day("2025-06-15", 0),
       day("2025-06-16", 1),
-      day("2025-06-17", 5),
-      day("2025-06-18", 8),
-      day("2025-06-19", 10),
+      day("2025-06-17", 3),
+      day("2025-06-18", 7),
+      day("2025-06-19", 15),
+      day("2025-06-20", 30),
+      day("2025-06-21", 100),
     ];
     const result = buildCalendarGrid(input);
     const cells = result.weeks.flat().filter((c): c is CalendarCell => c !== null);
+    const levelOf = (count: number) => cells.find((c) => c.count === count)?.level;
 
-    const zeroDay = cells.find((c) => c.count === 0);
-    expect(zeroDay?.level).toBe(0);
-
-    const maxDay = cells.find((c) => c.count === 10);
-    expect(maxDay?.level).toBe(4);
+    expect(levelOf(0)).toBe(0);
+    expect(levelOf(1)).toBe(1);
+    expect(levelOf(7)).toBe(2);
+    expect(levelOf(30)).toBe(3);
+    expect(levelOf(100)).toBe(4);
   });
 
   it("level 0 for all-zero input", () => {
@@ -145,13 +148,21 @@ describe("buildCalendarGrid", () => {
   });
 
   it("scales intensity levels to the filtered range, not all input", () => {
-    const input = [day("2025-06-10", 100), day("2025-06-15", 5), day("2025-06-20", 50)];
+    const input = [
+      day("2025-06-10", 100),
+      day("2025-06-12", 1),
+      day("2025-06-14", 7),
+      day("2025-06-16", 30),
+      day("2025-06-20", 50),
+    ];
     const result = buildCalendarGrid(input, {
-      startDate: "2025-06-12",
-      endDate: "2025-06-18",
+      startDate: "2025-06-11",
+      endDate: "2025-06-17",
     });
     const cells = result.weeks.flat().filter((c): c is CalendarCell => c !== null);
-    const jun15 = cells.find((c) => c.date === "2025-06-15");
-    expect(jun15?.level).toBe(4);
+    const jun16 = cells.find((c) => c.date === "2025-06-16");
+    // Thresholds from the filtered active counts [1, 7, 30] put 30 at level 3;
+    // computed from the full input [1, 7, 30, 50, 100] it would be level 2.
+    expect(jun16?.level).toBe(3);
   });
 });

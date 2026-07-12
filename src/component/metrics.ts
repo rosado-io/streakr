@@ -1,4 +1,5 @@
 import type { StreakrDay, StreakrLeveledDay } from "../types";
+import { computeLevels } from "../core/leveling";
 
 export interface StreakrStats {
   total: number;
@@ -7,33 +8,9 @@ export interface StreakrStats {
   current: number;
 }
 
-const LEVEL_PERCENTILES = [0.25, 0.55, 0.8] as const;
-
-const getDayLevel = (total: number, t1: number, t2: number, t3: number): 0 | 1 | 2 | 3 | 4 => {
-  if (total <= 0) return 0;
-  if (total <= t1) return 1;
-  if (total <= t2) return 2;
-  if (total <= t3) return 3;
-  return 4;
-};
-
 export const levelize = (days: StreakrDay[]): StreakrLeveledDay[] => {
-  const counts = days
-    .map((day) => day.total)
-    .filter((total) => total > 0)
-    .sort((a, b) => a - b);
-
-  const p = (q: number) => counts[Math.min(counts.length - 1, Math.floor(counts.length * q))];
-  const t1 = p(LEVEL_PERCENTILES[0]);
-  const t2 = p(LEVEL_PERCENTILES[1]);
-  const t3 = p(LEVEL_PERCENTILES[2]);
-
-  return counts.length === 0
-    ? days.map((day) => ({ ...day, level: 0 }))
-    : days.map((day) => ({
-        ...day,
-        level: getDayLevel(day.total, t1, t2, t3),
-      }));
+  const levels = computeLevels(days.map((day) => day.total));
+  return days.map((day, i) => ({ ...day, level: levels[i] }));
 };
 
 const nextStreakState = (
