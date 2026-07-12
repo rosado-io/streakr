@@ -283,6 +283,7 @@
 .sk-ring-outer {
   vector-effect: non-scaling-stroke;
   stroke-width: var(--sk-ring-guide-width);
+  pointer-events: none;
 }
 .sk-ring-inner {
   stroke: var(--sk-heat-1);

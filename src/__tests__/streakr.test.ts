@@ -843,10 +843,10 @@ describe("createStreakr", () => {
 
       expect(innerRing?.getAttribute("r")).toBe("78");
       expect(outerRing?.getAttribute("r")).toBe("150");
-      expect(svgChildren.indexOf(innerRing as Element)).toBeLessThan(
+      expect(svgChildren.indexOf(innerRing as Element)).toBeGreaterThan(
         svgChildren.indexOf(daysGroup as Element),
       );
-      expect(svgChildren.indexOf(outerRing as Element)).toBeLessThan(
+      expect(svgChildren.indexOf(outerRing as Element)).toBeGreaterThan(
         svgChildren.indexOf(daysGroup as Element),
       );
       expect(firstLine?.getAttribute("y1")).toBe("102");
@@ -893,7 +893,7 @@ describe("createStreakr", () => {
       expect(futureLines.every((line) => line.getAttribute("stroke") === "transparent")).toBe(true);
     });
 
-    it("renders overlapping day strokes with guide circles behind a filled ring", () => {
+    it("renders overlapping day strokes with guide circles in front of a filled ring", () => {
       setContainerWidth(375);
       instance = createStreakr({
         target,
@@ -916,10 +916,10 @@ describe("createStreakr", () => {
       expect(lines).toHaveLength(365);
       expect(Number(firstLine?.getAttribute("stroke-width"))).toBeGreaterThan(outerDayGap);
       expect(lines.every((line) => line.getAttribute("stroke") !== "transparent")).toBe(true);
-      expect(svgChildren.indexOf(innerRing as Element)).toBeLessThan(
+      expect(svgChildren.indexOf(innerRing as Element)).toBeGreaterThan(
         svgChildren.indexOf(daysGroup as Element),
       );
-      expect(svgChildren.indexOf(outerRing as Element)).toBeLessThan(
+      expect(svgChildren.indexOf(outerRing as Element)).toBeGreaterThan(
         svgChildren.indexOf(daysGroup as Element),
       );
     });
