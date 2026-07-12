@@ -801,6 +801,13 @@ describe("createStreakr", () => {
       expect(target.querySelector(".sk-heatmap-svg")).toBeNull();
     });
 
+    it("renders the ring skeleton on narrow containers when loading", () => {
+      setContainerWidth(375);
+      instance = createStreakr({ target, years, state: "loading", getDays });
+      expect(target.querySelector(".sk-ring-svg--skeleton")).toBeTruthy();
+      expect(target.querySelector(".sk-heatmap-svg--skeleton")).toBeNull();
+    });
+
     it("keeps the heatmap on wide containers", () => {
       setContainerWidth(1024);
       instance = createStreakr({ target, years, getDays });
