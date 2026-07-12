@@ -1,3 +1,6 @@
+## [0.7.1](https://github.com/rosado-io/streakr/compare/v0.7.0...v0.7.1) (2026-07-12)
+* fix(mobile): render ring guide circles above contribution lines (#130) ([`1e9d941`](https://github.com/rosado-io/streakr/commit/1e9d941a5d62f18fe2141c22c29985041ea5d367)) by ****
+
 ## [0.7.0](https://github.com/rosado-io/streakr/compare/v0.6.1...v0.7.0) (2026-07-05)
 * feat(demo): real GitHub stars, desktop/mobile toggle, install tabs, dark scrollbar, English changelog (#122) ([`3f06fc2`](https://github.com/rosado-io/streakr/commit/3f06fc2c4aba65d42e3b6b71e8707718954f3f70)) by ****
 
