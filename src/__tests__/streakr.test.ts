@@ -703,6 +703,50 @@ describe("createStreakr", () => {
       expect(target.querySelector<HTMLElement>(".sk-root")?.dataset.theme).toBe("dark");
     });
 
+    it("update({ target }) throws after mount", () => {
+      instance = createStreakr({ target, years, getDays });
+      const sk = instance;
+      const other = document.createElement("div");
+      document.body.appendChild(other);
+      expect(() => sk.update({ target: other })).toThrow(/Cannot update 'target' after mount/);
+      expect(target.querySelector(".sk-root")).toBeTruthy();
+      other.remove();
+    });
+
+    it("update({ target: undefined }) is a no-op, not a throw", () => {
+      instance = createStreakr({ target, years, getDays });
+      const sk = instance;
+      expect(() => sk.update({ target: undefined as unknown as HTMLElement })).not.toThrow();
+      expect(target.querySelector<HTMLElement>(".sk-root")?.dataset.theme).toBe("dark");
+    });
+
+    it("update() applies a valid patch and re-renders", () => {
+      instance = createStreakr({ target, years, getDays });
+      expect(target.querySelectorAll(".sk-stat")).toHaveLength(4);
+      instance.update({ showStats: false });
+      expect(target.querySelector(".sk-stats")).toBeNull();
+    });
+
+    it("update({ year }) reflects the new year in the UI", () => {
+      instance = createStreakr({ target, years, year: 2026, getDays });
+      instance.update({ year: 2024 });
+      expect(target.querySelector(".sk-year-tab.active")?.textContent).toBe("2024");
+      expect(target.querySelector(".sk-subtitle")?.textContent).toBe("2024");
+    });
+
+    it("update({ years }) re-derives the active year when it is no longer present", () => {
+      instance = createStreakr({ target, years, year: 2026, getDays });
+      instance.update({ years: [2022, 2023, 2024] });
+      expect(target.querySelector(".sk-year-tab.active")?.textContent).toBe("2024");
+    });
+
+    it("update() rejects unknown keys at compile time", () => {
+      const sk = createStreakr({ target, years, getDays });
+      // @ts-expect-error — 'unknownField' is not a key of StreakrOptions
+      sk.update({ unknownField: true });
+      sk.destroy();
+    });
+
     it("setYear() updates the active year", () => {
       instance = createStreakr({ target, years, year: 2026, getDays });
       instance.setYear(2024);

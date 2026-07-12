@@ -111,10 +111,16 @@ variables (`--sk-*`).
 
 | Method | Description |
 | --- | --- |
-| `update(patch)` | Patches any `StreakrOptions` value and re-renders. Undefined values are ignored. |
+| `update(patch)` | Patches any `StreakrOptions` value and re-renders. Undefined values are ignored. `target` cannot be updated after mount — call `destroy()` and recreate the instance with `createStreakr()` to move to a different element. |
 | `setYear(year)` | Changes the active year, fires `onYearChange`, and re-renders. |
 | `setProviders(next)` | Patches provider enabled/disabled state by provider key. |
 | `destroy()` | Removes DOM nodes, resize observers, tooltip, and keyboard listeners. |
+
+> ⚠️ **`update({ target })` throws.** The component is mounted into `target` at
+> creation time and the root node is not moved afterwards. Calling
+> `update({ target })` throws
+> `Cannot update 'target' after mount. Destroy and recreate the instance.`
+> To change the mount point, destroy the current instance and create a new one.
 
 ### `StreakrDay`
 
