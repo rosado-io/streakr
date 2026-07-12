@@ -521,9 +521,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       }),
     );
 
+    svgEl.appendChild(ringGroup);
     svgEl.appendChild(innerRing);
     svgEl.appendChild(outerRing);
-    svgEl.appendChild(ringGroup);
     svgEl.appendChild(monthLabels);
     svgEl.appendChild(hand);
     return svgEl;
