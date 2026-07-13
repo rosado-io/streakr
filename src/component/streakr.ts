@@ -431,41 +431,52 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   const dayToHandRotation = (day: Date, totalDays: number): number =>
     dayIndexToAngle(day, totalDays) + Math.PI / 2;
 
-  const renderRingSvg = (days: StreakrLeveledDay[], selectedDay: Date): SVGElement => {
+  type RingDayLineAttrs = {
+    class?: string | undefined;
+    stroke: string;
+    "stroke-linecap"?: "round";
+    "data-date"?: string | undefined;
+    "data-future"?: string | undefined;
+  };
+
+  const createRingSvgBase = <T extends StreakrDay>(
+    days: T[],
+    svgClass: string,
+    ariaLabel: string,
+    dayLineAttrs: (day: T, i: number) => RingDayLineAttrs,
+  ): SVGElement => {
     const totalDays = days.length;
     const svgEl = svg("svg", {
-      class: "sk-ring-svg",
+      class: svgClass,
       width: RING_SIZE,
       height: RING_SIZE,
       viewBox: `0 0 ${RING_SIZE} ${RING_SIZE}`,
       role: "img",
-      "aria-label": `Contribution ring for ${state.year ?? "selected year"}`,
+      "aria-label": ariaLabel,
     });
 
     const ringGroup = svg("g", { class: "sk-ring-days" });
     days.forEach((day, i) => {
       const angle = dayAngle(i, totalDays);
-      const future = isFutureRingDay(day.date);
       const start = polarToCartesian(RING_CX, RING_CY, RING_INNER_R, angle);
       const end = polarToCartesian(RING_CX, RING_CY, RING_LINE_OUTER_R, angle);
-      const line = svg("line", {
-        class: "sk-ring-line" + (future ? " sk-ring-line--future" : ""),
-        x1: start.x,
-        y1: start.y,
-        x2: end.x,
-        y2: end.y,
-        "stroke-width": RING_DAY_STROKE_WIDTH,
-        stroke: future ? "transparent" : ringLineColor(day.level),
-        "data-date": day.date.toISOString(),
-        "data-future": future ? "true" : undefined,
-      });
-      ringGroup.appendChild(line);
+      ringGroup.appendChild(
+        svg("line", {
+          x1: start.x,
+          y1: start.y,
+          x2: end.x,
+          y2: end.y,
+          "stroke-width": RING_DAY_STROKE_WIDTH,
+          ...dayLineAttrs(day, i),
+        }),
+      );
     });
 
+    const ringYear = state.year ?? cfg.today.getFullYear();
     const monthLabels = svg("g", { class: "sk-ring-months" });
     for (let month = 0; month < 12; month++) {
-      const firstDayOfMonth = new Date(state.year ?? cfg.today.getFullYear(), month, 1);
-      const startOfYear = new Date(firstDayOfMonth.getFullYear(), 0, 1);
+      const firstDayOfMonth = new Date(ringYear, month, 1);
+      const startOfYear = new Date(ringYear, 0, 1);
       const dayIndex = Math.round(
         (firstDayOfMonth.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24),
       );
@@ -504,6 +515,30 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       fill: "none",
     });
 
+    svgEl.appendChild(ringGroup);
+    svgEl.appendChild(innerRing);
+    svgEl.appendChild(outerRing);
+    svgEl.appendChild(monthLabels);
+    return svgEl;
+  };
+
+  const renderRingSvg = (days: StreakrLeveledDay[], selectedDay: Date): SVGElement => {
+    const totalDays = days.length;
+    const svgEl = createRingSvgBase(
+      days,
+      "sk-ring-svg",
+      `Contribution ring for ${state.year ?? "selected year"}`,
+      (day) => {
+        const future = isFutureRingDay(day.date);
+        return {
+          class: "sk-ring-line" + (future ? " sk-ring-line--future" : ""),
+          stroke: future ? "transparent" : ringLineColor(day.level),
+          "data-date": day.date.toISOString(),
+          "data-future": future ? "true" : undefined,
+        };
+      },
+    );
+
     const handStart = polarToCartesian(RING_CX, RING_CY, RING_HAND_START_R, -Math.PI / 2);
     const handEnd = polarToCartesian(RING_CX, RING_CY, RING_HAND_END_R, -Math.PI / 2);
     const hand = svg("g", { class: "sk-ring-hand" });
@@ -520,13 +555,22 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         y2: handEnd.y,
       }),
     );
-
-    svgEl.appendChild(ringGroup);
-    svgEl.appendChild(innerRing);
-    svgEl.appendChild(outerRing);
-    svgEl.appendChild(monthLabels);
     svgEl.appendChild(hand);
     return svgEl;
+  };
+
+  const renderSkeletonRing = (): SVGElement => {
+    const skeletonYear = state.year ?? cfg.today.getFullYear();
+    const skeletonDays = padDaysToYear([], skeletonYear);
+    return createRingSvgBase(
+      skeletonDays,
+      "sk-ring-svg sk-ring-svg--skeleton",
+      "Loading contribution ring",
+      () => ({
+        stroke: ringLineColor(0),
+        "stroke-linecap": "round",
+      }),
+    );
   };
 
   const ringCenterLabel = (day: StreakrDay): string =>
@@ -971,9 +1015,17 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     const { body, heatmapWrap, heatmapInner } = createReadyBodyShell();
 
     const draw = () => {
-      const w = heatmapWrap.clientWidth - 32;
-      const svgEl = renderSkeletonHeatmap(Math.max(200, w));
-      heatmapInner.replaceChildren(h("div", { class: "sk-heatmap-svg-wrap" }, [svgEl]));
+      const isMobile = isMobileHeatmap(heatmapWrap);
+      if (isMobile) {
+        const svgEl = renderSkeletonRing();
+        heatmapInner.replaceChildren(
+          h("div", { class: "sk-ring" }, [h("div", { class: "sk-ring-svg-wrap" }, [svgEl])]),
+        );
+      } else {
+        const w = heatmapWrap.clientWidth - 32;
+        const svgEl = renderSkeletonHeatmap(Math.max(200, w));
+        heatmapInner.replaceChildren(h("div", { class: "sk-heatmap-svg-wrap" }, [svgEl]));
+      }
     };
     body.__skDraw = draw;
     currentDraw = draw;
