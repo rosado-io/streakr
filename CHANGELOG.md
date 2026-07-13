@@ -1,3 +1,6 @@
+## [0.8.1](https://github.com/rosado-io/streakr/compare/v0.8.0...v0.8.1) (2026-07-13)
+* fix(component): make tooltip, ring, and year modal keyboard/screen-reader accessible (#135) ([`a0eb883`](https://github.com/rosado-io/streakr/commit/a0eb883aa71704a0abbace3faa46e160a1674015)) by ****
+
 ## [0.8.0](https://github.com/rosado-io/streakr/compare/v0.7.4...v0.8.0) (2026-07-13)
 * feat(heatmap): add scan/sweep loading animation for desktop cells (#134) ([`607159f`](https://github.com/rosado-io/streakr/commit/607159f23c11e67fe15eb85f00e3b5c812e84d0c)) by ****
 
