@@ -1253,75 +1253,81 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     }
   };
 
+  type UpdatePatch = Partial<StreakrOptions>;
+  type UpdateHandlers = {
+    [Key in keyof StreakrOptions]-?: (patch: Pick<UpdatePatch, Key>) => void;
+  };
+
+  const updateHandlers = {
+    target: ({ target }) => {
+      if (target !== undefined) {
+        throw new Error("Cannot update 'target' after mount. Destroy and recreate the instance.");
+      }
+    },
+    theme: ({ theme }) => {
+      if (theme !== undefined) {
+        cfg.theme = theme;
+        setupThemeListener();
+      }
+    },
+    accent: ({ accent }) => {
+      if (accent !== undefined) cfg.accent = accent;
+    },
+    tintHeatmap: ({ tintHeatmap }) => {
+      if (tintHeatmap !== undefined) cfg.tintHeatmap = tintHeatmap;
+    },
+    showProviders: ({ showProviders }) => {
+      if (showProviders !== undefined) cfg.showProviders = showProviders;
+    },
+    showStats: ({ showStats }) => {
+      if (showStats !== undefined) cfg.showStats = showStats;
+    },
+    state: ({ state: nextState }) => {
+      if (nextState !== undefined) cfg.state = nextState;
+    },
+    years: ({ years }) => {
+      if (years !== undefined) {
+        cfg.years = years;
+        if (cfg.years.length && (state.year == null || !cfg.years.includes(state.year))) {
+          state.year = cfg.years[cfg.years.length - 1];
+        }
+      }
+    },
+    year: ({ year }) => {
+      if (year !== undefined) {
+        cfg.year = year;
+        state.year = year;
+      }
+    },
+    today: ({ today }) => {
+      if (today !== undefined) cfg.today = today;
+    },
+    getDays: ({ getDays }) => {
+      if (getDays !== undefined) cfg.getDays = getDays;
+    },
+    providers: ({ providers }) => {
+      if (providers !== undefined) cfg.providers = providers;
+    },
+    onYearChange: ({ onYearChange }) => {
+      if (onYearChange !== undefined) cfg.onYearChange = onYearChange;
+    },
+    onProviderToggle: ({ onProviderToggle }) => {
+      if (onProviderToggle !== undefined) cfg.onProviderToggle = onProviderToggle;
+    },
+  } satisfies UpdateHandlers;
+
+  const isUpdateKey = (key: string): key is keyof typeof updateHandlers =>
+    Object.prototype.hasOwnProperty.call(updateHandlers, key);
+
   document.addEventListener("keydown", onKey);
   setupThemeListener();
   render();
 
   return {
-    update(patch: Partial<StreakrOptions>): void {
-      for (const key of Object.keys(patch) as (keyof StreakrOptions)[]) {
-        switch (key) {
-          case "target":
-            if (patch.target !== undefined) {
-              throw new Error(
-                "Cannot update 'target' after mount. Destroy and recreate the instance.",
-              );
-            }
-            break;
-          case "theme":
-            if (patch.theme !== undefined) {
-              cfg.theme = patch.theme;
-              setupThemeListener();
-            }
-            break;
-          case "accent":
-            if (patch.accent !== undefined) cfg.accent = patch.accent;
-            break;
-          case "tintHeatmap":
-            if (patch.tintHeatmap !== undefined) cfg.tintHeatmap = patch.tintHeatmap;
-            break;
-          case "showProviders":
-            if (patch.showProviders !== undefined) cfg.showProviders = patch.showProviders;
-            break;
-          case "showStats":
-            if (patch.showStats !== undefined) cfg.showStats = patch.showStats;
-            break;
-          case "state":
-            if (patch.state !== undefined) cfg.state = patch.state;
-            break;
-          case "years":
-            if (patch.years !== undefined) {
-              cfg.years = patch.years;
-              if (cfg.years.length && (state.year == null || !cfg.years.includes(state.year))) {
-                state.year = cfg.years[cfg.years.length - 1];
-              }
-            }
-            break;
-          case "year":
-            if (patch.year !== undefined) {
-              cfg.year = patch.year;
-              state.year = patch.year;
-            }
-            break;
-          case "today":
-            if (patch.today !== undefined) cfg.today = patch.today;
-            break;
-          case "getDays":
-            if (patch.getDays !== undefined) cfg.getDays = patch.getDays;
-            break;
-          case "providers":
-            if (patch.providers !== undefined) cfg.providers = patch.providers;
-            break;
-          case "onYearChange":
-            if (patch.onYearChange !== undefined) cfg.onYearChange = patch.onYearChange;
-            break;
-          case "onProviderToggle":
-            if (patch.onProviderToggle !== undefined) cfg.onProviderToggle = patch.onProviderToggle;
-            break;
-          default: {
-            const _exhaustive: never = key;
-            void _exhaustive;
-          }
+    update(patch: UpdatePatch): void {
+      for (const key of Object.keys(patch)) {
+        if (isUpdateKey(key)) {
+          updateHandlers[key](patch);
         }
       }
       render();

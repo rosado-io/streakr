@@ -824,10 +824,22 @@ describe("createStreakr", () => {
       expect(target.querySelector(".sk-subtitle")?.textContent).toBe("Year to date");
     });
 
+    it("update() preserves patch order for interdependent year options", () => {
+      instance = createStreakr({ target, years, year: 2026, getDays });
+
+      instance.update({ year: 2023, years: [2024, 2025] });
+      expect(target.querySelector(".sk-year-tab.active")?.textContent).toBe("2025");
+
+      instance.update({ years: [2024, 2025], year: 2023 });
+      expect(target.querySelector(".sk-year-tab.active")?.textContent).toBe("2023");
+    });
+
     it("update() rejects unknown keys at compile time", () => {
       const sk = createStreakr({ target, years, getDays });
-      // @ts-expect-error — 'unknownField' is not a key of StreakrOptions
-      sk.update({ unknownField: true });
+      expect(() => {
+        // @ts-expect-error — 'unknownField' is not a key of StreakrOptions
+        sk.update({ unknownField: true });
+      }).not.toThrow();
       expect(target.querySelector(".sk-root")).toBeTruthy();
       sk.destroy();
     });
