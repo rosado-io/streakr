@@ -258,12 +258,14 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     colStep: number,
     ci: number,
   ): SVGElement => {
+    let cellClass: string | null = null;
+    if (day) {
+      cellClass = "sk-heatmap-cell";
+      if (enterAnimationActive) cellClass += " sk-heatmap-cell--enter";
+    }
+
     const rect = svg("rect", {
-      class: day
-        ? enterAnimationActive
-          ? "sk-heatmap-cell sk-heatmap-cell--enter"
-          : "sk-heatmap-cell"
-        : null,
+      class: cellClass,
       y: ri * colStep,
       width: sq,
       height: sq,
