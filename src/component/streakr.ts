@@ -1232,16 +1232,70 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
   return {
     update(patch: Partial<StreakrOptions>): void {
-      Object.keys(patch)
-        .map((k) => k as keyof StreakrOptions)
-        .forEach((key) => {
-          const value = patch[key];
-          if (value !== undefined) {
-            (cfg as unknown as Record<string, unknown>)[key] = value;
+      for (const key of Object.keys(patch) as (keyof StreakrOptions)[]) {
+        switch (key) {
+          case "target":
+            if (patch.target !== undefined) {
+              throw new Error(
+                "Cannot update 'target' after mount. Destroy and recreate the instance.",
+              );
+            }
+            break;
+          case "theme":
+            if (patch.theme !== undefined) {
+              cfg.theme = patch.theme;
+              setupThemeListener();
+            }
+            break;
+          case "accent":
+            if (patch.accent !== undefined) cfg.accent = patch.accent;
+            break;
+          case "tintHeatmap":
+            if (patch.tintHeatmap !== undefined) cfg.tintHeatmap = patch.tintHeatmap;
+            break;
+          case "showProviders":
+            if (patch.showProviders !== undefined) cfg.showProviders = patch.showProviders;
+            break;
+          case "showStats":
+            if (patch.showStats !== undefined) cfg.showStats = patch.showStats;
+            break;
+          case "state":
+            if (patch.state !== undefined) cfg.state = patch.state;
+            break;
+          case "years":
+            if (patch.years !== undefined) {
+              cfg.years = patch.years;
+              if (cfg.years.length && (state.year == null || !cfg.years.includes(state.year))) {
+                state.year = cfg.years[cfg.years.length - 1];
+              }
+            }
+            break;
+          case "year":
+            if (patch.year !== undefined) {
+              cfg.year = patch.year;
+              state.year = patch.year;
+            }
+            break;
+          case "today":
+            if (patch.today !== undefined) cfg.today = patch.today;
+            break;
+          case "getDays":
+            if (patch.getDays !== undefined) cfg.getDays = patch.getDays;
+            break;
+          case "providers":
+            if (patch.providers !== undefined) cfg.providers = patch.providers;
+            break;
+          case "onYearChange":
+            if (patch.onYearChange !== undefined) cfg.onYearChange = patch.onYearChange;
+            break;
+          case "onProviderToggle":
+            if (patch.onProviderToggle !== undefined) cfg.onProviderToggle = patch.onProviderToggle;
+            break;
+          default: {
+            const _exhaustive: never = key;
+            void _exhaustive;
           }
-        });
-      if (patch.theme !== undefined) {
-        setupThemeListener();
+        }
       }
       render();
     },
