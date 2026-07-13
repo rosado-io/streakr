@@ -549,6 +549,38 @@ describe("createStreakr", () => {
       expect(target.querySelector(".sk-legend")?.textContent).toContain("Less");
       expect(target.querySelector(".sk-legend")?.textContent).toContain("More");
     });
+
+    it("applies the enter animation class and staggered animationDelay on first paint", () => {
+      instance = createStreakr({ target, years, getDays });
+      const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell--enter");
+      expect(cells.length).toBeGreaterThan(0);
+      const first = cells[0];
+      expect(first.getAttribute("class")).toContain("sk-heatmap-cell--enter");
+      expect(first.style.animationDelay).not.toBe("");
+    });
+
+    it("does not re-apply the enter animation on update() re-render", () => {
+      instance = createStreakr({ target, years, getDays });
+      expect(target.querySelector("rect.sk-heatmap-cell--enter")).toBeTruthy();
+
+      instance.update({ theme: "light" });
+
+      expect(target.querySelector("rect.sk-heatmap-cell--enter")).toBeNull();
+      const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell");
+      expect(cells.length).toBeGreaterThan(0);
+      expect(cells[0].style.animationDelay).toBe("");
+    });
+
+    it("re-applies the enter animation on the loading→ready transition", () => {
+      instance = createStreakr({ target, years, state: "loading", getDays });
+      expect(target.querySelector("rect.sk-heatmap-cell--enter")).toBeNull();
+
+      instance.update({ state: "ready" });
+
+      const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell--enter");
+      expect(cells.length).toBeGreaterThan(0);
+      expect(cells[0].style.animationDelay).not.toBe("");
+    });
   });
 
   describe("lifecycle states", () => {
@@ -792,10 +824,22 @@ describe("createStreakr", () => {
       expect(target.querySelector(".sk-subtitle")?.textContent).toBe("Year to date");
     });
 
+    it("update() preserves patch order for interdependent year options", () => {
+      instance = createStreakr({ target, years, year: 2026, getDays });
+
+      instance.update({ year: 2023, years: [2024, 2025] });
+      expect(target.querySelector(".sk-year-tab.active")?.textContent).toBe("2025");
+
+      instance.update({ years: [2024, 2025], year: 2023 });
+      expect(target.querySelector(".sk-year-tab.active")?.textContent).toBe("2023");
+    });
+
     it("update() rejects unknown keys at compile time", () => {
       const sk = createStreakr({ target, years, getDays });
-      // @ts-expect-error — 'unknownField' is not a key of StreakrOptions
-      sk.update({ unknownField: true });
+      expect(() => {
+        // @ts-expect-error — 'unknownField' is not a key of StreakrOptions
+        sk.update({ unknownField: true });
+      }).not.toThrow();
       expect(target.querySelector(".sk-root")).toBeTruthy();
       sk.destroy();
     });
