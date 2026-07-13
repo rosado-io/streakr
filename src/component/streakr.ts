@@ -561,12 +561,13 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       (day) => {
         const future = isFutureRingDay(day.date);
         const isSelected = !future && localDateKey(day.date) === localDateKey(selectedDay);
+        const interactiveTabIndex = isSelected ? "0" : "-1";
         return {
           class: "sk-ring-line" + (future ? " sk-ring-line--future" : ""),
           stroke: future ? "transparent" : ringLineColor(day.level),
           "data-date": day.date.toISOString(),
           "data-future": future ? "true" : undefined,
-          tabindex: future ? undefined : isSelected ? "0" : "-1",
+          tabindex: future ? undefined : interactiveTabIndex,
           role: future ? undefined : "button",
           "aria-label": future ? undefined : ringDayAriaLabel(day),
         };
