@@ -1295,4 +1295,188 @@ describe("createStreakr", () => {
       expect(date?.textContent).toBe("Jun 20");
     });
   });
+
+  describe("accessibility", () => {
+    const many = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
+
+    const setContainerWidth = (width: number): void => {
+      HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
+        const original = originalGetBoundingClientRect.call(this);
+        return { ...original, width } as DOMRect;
+      };
+    };
+
+    it("tooltip has role=tooltip and aria-live=polite", () => {
+      instance = createStreakr({ target, years, getDays });
+      const tooltip = target.querySelector(".sk-tooltip");
+      expect(tooltip?.getAttribute("role")).toBe("tooltip");
+      expect(tooltip?.getAttribute("aria-live")).toBe("polite");
+    });
+
+    it("moves focus to the first year button when the modal opens", () => {
+      instance = createStreakr({ target, years: many, getDays });
+      target.querySelector<HTMLButtonElement>(".sk-year-more")?.click();
+      const yearButtons = target.querySelectorAll<HTMLButtonElement>(".sk-modal-year");
+      expect(yearButtons.length).toBeGreaterThan(0);
+      expect(document.activeElement).toBe(yearButtons[0]);
+    });
+
+    it("traps Tab focus within the modal", () => {
+      instance = createStreakr({ target, years: many, getDays });
+      target.querySelector<HTMLButtonElement>(".sk-year-more")?.click();
+      const modal = target.querySelector<HTMLElement>(".sk-modal");
+      expect(modal).toBeTruthy();
+      if (!modal) return;
+      const buttons = Array.from(modal.querySelectorAll<HTMLButtonElement>("button"));
+      const first = buttons[0];
+      const last = buttons[buttons.length - 1];
+
+      last.focus();
+      modal.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
+      expect(document.activeElement).toBe(first);
+
+      first.focus();
+      modal.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true }),
+      );
+      expect(document.activeElement).toBe(last);
+    });
+
+    it("restores focus to the 'More years' button when the modal closes via Escape", () => {
+      instance = createStreakr({ target, years: many, getDays });
+      target.querySelector<HTMLButtonElement>(".sk-year-more")?.click();
+      expect(target.querySelector(".sk-modal")).toBeTruthy();
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      expect(target.querySelector(".sk-modal")).toBeNull();
+      expect(document.activeElement).toBe(target.querySelector(".sk-year-more"));
+    });
+
+    it("restores focus to the 'More years' button when the modal closes via backdrop", () => {
+      instance = createStreakr({ target, years: many, getDays });
+      target.querySelector<HTMLButtonElement>(".sk-year-more")?.click();
+      target.querySelector<HTMLElement>(".sk-modal-overlay")?.click();
+      expect(target.querySelector(".sk-modal")).toBeNull();
+      expect(document.activeElement).toBe(target.querySelector(".sk-year-more"));
+    });
+
+    it("makes non-future ring days focusable with role=button and a descriptive aria-label", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        today: new Date(2026, 0, 5),
+        getDays: () => [
+          { date: new Date(2026, 0, 2), total: 7, sources: { github: 7 } },
+          { date: new Date(2026, 0, 5), total: 2, sources: { github: 2 } },
+        ],
+      });
+
+      const jan2Line = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line")).find(
+        (line) => line.dataset.date?.startsWith("2026-01-02"),
+      );
+      expect(jan2Line?.getAttribute("tabindex")).toBe("-1");
+      expect(jan2Line?.getAttribute("role")).toBe("button");
+      expect(jan2Line?.getAttribute("aria-label")).toBe("2 Jan 2026, 7 contributions");
+
+      const jan5Line = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line")).find(
+        (line) => line.dataset.date?.startsWith("2026-01-05"),
+      );
+      expect(jan5Line?.getAttribute("tabindex")).toBe("0");
+      expect(jan5Line?.getAttribute("role")).toBe("button");
+
+      const futureLine = target.querySelector<SVGLineElement>(".sk-ring-line--future");
+      expect(futureLine?.getAttribute("tabindex")).toBeNull();
+      expect(futureLine?.getAttribute("role")).toBeNull();
+    });
+
+    it("activates a focusable ring day on Enter and Space", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        today: new Date(2026, 0, 5),
+        getDays: () => [
+          { date: new Date(2026, 0, 2), total: 7, sources: { github: 7 } },
+          { date: new Date(2026, 0, 5), total: 2, sources: { github: 2 } },
+        ],
+      });
+
+      const jan2Line = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line")).find(
+        (line) => line.dataset.date?.startsWith("2026-01-02"),
+      );
+      jan2Line?.focus();
+      jan2Line?.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+      expect(target.querySelector(".sk-ring-count")?.textContent).toBe("7");
+      expect(target.querySelector(".sk-ring-date")?.textContent).toBe("Jan 2");
+
+      const jan5Line = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line")).find(
+        (line) => line.dataset.date?.startsWith("2026-01-05"),
+      );
+      jan5Line?.focus();
+      jan5Line?.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
+      expect(target.querySelector(".sk-ring-count")?.textContent).toBe("2");
+      expect(target.querySelector(".sk-ring-date")?.textContent).toBe("Jan 5");
+    });
+
+    it("roves tabindex and focus across ring days with arrow keys", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        today: new Date(2026, 0, 5),
+        getDays: () => [
+          { date: new Date(2026, 0, 2), total: 7, sources: { github: 7 } },
+          { date: new Date(2026, 0, 5), total: 2, sources: { github: 2 } },
+        ],
+      });
+
+      const focusable = Array.from(
+        target.querySelectorAll<SVGLineElement>(".sk-ring-line:not(.sk-ring-line--future)"),
+      );
+      expect(focusable).toHaveLength(5);
+      const [jan1, jan2, jan3, jan4, jan5] = focusable;
+
+      expect(jan5.getAttribute("tabindex")).toBe("0");
+      expect(jan2.getAttribute("tabindex")).toBe("-1");
+
+      jan5.focus();
+      jan5.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+      expect(document.activeElement).toBe(jan4);
+      expect(jan4.getAttribute("tabindex")).toBe("0");
+      expect(jan5.getAttribute("tabindex")).toBe("-1");
+      expect(target.querySelector(".sk-ring-date")?.textContent).toBe("Jan 4");
+
+      jan4.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+      expect(document.activeElement).toBe(jan5);
+      expect(jan5.getAttribute("tabindex")).toBe("0");
+      expect(jan4.getAttribute("tabindex")).toBe("-1");
+      expect(target.querySelector(".sk-ring-date")?.textContent).toBe("Jan 5");
+
+      jan5.dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
+      expect(document.activeElement).toBe(jan1);
+      expect(jan1.getAttribute("tabindex")).toBe("0");
+      expect(jan5.getAttribute("tabindex")).toBe("-1");
+      expect(target.querySelector(".sk-ring-date")?.textContent).toBe("Jan 1");
+
+      jan1.dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true }));
+      expect(document.activeElement).toBe(jan5);
+      expect(jan5.getAttribute("tabindex")).toBe("0");
+      expect(jan1.getAttribute("tabindex")).toBe("-1");
+      expect(target.querySelector(".sk-ring-date")?.textContent).toBe("Jan 5");
+
+      jan2.focus();
+      jan2.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+      expect(document.activeElement).toBe(jan3);
+      expect(jan3.getAttribute("tabindex")).toBe("0");
+      expect(jan2.getAttribute("tabindex")).toBe("-1");
+
+      jan3.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+      expect(document.activeElement).toBe(jan2);
+      expect(jan2.getAttribute("tabindex")).toBe("0");
+      expect(jan3.getAttribute("tabindex")).toBe("-1");
+    });
+  });
 });
