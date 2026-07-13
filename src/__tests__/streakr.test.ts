@@ -697,10 +697,54 @@ describe("createStreakr", () => {
       expect(target.querySelector<HTMLElement>(".sk-root")?.dataset.theme).toBe("light");
     });
 
-    it("update() preserves resolved defaults when callers pass undefined", () => {
-      instance = createStreakr({ target, years, theme: "dark", getDays });
-      instance.update({ theme: undefined as unknown as "dark" });
-      expect(target.querySelector<HTMLElement>(".sk-root")?.dataset.theme).toBe("dark");
+    it("update() ignores undefined values for every option", () => {
+      const onYearChange = vi.fn();
+      const onProviderToggle = vi.fn();
+      instance = createStreakr({
+        target,
+        years,
+        year: 2026,
+        theme: "dark",
+        accent: "#123456",
+        tintHeatmap: true,
+        showProviders: true,
+        showStats: true,
+        state: "ready",
+        today: new Date(2026, 5, 20),
+        getDays,
+        onYearChange,
+        onProviderToggle,
+      });
+
+      instance.update({
+        target: undefined as unknown as HTMLElement,
+        theme: undefined as unknown as "dark",
+        accent: undefined as unknown as string,
+        tintHeatmap: undefined as unknown as boolean,
+        showProviders: undefined as unknown as boolean,
+        showStats: undefined as unknown as boolean,
+        state: undefined as unknown as "ready",
+        years: undefined as unknown as number[],
+        year: undefined as unknown as number,
+        today: undefined as unknown as Date,
+        getDays: undefined as unknown as typeof getDays,
+        providers: undefined as unknown as StreakrProvider[],
+        onYearChange: undefined as unknown as typeof onYearChange,
+        onProviderToggle: undefined as unknown as typeof onProviderToggle,
+      });
+
+      const root = target.querySelector<HTMLElement>(".sk-root");
+      expect(root?.dataset.theme).toBe("dark");
+      expect(root?.style.getPropertyValue("--sk-accent")).toBe("#123456");
+      expect(target.querySelectorAll(".sk-year-tab")).toHaveLength(years.length);
+      expect(target.querySelector(".sk-year-tab.active")?.textContent).toBe("2026");
+      expect(target.querySelector(".sk-providers")).toBeTruthy();
+      expect(target.querySelector(".sk-stats")).toBeTruthy();
+
+      instance.setYear(2024);
+      expect(onYearChange).toHaveBeenCalledWith(2024);
+      target.querySelector<HTMLButtonElement>(".sk-provider")?.click();
+      expect(onProviderToggle).toHaveBeenCalled();
     });
 
     it("update({ target }) throws after mount", () => {
@@ -740,11 +784,105 @@ describe("createStreakr", () => {
       expect(target.querySelector(".sk-year-tab.active")?.textContent).toBe("2024");
     });
 
+    it("update({ years: [] }) keeps the active year visible", () => {
+      instance = createStreakr({ target, years, year: 2026, getDays });
+      instance.update({ years: [] });
+      expect(target.querySelectorAll(".sk-year-tab")).toHaveLength(1);
+      expect(target.querySelector(".sk-year-tab.active")?.textContent).toBe("2026");
+      expect(target.querySelector(".sk-subtitle")?.textContent).toBe("Year to date");
+    });
+
     it("update() rejects unknown keys at compile time", () => {
       const sk = createStreakr({ target, years, getDays });
       // @ts-expect-error — 'unknownField' is not a key of StreakrOptions
       sk.update({ unknownField: true });
+      expect(target.querySelector(".sk-root")).toBeTruthy();
       sk.destroy();
+    });
+
+    it("update({ theme }) applies the new theme and re-renders", () => {
+      instance = createStreakr({ target, years, getDays });
+      instance.update({ theme: "light" });
+      expect(target.querySelector<HTMLElement>(".sk-root")?.dataset.theme).toBe("light");
+    });
+
+    it("update({ accent }) applies the new accent color", () => {
+      instance = createStreakr({ target, years, getDays });
+      instance.update({ accent: "#ff0000" });
+      expect(
+        target.querySelector<HTMLElement>(".sk-root")?.style.getPropertyValue("--sk-accent"),
+      ).toBe("#ff0000");
+    });
+
+    it("update({ tintHeatmap }) toggles heatmap tinting", () => {
+      instance = createStreakr({ target, years, getDays });
+      const root = target.querySelector<HTMLElement>(".sk-root");
+      expect(root?.style.getPropertyValue("--sk-heat-4")).toBe("#39d353");
+      instance.update({ tintHeatmap: false });
+      expect(root?.style.getPropertyValue("--sk-heat-4")).toBe("");
+    });
+
+    it("update({ showProviders }) toggles the provider chips", () => {
+      instance = createStreakr({ target, years, getDays });
+      instance.update({ showProviders: false });
+      expect(target.querySelector(".sk-providers")).toBeNull();
+    });
+
+    it("update({ state }) switches to loading state", () => {
+      instance = createStreakr({ target, years, getDays });
+      instance.update({ state: "loading" });
+      expect(target.querySelector(".sk-skeleton")).toBeTruthy();
+    });
+
+    it("update({ today }) updates the reference date", () => {
+      instance = createStreakr({ target, years, year: 2024, getDays });
+      expect(target.querySelector(".sk-subtitle")?.textContent).toBe("2024");
+      instance.update({ today: new Date(2024, 5, 15) });
+      expect(target.querySelector(".sk-subtitle")?.textContent).toBe("Year to date");
+    });
+
+    it("update({ getDays }) swaps the data source and re-renders", () => {
+      instance = createStreakr({ target, years, getDays });
+      const newGetDays = vi.fn(() => [{ date: new Date(2026, 0, 1), total: 99 }]);
+      instance.update({ getDays: newGetDays });
+      expect(newGetDays).toHaveBeenCalledWith(2026);
+    });
+
+    it("update({ providers }) replaces the provider list", () => {
+      instance = createStreakr({ target, years, getDays });
+      instance.update({
+        providers: [
+          { key: "github", name: "GitHub", color: "#39d353" },
+          { key: "gitlab", name: "GitLab", color: "#fc6d26" },
+        ],
+      });
+      const labels = Array.from(target.querySelectorAll<HTMLButtonElement>(".sk-provider")).map(
+        (provider) => provider.getAttribute("aria-label"),
+      );
+      expect(labels).toHaveLength(2);
+      expect(labels[0]).toContain("GitHub");
+      expect(labels[1]).toContain("GitLab");
+    });
+
+    it("update({ onYearChange }) registers a new year-change callback", () => {
+      instance = createStreakr({ target, years, getDays });
+      const cb = vi.fn();
+      instance.update({ onYearChange: cb });
+      instance.setYear(2024);
+      expect(cb).toHaveBeenCalledWith(2024);
+    });
+
+    it("update({ onProviderToggle }) registers a new toggle callback", () => {
+      instance = createStreakr({ target, years, getDays });
+      const cb = vi.fn();
+      instance.update({ onProviderToggle: cb });
+      const chip = target.querySelector<HTMLButtonElement>(".sk-provider");
+      chip?.click();
+      expect(cb).toHaveBeenCalledWith("github", false, {
+        github: false,
+        gitlab: true,
+        bitbucket: true,
+      });
     });
 
     it("setYear() updates the active year", () => {
