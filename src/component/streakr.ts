@@ -912,8 +912,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     currentDraw = null;
 
     enterAnimationActive =
-      cfg.state === "ready" &&
-      (previousState === null || previousState === "loading");
+      cfg.state === "ready" && (previousState === null || previousState === "loading");
     previousState = cfg.state;
 
     const wasOpen = state.yearModalOpen;
