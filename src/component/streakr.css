@@ -478,6 +478,16 @@
   opacity: 0.7;
 }
 
+@keyframes sk-cell-enter {
+  from { opacity: 0; transform: scale(0.4); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.sk-heatmap-cell--enter {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: sk-cell-enter 280ms ease-out backwards;
+}
+
 .sk-empty {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 48px 24px; gap: 12px;
@@ -540,4 +550,13 @@
 @media (max-width: 480px) {
   .sk-modal { min-width: 0; width: 100%; }
   .sk-modal-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sk-heatmap-cell--enter,
+  .sk-skeleton::after,
+  .sk-modal-overlay,
+  .sk-modal {
+    animation: none;
+  }
 }
