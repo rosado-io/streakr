@@ -1,3 +1,6 @@
+## [0.8.2](https://github.com/rosado-io/streakr/compare/v0.8.1...v0.8.2) (2026-07-13)
+* fix(deps): Actualiza esbuild para corregir GHSA-g7r4-m6w7-qqqr (#137) ([`ae05bf4`](https://github.com/rosado-io/streakr/commit/ae05bf4cfa8380acebe92b7c4567fb5aa29fcecc)) by ****
+
 ## [0.8.1](https://github.com/rosado-io/streakr/compare/v0.8.0...v0.8.1) (2026-07-13)
 * fix(component): make tooltip, ring, and year modal keyboard/screen-reader accessible (#135) ([`a0eb883`](https://github.com/rosado-io/streakr/commit/a0eb883aa71704a0abbace3faa46e160a1674015)) by ****
 
