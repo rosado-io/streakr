@@ -1,3 +1,6 @@
+## [0.8.0](https://github.com/rosado-io/streakr/compare/v0.7.4...v0.8.0) (2026-07-13)
+* feat(heatmap): add scan/sweep loading animation for desktop cells (#134) ([`607159f`](https://github.com/rosado-io/streakr/commit/607159f23c11e67fe15eb85f00e3b5c812e84d0c)) by ****
+
 ## [0.7.4](https://github.com/rosado-io/streakr/compare/v0.7.3...v0.7.4) (2026-07-13)
 * fix(component): remove unsafe cast in update() and throw on target change (#132) ([`58cb3e2`](https://github.com/rosado-io/streakr/commit/58cb3e2ac5750f10db4e8a5951ecf46d6dfc5f4c)) by ****
 
