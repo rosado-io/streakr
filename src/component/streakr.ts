@@ -105,7 +105,11 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   const root = h("div", { class: "sk-root" }) as HTMLElement;
   cfg.target.appendChild(root);
 
-  const tooltipEl = h("div", { class: "sk-tooltip" }) as HTMLElement;
+  const tooltipEl = h("div", {
+    class: "sk-tooltip",
+    role: "tooltip",
+    "aria-live": "polite",
+  }) as HTMLElement;
   root.appendChild(tooltipEl);
   let currentDraw: (() => void) | null = null;
   let skipNextResizeRedraw = false;
@@ -436,6 +440,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
   const ringLineColor = (level: number): string => `var(--sk-heat-${level})`;
 
+  const ringDayAriaLabel = (day: StreakrLeveledDay): string =>
+    `${day.date.getDate()} ${MONTH_LABELS_SHORT[day.date.getMonth()]} ${day.date.getFullYear()}, ${formatTotalLabel(day.total)}`;
+
   const dayStartMs = (day: Date): number =>
     new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime();
 
@@ -457,6 +464,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     "stroke-linecap"?: "round";
     "data-date"?: string | undefined;
     "data-future"?: string | undefined;
+    tabindex?: string | undefined;
+    role?: string | undefined;
+    "aria-label"?: string | undefined;
   };
 
   const createRingSvgBase = <T extends StreakrDay>(
@@ -550,11 +560,16 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       `Contribution ring for ${state.year ?? "selected year"}`,
       (day) => {
         const future = isFutureRingDay(day.date);
+        const isSelected = !future && localDateKey(day.date) === localDateKey(selectedDay);
+        const interactiveTabIndex = isSelected ? "0" : "-1";
         return {
           class: "sk-ring-line" + (future ? " sk-ring-line--future" : ""),
           stroke: future ? "transparent" : ringLineColor(day.level),
           "data-date": day.date.toISOString(),
           "data-future": future ? "true" : undefined,
+          tabindex: future ? undefined : interactiveTabIndex,
+          role: future ? undefined : "button",
+          "aria-label": future ? undefined : ringDayAriaLabel(day),
         };
       },
     );
@@ -729,12 +744,52 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       selectLineTarget(e.target);
     };
 
+    const handleLineKeydown = (e: KeyboardEvent): void => {
+      const day = lineToDay(e.target);
+      if (e.key === "Enter" || e.key === " ") {
+        if (!day) return;
+        e.preventDefault();
+        selectDay(day);
+        return;
+      }
+      if (!day) return;
+      const focusableLines = Array.from(
+        svgEl.querySelectorAll<SVGLineElement>(".sk-ring-line:not(.sk-ring-line--future)"),
+      );
+      const currentIndex = focusableLines.indexOf(e.target as SVGLineElement);
+      if (currentIndex === -1) return;
+      let targetIndex: number;
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        targetIndex = Math.min(currentIndex + 1, focusableLines.length - 1);
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        targetIndex = Math.max(currentIndex - 1, 0);
+      } else if (e.key === "Home") {
+        targetIndex = 0;
+      } else if (e.key === "End") {
+        targetIndex = focusableLines.length - 1;
+      } else {
+        return;
+      }
+      e.preventDefault();
+      if (targetIndex === currentIndex) return;
+      const currentLine = focusableLines[currentIndex];
+      const targetLine = focusableLines[targetIndex];
+      currentLine.setAttribute("tabindex", "-1");
+      targetLine.setAttribute("tabindex", "0");
+      targetLine.focus();
+      const dateAttr = targetLine.dataset.date;
+      if (dateAttr) {
+        selectDay(findDayByDate(days, new Date(dateAttr)));
+      }
+    };
+
     svgEl.addEventListener("pointerdown", handlePointerDown);
     svgEl.addEventListener("pointermove", handlePointerMove);
     svgEl.addEventListener("pointerup", handlePointerUp);
     svgEl.addEventListener("pointercancel", handlePointerUp);
     svgEl.addEventListener("pointerleave", handlePointerUp);
     svgEl.addEventListener("click", handleLineInteraction);
+    svgEl.addEventListener("keydown", handleLineKeydown);
   };
 
   const renderRing = (wrap: HTMLElement, days: StreakrLeveledDay[]): void => {
@@ -1216,6 +1271,25 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         );
       });
     modal.appendChild(grid);
+
+    const trapFocus = (e: KeyboardEvent): void => {
+      if (e.key !== "Tab") return;
+      const focusables = Array.from(modal.querySelectorAll<HTMLElement>("button:not([disabled])"));
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    modal.addEventListener("keydown", trapFocus);
+
     overlay.appendChild(modal);
     card.appendChild(overlay);
   };
@@ -1240,11 +1314,13 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   const openYearModal = (): void => {
     state.yearModalOpen = true;
     render();
+    root.querySelector<HTMLButtonElement>(".sk-modal-year")?.focus();
   };
 
   const closeYearModal = (): void => {
     state.yearModalOpen = false;
     render();
+    root.querySelector<HTMLButtonElement>(".sk-year-more")?.focus();
   };
 
   const onKey = (e: KeyboardEvent): void => {
