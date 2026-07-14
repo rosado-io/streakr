@@ -41,9 +41,44 @@ describe("parseCoAuthors", () => {
     ]);
   });
 
-  it("tolerates surrounding whitespace and CRLF line endings", () => {
-    const message = "subject\r\n\r\n  Co-authored-by: Claude <noreply@anthropic.com>  \r\n";
+  it("tolerates trailing whitespace and CRLF line endings", () => {
+    const message = "subject\r\n\r\nCo-authored-by: Claude <noreply@anthropic.com>  \r\n";
     expect(parseCoAuthors(message)).toEqual([{ name: "Claude", email: "noreply@anthropic.com" }]);
+  });
+
+  it("parses only the final trailer block, like git interpret-trailers", () => {
+    const message = [
+      "feat(heatmap): add scan/sweep loading animation (#129)",
+      "",
+      "* feat(heatmap): add loading animation",
+      "",
+      "Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>",
+      "",
+      "* refactor(heatmap): simplify animation class",
+      "",
+      "---------",
+      "",
+      "Co-authored-by: opencode (glm-5.2) <noreply@opencode.ai>",
+    ].join("\n");
+    expect(parseCoAuthors(message)).toEqual([
+      { name: "opencode (glm-5.2)", email: "noreply@opencode.ai" },
+    ]);
+  });
+
+  it("ignores quoted trailer examples outside the final block", () => {
+    const message = [
+      "docs: explain agent attribution",
+      "",
+      "Co-authored-by: Claude <noreply@anthropic.com> is appended automatically.",
+      "",
+      "Closes #150",
+    ].join("\n");
+    expect(parseCoAuthors(message)).toEqual([]);
+  });
+
+  it("ignores indented trailer-like lines", () => {
+    const message = "docs: quote a trailer\n\n    Co-authored-by: Claude <noreply@anthropic.com>";
+    expect(parseCoAuthors(message)).toEqual([]);
   });
 
   it("returns an empty name when the trailer only has an email", () => {
@@ -163,6 +198,20 @@ describe("parseAgentCoAuthors", () => {
   it("returns an empty list when no agent signed", () => {
     const message = "Co-authored-by: Eduardo Rosado <rodsado.io@gmail.com>";
     expect(parseAgentCoAuthors(message)).toEqual([]);
+  });
+
+  it("does not leak state from global or sticky custom regexes", () => {
+    const message = [
+      "feat: pair session",
+      "",
+      "Co-authored-by: opencode (glm-5.2) <noreply@opencode.ai>",
+      "Co-authored-by: opencode (glm-5.2) <noreply@opencode.ai>",
+    ].join("\n");
+    const rules = [{ key: "glm", name: /glm/gi }];
+    expect(parseAgentCoAuthors(message, rules)).toHaveLength(2);
+    const coAuthor = { name: "opencode (glm-5.2)", email: "noreply@opencode.ai" };
+    expect(matchAgent(coAuthor, rules)).toBe("glm");
+    expect(matchAgent(coAuthor, rules)).toBe("glm");
   });
 });
 

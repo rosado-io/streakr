@@ -22,22 +22,35 @@ export const AGENT_TRAILER_RULES: readonly AgentTrailerRule[] = [
 
 const TRAILER_RE = /^co-authored-by:\s*(.*?)\s*<([^<>]+)>$/i;
 
+const finalBlock = (message: string): string[] => {
+  const lines = message.split(/\r?\n/).map((line) => line.trimEnd());
+  let end = lines.length;
+  while (end > 0 && lines[end - 1] === "") end -= 1;
+  let start = end;
+  while (start > 0 && lines[start - 1] !== "") start -= 1;
+  return lines.slice(start, end);
+};
+
 export const parseCoAuthors = (message: string): CoAuthor[] =>
-  message
-    .split(/\r?\n/)
-    .map((line) => TRAILER_RE.exec(line.trim()))
+  finalBlock(message)
+    .map((line) => TRAILER_RE.exec(line))
     .filter((match): match is RegExpExecArray => match !== null)
     .map((match) => ({ name: match[1], email: match[2].trim() }));
 
+const testStateless = (pattern: RegExp, value: string): boolean =>
+  pattern.global || pattern.sticky
+    ? new RegExp(pattern.source, pattern.flags.replace(/[gy]/g, "")).test(value)
+    : pattern.test(value);
+
 const matchesEmail = (email: string, expected: string | RegExp | undefined): boolean => {
   if (expected === undefined) return true;
-  if (expected instanceof RegExp) return expected.test(email);
+  if (expected instanceof RegExp) return testStateless(expected, email);
   return email.toLowerCase() === expected.toLowerCase();
 };
 
 const matchesName = (name: string, expected: string | RegExp | undefined): boolean => {
   if (expected === undefined) return true;
-  if (expected instanceof RegExp) return expected.test(name);
+  if (expected instanceof RegExp) return testStateless(expected, name);
   return name.toLowerCase().includes(expected.toLowerCase());
 };
 
