@@ -1243,6 +1243,103 @@ describe("createStreakr", () => {
       expect(clipPathEl?.getAttribute("id")).toBe(clipId);
     });
 
+    it("renders one skeleton line per day for a non-leap year", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        state: "loading",
+        getDays,
+      });
+      expect(target.querySelectorAll(".sk-ring-skeleton-line")).toHaveLength(365);
+    });
+
+    it("renders one skeleton line per day for a leap year", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2024],
+        year: 2024,
+        state: "loading",
+        getDays,
+      });
+      expect(target.querySelectorAll(".sk-ring-skeleton-line")).toHaveLength(366);
+    });
+
+    it("derives skeleton line animation delay from index/totalDays, ordered and looping within one revolution", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        state: "loading",
+        getDays,
+      });
+      const lines = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-skeleton-line"));
+      expect(lines).toHaveLength(365);
+
+      const delays = lines.map((line) => parseFloat(line.style.animationDelay));
+      expect(delays[0]).toBe(0);
+      for (let i = 1; i < delays.length; i++) {
+        expect(delays[i]).toBeGreaterThan(delays[i - 1]);
+      }
+      // Delays span up to (but not including) one full revolution, so the wrap from
+      // the last day back to Jan 1 stays seamless instead of flashing the whole ring.
+      const lastDelay = delays[delays.length - 1];
+      expect(lastDelay).toBeGreaterThan(1900);
+      expect(lastDelay).toBeLessThan(2000);
+      expect(delays[182]).toBeCloseTo((182 / 365) * 2000, 0);
+    });
+
+    it("keeps skeleton ring lines fully non-interactive", () => {
+      setContainerWidth(375);
+      instance = createStreakr({ target, years, state: "loading", getDays });
+      const lines = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-skeleton-line"));
+      expect(lines.length).toBeGreaterThan(0);
+      lines.forEach((line) => {
+        expect(line.hasAttribute("tabindex")).toBe(false);
+        expect(line.hasAttribute("role")).toBe(false);
+        expect(line.hasAttribute("aria-label")).toBe(false);
+        expect(line.hasAttribute("data-date")).toBe(false);
+        expect(line.onclick).toBeNull();
+      });
+      expect(target.querySelector(".sk-ring-center")).toBeNull();
+      expect(target.querySelector(".sk-ring-hand")).toBeNull();
+    });
+
+    it("removes skeleton animation classes and inline delays once state becomes ready", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        state: "loading",
+        getDays,
+      });
+      expect(target.querySelector(".sk-ring-skeleton-line")).toBeTruthy();
+
+      instance.update({ state: "ready" });
+
+      expect(target.querySelector(".sk-ring-skeleton-line")).toBeNull();
+      expect(target.querySelector(".sk-ring-svg--skeleton")).toBeNull();
+
+      const readyLines = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line"));
+      expect(readyLines.length).toBeGreaterThan(0);
+      readyLines.forEach((line) => {
+        expect(line.classList.contains("sk-ring-skeleton-line")).toBe(false);
+        expect(line.style.animationDelay).toBe("");
+      });
+    });
+
+    it("still selects the desktop heatmap skeleton (not the ring skeleton) above the mobile breakpoint", () => {
+      setContainerWidth(1024);
+      instance = createStreakr({ target, years, state: "loading", getDays });
+      expect(target.querySelector(".sk-heatmap-svg--skeleton")).toBeTruthy();
+      expect(target.querySelector(".sk-ring-svg--skeleton")).toBeNull();
+      expect(target.querySelector(".sk-ring-skeleton-line")).toBeNull();
+    });
+
     it("does not update the center and selector when a day line is hovered", () => {
       setContainerWidth(375);
       instance = createStreakr({
