@@ -120,9 +120,6 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     }
     currentDraw?.();
   });
-  let previousState: "loading" | "empty" | "ready" | null = null;
-  let enterAnimationActive = false;
-
   let mediaQueryListener: ((e: MediaQueryListEvent) => void) | null = null;
 
   const getActiveTheme = (): "dark" | "light" => {
@@ -260,16 +257,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     ri: number,
     sq: number,
     colStep: number,
-    ci: number,
   ): SVGElement => {
-    let cellClass: string | null = null;
-    if (day) {
-      cellClass = "sk-heatmap-cell";
-      if (enterAnimationActive) cellClass += " sk-heatmap-cell--enter";
-    }
-
     const rect = svg("rect", {
-      class: cellClass,
+      class: day ? "sk-heatmap-cell" : null,
       y: ri * colStep,
       width: sq,
       height: sq,
@@ -277,7 +267,6 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       fill: day ? `var(--sk-heat-${day.level})` : "transparent",
       style: {
         cursor: day ? "pointer" : "default",
-        ...(day && enterAnimationActive ? { animationDelay: `${ci * 12}ms` } : {}),
       },
     });
     if (day) {
@@ -988,10 +977,6 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     resizeObs.disconnect();
     currentDraw = null;
 
-    enterAnimationActive =
-      cfg.state === "ready" && (previousState === null || previousState === "loading");
-    previousState = cfg.state;
-
     const wasOpen = state.yearModalOpen;
     const flags = computeRenderFlags();
 
@@ -1065,13 +1050,15 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     return totals;
   };
 
-  const buildSkeletonHeatmapCell: HeatmapCellBuilder = (day, ri, sq, colStep) =>
+  const buildSkeletonHeatmapCell: HeatmapCellBuilder = (day, ri, sq, colStep, ci) =>
     svg("rect", {
+      class: day ? "sk-heatmap-skeleton-cell" : null,
       y: ri * colStep,
       width: sq,
       height: sq,
       rx: Math.max(2, sq * 0.22),
       fill: day ? "var(--sk-heat-0)" : "transparent",
+      style: day ? { animationDelay: `${ci * 12}ms` } : {},
     });
 
   const renderSkeletonHeatmap = (containerW: number): SVGElement => {
@@ -1202,7 +1189,6 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       } catch (err) {
         console.error("[streakr] draw failed:", err);
       }
-      enterAnimationActive = false;
     };
     body.__skDraw = draw;
     currentDraw = draw;
