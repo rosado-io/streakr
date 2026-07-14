@@ -438,6 +438,17 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   const RING_CLICK_DRAG_TOLERANCE = 6;
   const RING_SUPPRESS_CLICK_MS = 350;
 
+  // Day strokes scale with the viewBox while the guide circles use a fixed non-scaling
+  // stroke, so an endpoint inset alone can't contain the rounded caps at every size/state.
+  // Clipping to the exact annulus between the guide radii contains them regardless.
+  let ringClipIdSeq = 0;
+
+  const describeCirclePath = (cx: number, cy: number, r: number): string =>
+    `M ${cx + r},${cy} A ${r},${r} 0 1,0 ${cx - r},${cy} A ${r},${r} 0 1,0 ${cx + r},${cy} Z`;
+
+  const describeAnnulusPath = (cx: number, cy: number, innerR: number, outerR: number): string =>
+    `${describeCirclePath(cx, cy, outerR)} ${describeCirclePath(cx, cy, innerR)}`;
+
   const ringLineColor = (level: number): string => `var(--sk-heat-${level})`;
 
   const ringDayAriaLabel = (day: StreakrLeveledDay): string =>
@@ -485,7 +496,17 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       "aria-label": ariaLabel,
     });
 
-    const ringGroup = svg("g", { class: "sk-ring-days" });
+    const ringClipId = `sk-ring-clip-${++ringClipIdSeq}`;
+    const ringClip = svg("defs", {}, [
+      svg("clipPath", { id: ringClipId, clipPathUnits: "userSpaceOnUse" }, [
+        svg("path", {
+          d: describeAnnulusPath(RING_CX, RING_CY, RING_INNER_R, RING_OUTER_R),
+          "clip-rule": "evenodd",
+        }),
+      ]),
+    ]);
+
+    const ringGroup = svg("g", { class: "sk-ring-days", "clip-path": `url(#${ringClipId})` });
     days.forEach((day, i) => {
       const angle = dayAngle(i, totalDays);
       const start = polarToCartesian(RING_CX, RING_CY, RING_INNER_R, angle);
@@ -545,6 +566,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       fill: "none",
     });
 
+    svgEl.appendChild(ringClip);
     svgEl.appendChild(ringGroup);
     svgEl.appendChild(innerRing);
     svgEl.appendChild(outerRing);
