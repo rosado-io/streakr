@@ -1195,6 +1195,54 @@ describe("createStreakr", () => {
       );
     });
 
+    it("clips the day-stroke group to the exact annulus between the guide circles", () => {
+      setContainerWidth(375);
+      instance = createStreakr({ target, years, getDays });
+
+      const daysGroup = target.querySelector(".sk-ring-days");
+      const innerRing = target.querySelector(".sk-ring-inner");
+      const outerRing = target.querySelector(".sk-ring-outer");
+      const clipAttr = daysGroup?.getAttribute("clip-path");
+
+      expect(clipAttr).toMatch(/^url\(#.+\)$/);
+      const clipId = (clipAttr ?? "").slice(5, -1);
+
+      const clipPathEl = target.querySelector("clipPath");
+      expect(clipPathEl?.getAttribute("id")).toBe(clipId);
+
+      const clipPathD = clipPathEl?.querySelector("path");
+      const clipD = clipPathD?.getAttribute("d") ?? "";
+      const radii = Array.from(clipD.matchAll(/A\s+([\d.]+),[\d.]+/g)).map((m) => Number(m[1]));
+      const uniqueRadii = Array.from(new Set(radii)).sort((a, b) => a - b);
+
+      // The clip boundary must sit exactly on the guide circles' radii: a rounded-cap day
+      // stroke, at any stroke width (rest 2.85px, hover 3.5px, focus-visible 4px), is
+      // truncated there and therefore cannot bleed past either guide, regardless of the
+      // viewBox-to-screen scale factor at narrow container widths.
+      expect(uniqueRadii).toEqual(
+        [innerRing?.getAttribute("r"), outerRing?.getAttribute("r")]
+          .map(Number)
+          .sort((a, b) => a - b),
+      );
+
+      // clip-rule (not fill-rule) is what determines the even-odd hole inside a <clipPath>;
+      // without it the inner circle never punches a hole and the "annulus" stays a solid disk.
+      expect(clipPathD?.getAttribute("clip-rule")).toBe("evenodd");
+    });
+
+    it("applies the same annulus clip to the loading skeleton ring", () => {
+      setContainerWidth(375);
+      instance = createStreakr({ target, years, state: "loading", getDays });
+
+      const daysGroup = target.querySelector(".sk-ring-svg--skeleton .sk-ring-days");
+      const clipAttr = daysGroup?.getAttribute("clip-path");
+
+      expect(clipAttr).toMatch(/^url\(#.+\)$/);
+      const clipId = (clipAttr ?? "").slice(5, -1);
+      const clipPathEl = target.querySelector("clipPath");
+      expect(clipPathEl?.getAttribute("id")).toBe(clipId);
+    });
+
     it("does not update the center and selector when a day line is hovered", () => {
       setContainerWidth(375);
       instance = createStreakr({
