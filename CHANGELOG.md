@@ -1,3 +1,6 @@
+## [0.11.0](https://github.com/rosado-io/streakr/compare/v0.10.0...v0.11.0) (2026-07-14)
+* feat(core): add splitCoAuthored helper for human vs agent partition (#153) ([`de85dfc`](https://github.com/rosado-io/streakr/commit/de85dfcdad0207c540e50a61b6df474b075ece99)) by ****
+
 ## [0.10.0](https://github.com/rosado-io/streakr/compare/v0.9.0...v0.10.0) (2026-07-14)
 * feat(agents): co-author trailer parser and agent registry (#152) ([`3eaa57d`](https://github.com/rosado-io/streakr/commit/3eaa57d993103f0f3840f9e2ac4deef9b53869e6)) by ****
 
