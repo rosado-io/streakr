@@ -501,7 +501,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       svg("clipPath", { id: ringClipId, clipPathUnits: "userSpaceOnUse" }, [
         svg("path", {
           d: describeAnnulusPath(RING_CX, RING_CY, RING_INNER_R, RING_OUTER_R),
-          "fill-rule": "evenodd",
+          "clip-rule": "evenodd",
         }),
       ]),
     ]);

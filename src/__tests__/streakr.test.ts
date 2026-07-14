@@ -1172,7 +1172,8 @@ describe("createStreakr", () => {
       const clipPathEl = target.querySelector("clipPath");
       expect(clipPathEl?.getAttribute("id")).toBe(clipId);
 
-      const clipD = clipPathEl?.querySelector("path")?.getAttribute("d") ?? "";
+      const clipPathD = clipPathEl?.querySelector("path");
+      const clipD = clipPathD?.getAttribute("d") ?? "";
       const radii = Array.from(clipD.matchAll(/A\s+([\d.]+),[\d.]+/g)).map((m) => Number(m[1]));
       const uniqueRadii = Array.from(new Set(radii)).sort((a, b) => a - b);
 
@@ -1185,6 +1186,10 @@ describe("createStreakr", () => {
           .map(Number)
           .sort((a, b) => a - b),
       );
+
+      // clip-rule (not fill-rule) is what determines the even-odd hole inside a <clipPath>;
+      // without it the inner circle never punches a hole and the "annulus" stays a solid disk.
+      expect(clipPathD?.getAttribute("clip-rule")).toBe("evenodd");
     });
 
     it("applies the same annulus clip to the loading skeleton ring", () => {
