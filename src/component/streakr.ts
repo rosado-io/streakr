@@ -426,6 +426,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   const RING_DAY_STROKE_WIDTH = 2.85;
   const RING_CLICK_DRAG_TOLERANCE = 6;
   const RING_SUPPRESS_CLICK_MS = 350;
+  const RING_SKELETON_REVOLUTION_MS = 2000;
 
   // Day strokes scale with the viewBox while the guide circles use a fixed non-scaling
   // stroke, so an endpoint inset alone can't contain the rounded caps at every size/state.
@@ -467,6 +468,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     tabindex?: string | undefined;
     role?: string | undefined;
     "aria-label"?: string | undefined;
+    style?: Partial<CSSStyleDeclaration> | undefined;
   };
 
   const createRingSvgBase = <T extends StreakrDay>(
@@ -608,13 +610,18 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   const renderSkeletonRing = (): SVGElement => {
     const skeletonYear = state.year ?? cfg.today.getFullYear();
     const skeletonDays = padDaysToYear([], skeletonYear);
+    const totalDays = skeletonDays.length;
     return createRingSvgBase(
       skeletonDays,
       "sk-ring-svg sk-ring-svg--skeleton",
       "Loading contribution ring",
-      () => ({
+      (_day, i) => ({
+        class: "sk-ring-skeleton-line",
         stroke: ringLineColor(0),
         "stroke-linecap": "round",
+        style: {
+          animationDelay: `${((i * RING_SKELETON_REVOLUTION_MS) / totalDays).toFixed(2)}ms`,
+        },
       }),
     );
   };
