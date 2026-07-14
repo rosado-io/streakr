@@ -1,3 +1,6 @@
+## [0.13.0](https://github.com/rosado-io/streakr/compare/v0.12.0...v0.13.0) (2026-07-14)
+* feat(agents): add GitHubCoAuthorProvider (commit search API) (#156) ([`9f8cebe`](https://github.com/rosado-io/streakr/commit/9f8cebee1ad45d3c06458b1d98d10ec83396b2ad)) by ****
+
 ## [0.12.0](https://github.com/rosado-io/streakr/compare/v0.11.0...v0.12.0) (2026-07-14)
 * feat(component): add built-in agent provider chips preset (#154) ([`de569d7`](https://github.com/rosado-io/streakr/commit/de569d7bc5b76b25b435c42017b7328e5b82a150)) by ****
 
