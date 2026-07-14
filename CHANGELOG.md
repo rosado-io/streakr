@@ -1,3 +1,6 @@
+## [0.10.0](https://github.com/rosado-io/streakr/compare/v0.9.0...v0.10.0) (2026-07-14)
+* feat(agents): co-author trailer parser and agent registry (#152) ([`3eaa57d`](https://github.com/rosado-io/streakr/commit/3eaa57d993103f0f3840f9e2ac4deef9b53869e6)) by ****
+
 ## [0.9.0](https://github.com/rosado-io/streakr/compare/v0.8.4...v0.9.0) (2026-07-14)
 * feat(mobile): add speedometer-style sweep to ring loader (#144) ([`d67c4d4`](https://github.com/rosado-io/streakr/commit/d67c4d491029e65c6df0251e75cbfe204b3d4b61)) by ****
 
