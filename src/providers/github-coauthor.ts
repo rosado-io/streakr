@@ -42,7 +42,7 @@ export class GitHubCoAuthorProvider implements Provider {
   public constructor(options: GitHubCoAuthorProviderOptions) {
     const token = options.token.trim();
     if (token.length === 0) {
-      throw new Error("GitHubCoAuthorProvider requires a non-empty PAT token");
+      throw new TypeError("GitHubCoAuthorProvider requires a non-empty PAT token");
     }
 
     const keys = options.agents ?? AGENT_TRAILER_RULES.map((rule) => rule.key);
@@ -50,11 +50,11 @@ export class GitHubCoAuthorProvider implements Provider {
     this.matches = keys.map((key) => {
       const rule = AGENT_TRAILER_RULES.find((candidate) => candidate.key === key);
       if (!rule) {
-        throw new Error(`Unknown agent key "${key}"`);
+        throw new TypeError(`Unknown agent key "${key}"`);
       }
       const match = typeof rule.email === "string" ? rule.email : rule.name;
       if (typeof match !== "string") {
-        throw new Error(`Agent "${key}" has no searchable co-author match`);
+        throw new TypeError(`Agent "${key}" has no searchable co-author match`);
       }
       return { key, match };
     });
@@ -122,7 +122,10 @@ export class GitHubCoAuthorProvider implements Provider {
     end: string,
     page: number,
   ): Promise<CommitSearchResponse> {
-    const query = `author:${user} "co-authored-by: ${match}" author-date:${start}..${end}`;
+    // The trailer is `Co-Authored-By: Claude <noreply@anthropic.com>`, so the display
+    // name sits between the label and the email; searching the email (or name) as a
+    // standalone quoted term is what matches, not a phrase glued to the label.
+    const query = `author:${user} "${match}" author-date:${start}..${end}`;
     const url = `${this.endpoint}?q=${encodeURIComponent(query)}&per_page=${PER_PAGE}&page=${page}`;
 
     const response = await this.fetchImpl(url, {

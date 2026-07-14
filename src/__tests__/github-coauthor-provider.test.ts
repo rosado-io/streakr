@@ -66,7 +66,7 @@ describe("GitHubCoAuthorProvider", () => {
     const url = new URL(String(requestUrl));
     expect(url.origin + url.pathname).toBe("https://api.github.com/search/commits");
     expect(url.searchParams.get("q")).toBe(
-      'author:octocat "co-authored-by: noreply@anthropic.com" author-date:2025-06-01..2025-06-01',
+      'author:octocat "noreply@anthropic.com" author-date:2025-06-01..2025-06-01',
     );
     expect(url.searchParams.get("per_page")).toBe("100");
     expect(url.searchParams.get("page")).toBe("1");
@@ -91,9 +91,35 @@ describe("GitHubCoAuthorProvider", () => {
 
     await provider.fetchEvents({ user: "octocat", start: "2025-06-01", end: "2025-06-01" });
 
-    expect(parseQuery(fetchMock.mock.calls[0][0] as RequestInfo | URL)).toContain(
-      '"co-authored-by: copilot"',
-    );
+    const query = parseQuery(fetchMock.mock.calls[0][0] as RequestInfo | URL);
+    expect(query).toContain('"copilot"');
+    expect(query).not.toContain('"co-authored-by:');
+  });
+
+  it("matches trailers whose display name sits between the label and the email", async () => {
+    // Simulates GitHub commit search over `Co-Authored-By: Claude <noreply@anthropic.com>`:
+    // the label glued to the email never matches (the old buggy query), only the
+    // email as a standalone quoted term does.
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const query = parseQuery(input);
+      if (query.includes('"co-authored-by: noreply@anthropic.com"')) {
+        return json({ total_count: 0, items: [] });
+      }
+      if (query.includes('"noreply@anthropic.com"')) {
+        return json({ total_count: 1, items: [commit("2025-06-01")] });
+      }
+      return json({ total_count: 0, items: [] });
+    });
+
+    const provider = new GitHubCoAuthorProvider({
+      token: "ghp_token",
+      agents: ["claude"],
+      fetch: fetchMock,
+    });
+
+    const result = await provider.fetchEvents(baseParams);
+
+    expect(result[0]).toEqual({ date: "2025-06-01", count: 1, sources: { claude: 1 } });
   });
 
   it("paginates until every page in the range is collected", async () => {
