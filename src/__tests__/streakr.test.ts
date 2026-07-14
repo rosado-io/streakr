@@ -1181,7 +1181,9 @@ describe("createStreakr", () => {
       // truncated there and therefore cannot bleed past either guide, regardless of the
       // viewBox-to-screen scale factor at narrow container widths.
       expect(uniqueRadii).toEqual(
-        [innerRing?.getAttribute("r"), outerRing?.getAttribute("r")].map(Number).sort((a, b) => a - b),
+        [innerRing?.getAttribute("r"), outerRing?.getAttribute("r")]
+          .map(Number)
+          .sort((a, b) => a - b),
       );
     });
 
