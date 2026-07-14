@@ -20,7 +20,7 @@ export const AGENT_TRAILER_RULES: readonly AgentTrailerRule[] = [
   { key: "copilot", name: "copilot", email: /@users\.noreply\.github\.com$/i },
 ];
 
-const TRAILER_RE = /^co-authored-by:\s*(.*?)\s*<([^<>]+)>$/i;
+const TRAILER_RE = /^co-authored-by:(.*)<([^<>]+)>$/i;
 
 const finalBlock = (message: string): string[] => {
   const lines = message.split(/\r?\n/).map((line) => line.trimEnd());
@@ -35,12 +35,16 @@ export const parseCoAuthors = (message: string): CoAuthor[] =>
   finalBlock(message)
     .map((line) => TRAILER_RE.exec(line))
     .filter((match): match is RegExpExecArray => match !== null)
-    .map((match) => ({ name: match[1], email: match[2].trim() }));
+    .map((match) => ({ name: match[1].trim(), email: match[2].trim() }));
 
-const testStateless = (pattern: RegExp, value: string): boolean =>
-  pattern.global || pattern.sticky
-    ? new RegExp(pattern.source, pattern.flags.replace(/[gy]/g, "")).test(value)
-    : pattern.test(value);
+const testStateless = (pattern: RegExp, value: string): boolean => {
+  if (!pattern.global && !pattern.sticky) return pattern.test(value);
+  const lastIndex = pattern.lastIndex;
+  pattern.lastIndex = 0;
+  const matched = pattern.test(value);
+  pattern.lastIndex = lastIndex;
+  return matched;
+};
 
 const matchesEmail = (email: string, expected: string | RegExp | undefined): boolean => {
   if (expected === undefined) return true;

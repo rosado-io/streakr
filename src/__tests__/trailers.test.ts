@@ -100,6 +100,13 @@ describe("parseCoAuthors", () => {
   it("returns an empty list for an empty message", () => {
     expect(parseCoAuthors("")).toEqual([]);
   });
+
+  it("stays linear on a pathological unterminated trailer line (no catastrophic backtracking)", () => {
+    const message = `co-authored-by:${" ".repeat(200_000)}`;
+    const start = performance.now();
+    expect(parseCoAuthors(message)).toEqual([]);
+    expect(performance.now() - start).toBeLessThan(200);
+  });
 });
 
 describe("matchAgent", () => {
