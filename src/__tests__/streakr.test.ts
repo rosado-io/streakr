@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createStreakr } from "../component/streakr";
 import type { StreakrDay, StreakrInstance, StreakrProvider } from "../types";
+import streakrCss from "../component/streakr.css?raw";
 
 function makeYearDays(year: number, fillEvery = 3): StreakrDay[] {
   const days: StreakrDay[] = [];
@@ -550,36 +551,40 @@ describe("createStreakr", () => {
       expect(target.querySelector(".sk-legend")?.textContent).toContain("More");
     });
 
-    it("applies the enter animation class and staggered animationDelay on first paint", () => {
+    it("never applies a loading animation class or stagger delay to ready cells", () => {
       instance = createStreakr({ target, years, getDays });
-      const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell--enter");
+      expect(target.querySelector("rect.sk-heatmap-skeleton-cell")).toBeNull();
+      const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell");
       expect(cells.length).toBeGreaterThan(0);
-      const first = cells[0];
-      expect(first.getAttribute("class")).toContain("sk-heatmap-cell--enter");
-      expect(first.style.animationDelay).not.toBe("");
+      cells.forEach((cell) => {
+        expect(cell.getAttribute("class")).not.toContain("sk-heatmap-skeleton-cell");
+        expect(cell.style.animationDelay).toBe("");
+      });
     });
 
-    it("does not re-apply the enter animation on update() re-render", () => {
+    it("does not introduce a loading animation on update() re-render", () => {
       instance = createStreakr({ target, years, getDays });
-      expect(target.querySelector("rect.sk-heatmap-cell--enter")).toBeTruthy();
-
       instance.update({ theme: "light" });
 
-      expect(target.querySelector("rect.sk-heatmap-cell--enter")).toBeNull();
+      expect(target.querySelector("rect.sk-heatmap-skeleton-cell")).toBeNull();
       const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell");
       expect(cells.length).toBeGreaterThan(0);
       expect(cells[0].style.animationDelay).toBe("");
     });
 
-    it("re-applies the enter animation on the loading→ready transition", () => {
+    it("replaces the animated skeleton with static ready cells on the loading→ready transition", () => {
       instance = createStreakr({ target, years, state: "loading", getDays });
-      expect(target.querySelector("rect.sk-heatmap-cell--enter")).toBeNull();
+      expect(target.querySelector("rect.sk-heatmap-skeleton-cell")).toBeTruthy();
 
       instance.update({ state: "ready" });
 
-      const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell--enter");
+      expect(target.querySelector("rect.sk-heatmap-skeleton-cell")).toBeNull();
+      const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell");
       expect(cells.length).toBeGreaterThan(0);
-      expect(cells[0].style.animationDelay).not.toBe("");
+      cells.forEach((cell) => {
+        expect(cell.getAttribute("class")).not.toContain("sk-heatmap-skeleton-cell");
+        expect(cell.style.animationDelay).toBe("");
+      });
     });
   });
 
@@ -602,6 +607,39 @@ describe("createStreakr", () => {
       expect(target.querySelectorAll(".sk-stat-value-skeleton--3")).toHaveLength(1);
       expect(target.querySelectorAll(".sk-stat-value-skeleton--2")).toHaveLength(3);
       expect(target.textContent).not.toContain("Loading");
+    });
+
+    it("gives loading skeleton cells a staggered sweep animation", () => {
+      instance = createStreakr({ target, years, state: "loading", getDays });
+      const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-skeleton-cell");
+      expect(cells.length).toBeGreaterThan(0);
+      cells.forEach((cell) => {
+        expect(cell.getAttribute("class")).toContain("sk-heatmap-skeleton-cell");
+        expect(cell.style.animationDelay).not.toBe("");
+      });
+      const delays = new Set(Array.from(cells).map((cell) => cell.style.animationDelay));
+      expect(delays.size).toBeGreaterThan(1);
+    });
+
+    it("keeps the skeleton sweep animating indefinitely while loading (infinite iteration)", () => {
+      instance = createStreakr({ target, years, state: "loading", getDays });
+      expect(target.querySelector("rect.sk-heatmap-skeleton-cell")).toBeTruthy();
+
+      const ruleMatch = streakrCss.match(/\.sk-heatmap-skeleton-cell\s*{[^}]*}/);
+      expect(ruleMatch?.[0]).toContain("infinite");
+
+      instance.update({ state: "loading" });
+      expect(target.querySelector("rect.sk-heatmap-skeleton-cell")).toBeTruthy();
+    });
+
+    it("does not depend on getDays/contribution data for the loading skeleton", () => {
+      const getDaysSpy = vi.fn(getDays);
+      instance = createStreakr({ target, years, state: "loading", getDays: getDaysSpy });
+      expect(getDaysSpy).not.toHaveBeenCalled();
+      const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-skeleton-cell");
+      cells.forEach((cell) => {
+        expect(cell.getAttribute("fill")).toBe("var(--sk-heat-0)");
+      });
     });
 
     it("keeps heatmap geometry stable between ready and loading", () => {
