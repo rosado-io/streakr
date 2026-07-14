@@ -1,3 +1,6 @@
+## [0.12.0](https://github.com/rosado-io/streakr/compare/v0.11.0...v0.12.0) (2026-07-14)
+* feat(component): add built-in agent provider chips preset (#154) ([`de569d7`](https://github.com/rosado-io/streakr/commit/de569d7bc5b76b25b435c42017b7328e5b82a150)) by ****
+
 ## [0.11.0](https://github.com/rosado-io/streakr/compare/v0.10.0...v0.11.0) (2026-07-14)
 * feat(core): add splitCoAuthored helper for human vs agent partition (#153) ([`de85dfc`](https://github.com/rosado-io/streakr/commit/de85dfcdad0207c540e50a61b6df474b075ece99)) by ****
 
