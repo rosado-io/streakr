@@ -1,3 +1,6 @@
+## [0.8.4](https://github.com/rosado-io/streakr/compare/v0.8.3...v0.8.4) (2026-07-14)
+* fix(loading): run desktop heatmap sweep during loading, not on ready transition (#143) ([`769d586`](https://github.com/rosado-io/streakr/commit/769d5860e896d8912255fb8eff6878c74393135f)) by ****
+
 ## [0.8.3](https://github.com/rosado-io/streakr/compare/v0.8.2...v0.8.3) (2026-07-14)
 * fix(mobile): contain contribution strokes within ring guides (#142) ([`74cdeac`](https://github.com/rosado-io/streakr/commit/74cdeac6ff8afad8cd55e8a7c4c4d7ee1d30ec9a)) by ****
 
