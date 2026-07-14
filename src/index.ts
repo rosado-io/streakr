@@ -1,5 +1,7 @@
 export { normalizeEventsToDaily } from "./core/normalize";
 export { computeStreaks } from "./core/streaks";
+export { splitCoAuthored } from "./core/split";
+export type { SplitCoAuthoredOptions } from "./core/split";
 export { buildCalendarGrid } from "./core/grid";
 
 export type { Provider } from "./providers/types";
