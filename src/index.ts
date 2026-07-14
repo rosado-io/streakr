@@ -19,6 +19,7 @@ export {
 export type { CoAuthor, AgentCoAuthor, AgentTrailerRule } from "./providers/trailers";
 
 export { createStreakr } from "./component/streakr";
+export { DEFAULT_PROVIDERS, AGENT_PROVIDERS } from "./component/providers";
 
 export type {
   ContributionDay,
