@@ -90,7 +90,11 @@ export class LocalGitCoAuthorProvider implements Provider {
       }
     }
 
-    return toCanonicalDays(this.toDays(commits, params.start, params.end), params.start, params.end);
+    return toCanonicalDays(
+      this.toDays(commits, params.start, params.end),
+      params.start,
+      params.end,
+    );
   }
 
   private async ensureGit(): Promise<void> {
