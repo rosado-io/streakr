@@ -20,6 +20,13 @@ type ContributionDay = {
 Both compose with `aggregate()` and `normalizeEventsToDaily()` exactly like the
 [Git host providers](./providers.md).
 
+> ⚠️ **Availability.** `GitHubCoAuthorProvider` (main entry `@rosado-io/streakr`)
+> and `LocalGitCoAuthorProvider` (subpath `@rosado-io/streakr/agents`) land in
+> PRs [#156](https://github.com/rosado-io/streakr/pull/156) and
+> [#157](https://github.com/rosado-io/streakr/pull/157). They ship starting with
+> the release that includes those PRs; until then the imports in this guide will
+> not resolve against the published package.
+
 ## What the counts mean
 
 Co-author trailers measure **commits shipped with an agent**, not agent usage:
