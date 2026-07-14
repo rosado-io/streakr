@@ -1,3 +1,12 @@
+## [0.12.0](https://github.com/rosado-io/streakr/compare/v0.11.0...v0.12.0) (2026-07-14)
+* feat(component): add built-in agent provider chips preset (#154) ([`de569d7`](https://github.com/rosado-io/streakr/commit/de569d7bc5b76b25b435c42017b7328e5b82a150)) by ****
+
+## [0.11.0](https://github.com/rosado-io/streakr/compare/v0.10.0...v0.11.0) (2026-07-14)
+* feat(core): add splitCoAuthored helper for human vs agent partition (#153) ([`de85dfc`](https://github.com/rosado-io/streakr/commit/de85dfcdad0207c540e50a61b6df474b075ece99)) by ****
+
+## [0.10.0](https://github.com/rosado-io/streakr/compare/v0.9.0...v0.10.0) (2026-07-14)
+* feat(agents): co-author trailer parser and agent registry (#152) ([`3eaa57d`](https://github.com/rosado-io/streakr/commit/3eaa57d993103f0f3840f9e2ac4deef9b53869e6)) by ****
+
 ## [0.9.0](https://github.com/rosado-io/streakr/compare/v0.8.4...v0.9.0) (2026-07-14)
 * feat(mobile): add speedometer-style sweep to ring loader (#144) ([`d67c4d4`](https://github.com/rosado-io/streakr/commit/d67c4d491029e65c6df0251e75cbfe204b3d4b61)) by ****
 
