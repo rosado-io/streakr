@@ -1,3 +1,6 @@
+## [0.8.3](https://github.com/rosado-io/streakr/compare/v0.8.2...v0.8.3) (2026-07-14)
+* fix(mobile): contain contribution strokes within ring guides (#142) ([`74cdeac`](https://github.com/rosado-io/streakr/commit/74cdeac6ff8afad8cd55e8a7c4c4d7ee1d30ec9a)) by ****
+
 ## [0.8.2](https://github.com/rosado-io/streakr/compare/v0.8.1...v0.8.2) (2026-07-13)
 * fix(deps): Actualiza esbuild para corregir GHSA-g7r4-m6w7-qqqr (#137) ([`ae05bf4`](https://github.com/rosado-io/streakr/commit/ae05bf4cfa8380acebe92b7c4567fb5aa29fcecc)) by ****
 
