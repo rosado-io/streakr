@@ -495,14 +495,14 @@
   opacity: 0.7;
 }
 
-@keyframes sk-cell-enter {
-  from { opacity: 0; transform: scale(0.4); }
-  to   { opacity: 1; transform: scale(1); }
+@keyframes sk-skeleton-sweep {
+  0%, 100% { opacity: 0.4; transform: scale(0.4); }
+  50%      { opacity: 1; transform: scale(1); }
 }
-.sk-heatmap-cell--enter {
+.sk-heatmap-skeleton-cell {
   transform-box: fill-box;
   transform-origin: center;
-  animation: sk-cell-enter 280ms ease-out backwards;
+  animation: sk-skeleton-sweep 1400ms ease-in-out infinite;
 }
 
 .sk-empty {
@@ -570,7 +570,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sk-heatmap-cell--enter,
+  .sk-heatmap-skeleton-cell,
   .sk-skeleton::after,
   .sk-modal-overlay,
   .sk-modal {
