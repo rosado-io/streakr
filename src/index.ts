@@ -10,6 +10,8 @@ export { GitHubProvider } from "./providers/github";
 export type { GitHubProviderOptions } from "./providers/github";
 export { GitLabProvider } from "./providers/gitlab";
 export type { GitLabProviderOptions } from "./providers/gitlab";
+export { GitHubCoAuthorProvider } from "./providers/github-coauthor";
+export type { GitHubCoAuthorProviderOptions } from "./providers/github-coauthor";
 export {
   AGENT_TRAILER_RULES,
   parseCoAuthors,
