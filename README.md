@@ -182,6 +182,24 @@ createStreakr({
 > with [DOMPurify](https://github.com/cure53/DOMPurify)) — SVG can contain
 > inline scripts and lead to XSS.
 
+### Agent providers preset
+
+For coding-agent activity, `AGENT_PROVIDERS` ships chips for Claude, Codex,
+opencode, and Copilot with distinct colors and built-in icons (Codex has no
+icon and falls back to its color dot). Agents are opt-in — the default stays
+git hosts — so spread both presets together:
+
+```ts
+import { createStreakr, DEFAULT_PROVIDERS, AGENT_PROVIDERS } from "@rosado-io/streakr";
+
+createStreakr({
+  target: el,
+  years: [2026],
+  providers: [...DEFAULT_PROVIDERS, ...AGENT_PROVIDERS],
+  getDays: (year) => myFetchActivity(year), // days like { sources: { github: 2, claude: 3, codex: 1 } }
+});
+```
+
 ## Lifecycle states
 
 ```ts

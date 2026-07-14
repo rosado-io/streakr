@@ -10,6 +10,7 @@ export { GitLabProvider } from "./providers/gitlab";
 export type { GitLabProviderOptions } from "./providers/gitlab";
 
 export { createStreakr } from "./component/streakr";
+export { DEFAULT_PROVIDERS, AGENT_PROVIDERS } from "./component/providers";
 
 export type {
   ContributionDay,
