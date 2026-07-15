@@ -113,6 +113,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   root.appendChild(tooltipEl);
   let currentDraw: (() => void) | null = null;
   let skipNextResizeRedraw = false;
+  let wasLoading = false;
   const resizeObs = new ResizeObserver(() => {
     if (skipNextResizeRedraw) {
       skipNextResizeRedraw = false;
@@ -396,10 +397,35 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     return svgEl;
   };
 
+  const buildRevealHeatmapCell =
+    (totalCols: number): HeatmapCellBuilder =>
+    (day, ri, sq, colStep, ci) => {
+      const rect = svg("rect", {
+        class: day ? "sk-heatmap-cell sk-heatmap-cell--reveal" : null,
+        y: ri * colStep,
+        width: sq,
+        height: sq,
+        rx: Math.max(2, sq * 0.22),
+        fill: day ? "var(--sk-heat-0)" : "transparent",
+        style: day
+          ? {
+              cursor: "pointer",
+              "--sk-cell-final": `var(--sk-heat-${day.level})`,
+              animationDelay: `${((ci * HEATMAP_SKELETON_SWEEP_MS) / totalCols).toFixed(2)}ms`,
+            }
+          : { cursor: "default" },
+      });
+      if (day) {
+        bindCellEvents(rect, day);
+      }
+      return rect;
+    };
+
   const renderHeatmap = (
     wrap: HTMLElement,
     days: StreakrLeveledDay[],
     containerW: number,
+    isRevealing = false,
   ): void => {
     const cols = gridFromDays(days);
     const svgEl = createHeatmapSvg(cols, {
@@ -409,6 +435,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         : `Contribution heatmap for ${state.year ?? "selected year"}`,
       containerW,
       wrap,
+      ...(isRevealing ? { buildCell: buildRevealHeatmapCell(cols.length) } : {}),
     });
 
     wrap.replaceChildren(h("div", { class: "sk-heatmap-svg-wrap" }, [svgEl]));
@@ -427,6 +454,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   const RING_CLICK_DRAG_TOLERANCE = 6;
   const RING_SUPPRESS_CLICK_MS = 350;
   const RING_SKELETON_REVOLUTION_MS = 2000;
+  const HEATMAP_SKELETON_SWEEP_MS = 2860;
 
   // Day strokes scale with the viewBox while the guide circles use a fixed non-scaling
   // stroke, so an endpoint inset alone can't contain the rounded caps at every size/state.
@@ -951,7 +979,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     return header;
   };
 
-  const appendBody = (card: Element, flags: RenderFlags): void => {
+  const appendBody = (card: Element, flags: RenderFlags, isRevealing: boolean): void => {
     const stateBody = [
       [flags.isLoading, renderLoadingBody],
       [flags.allOff, renderNoProviders],
@@ -969,7 +997,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       return;
     }
 
-    const body = renderReadyBody(flags.leveled, flags.stats) as ReadyBody;
+    const body = renderReadyBody(flags.leveled, flags.stats, isRevealing) as ReadyBody;
     card.appendChild(body);
     body.__skDraw?.();
     if (body.__skObserveTarget) {
@@ -986,6 +1014,8 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
 
     const wasOpen = state.yearModalOpen;
     const flags = computeRenderFlags();
+    const isRevealing = wasLoading && !flags.isLoading;
+    wasLoading = flags.isLoading;
 
     root.replaceChildren(tooltipEl);
     root.dataset.theme = getActiveTheme();
@@ -994,7 +1024,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     const card = h("div", { class: "sk-card" });
     root.appendChild(card);
     card.appendChild(renderHeader(flags));
-    appendBody(card, flags);
+    appendBody(card, flags, isRevealing);
 
     if (wasOpen) {
       renderYearModal(card);
@@ -1008,7 +1038,6 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       const active = !!state.providers[p.key];
       const total = totals[p.key].toLocaleString();
       const activeState = active ? "enabled" : "disabled";
-      const title = isLoading ? p.name : p.name + " — " + total;
       const ariaLabel = isLoading
         ? `${p.name}: loading contributions, ${activeState}`
         : `${p.name}: ${total} contributions, ${activeState}`;
@@ -1017,7 +1046,6 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         "button",
         {
           class: "sk-provider" + (active ? " active" : ""),
-          title,
           "aria-label": ariaLabel,
           "aria-pressed": active,
           onclick: () => toggleProvider(p.key),
@@ -1040,6 +1068,21 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
           ),
         ],
       );
+      btn.addEventListener("mouseenter", (e) => {
+        tooltipEl.replaceChildren();
+        tooltipEl.appendChild(
+          h("div", { class: "tt-row" }, [
+            h("span", { class: "tt-label" }, [
+              h("span", { class: "dot", style: { background: p.color } }),
+              p.name,
+            ]),
+          ]),
+        );
+        moveTooltip(e);
+        tooltipEl.classList.add("visible");
+      });
+      btn.addEventListener("mousemove", moveTooltip);
+      btn.addEventListener("mouseleave", hideTooltip);
       row.appendChild(btn);
     });
     return row;
@@ -1057,16 +1100,30 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     return totals;
   };
 
-  const buildSkeletonHeatmapCell: HeatmapCellBuilder = (day, ri, sq, colStep, ci) =>
-    svg("rect", {
-      class: day ? "sk-heatmap-skeleton-cell" : null,
-      y: ri * colStep,
-      width: sq,
-      height: sq,
-      rx: Math.max(2, sq * 0.22),
-      fill: day ? "var(--sk-heat-0)" : "transparent",
-      style: day ? { animationDelay: `${ci * 12}ms` } : {},
-    });
+  const SKELETON_PEAK_LEVELS = [0, 1, 1, 2, 2, 2, 3, 3, 4, 4] as const;
+
+  const skeletonPeakLevel = (ci: number, ri: number): number => {
+    const hash = Math.imul(ci * 7 + ri + 1, 2654435761) >>> 0;
+    return SKELETON_PEAK_LEVELS[hash % SKELETON_PEAK_LEVELS.length];
+  };
+
+  const buildSkeletonHeatmapCell =
+    (totalCols: number): HeatmapCellBuilder =>
+    (day, ri, sq, colStep, ci) =>
+      svg("rect", {
+        class: day ? "sk-heatmap-skeleton-cell" : null,
+        y: ri * colStep,
+        width: sq,
+        height: sq,
+        rx: Math.max(2, sq * 0.22),
+        fill: day ? "var(--sk-heat-0)" : "transparent",
+        style: day
+          ? {
+              "--sk-cell-peak": `var(--sk-heat-${skeletonPeakLevel(ci, ri)})`,
+              animationDelay: `${((ci * HEATMAP_SKELETON_SWEEP_MS) / totalCols).toFixed(2)}ms`,
+            }
+          : {},
+      });
 
   const renderSkeletonHeatmap = (containerW: number): SVGElement => {
     const skeletonYear = state.year ?? cfg.today.getFullYear();
@@ -1079,7 +1136,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       className: "sk-heatmap-svg sk-heatmap-svg--skeleton",
       ariaLabel: "Loading contribution heatmap",
       containerW,
-      buildCell: buildSkeletonHeatmapCell,
+      buildCell: buildSkeletonHeatmapCell(cols.length),
     });
   };
 
@@ -1181,9 +1238,14 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       }),
     ]);
 
-  const renderReadyBody = (leveled: StreakrLeveledDay[], stats: StreakrStats): HTMLElement => {
+  const renderReadyBody = (
+    leveled: StreakrLeveledDay[],
+    stats: StreakrStats,
+    isRevealing: boolean,
+  ): HTMLElement => {
     const { body, heatmapWrap, heatmapInner } = createReadyBodyShell();
 
+    let pendingReveal = isRevealing;
     const draw = () => {
       try {
         const isMobile = isMobileHeatmap(heatmapWrap);
@@ -1191,8 +1253,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
           renderRing(heatmapInner, leveled);
         } else {
           const w = heatmapWrap.clientWidth - 32;
-          renderHeatmap(heatmapInner, leveled, Math.max(200, w));
+          renderHeatmap(heatmapInner, leveled, Math.max(200, w), pendingReveal);
         }
+        pendingReveal = false;
       } catch (err) {
         console.error("[streakr] draw failed:", err);
       }

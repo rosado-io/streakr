@@ -495,11 +495,6 @@
   opacity: 0.7;
 }
 
-@keyframes sk-skeleton-sweep {
-  0%, 100% { opacity: 0.4; transform: scale(0.4); }
-  50%      { opacity: 1; transform: scale(1); }
-}
-
 .sk-ring-skeleton-line {
   animation: sk-ring-sweep 2000ms linear infinite;
 }
@@ -512,9 +507,23 @@
   12%, 100% { stroke: var(--sk-heat-0); }
 }
 .sk-heatmap-skeleton-cell {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: sk-skeleton-sweep 1400ms ease-in-out infinite;
+  animation: sk-heatmap-sweep 2860ms linear infinite;
+}
+
+@keyframes sk-heatmap-sweep {
+  0% { fill: var(--sk-cell-peak, var(--sk-heat-4)); }
+  8% { fill: color-mix(in oklab, var(--sk-cell-peak, var(--sk-heat-4)) 50%, var(--sk-heat-0)); }
+  52%, 100% { fill: var(--sk-heat-0); }
+}
+
+.sk-heatmap-cell--reveal {
+  animation: sk-heatmap-reveal 2860ms linear forwards;
+}
+
+@keyframes sk-heatmap-reveal {
+  0% { fill: var(--sk-heat-4); }
+  8% { fill: color-mix(in oklab, var(--sk-heat-4) 50%, var(--sk-cell-final, var(--sk-heat-0))); }
+  52%, 100% { fill: var(--sk-cell-final, var(--sk-heat-0)); }
 }
 
 .sk-empty {
@@ -583,6 +592,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .sk-heatmap-skeleton-cell,
+  .sk-heatmap-cell--reveal,
   .sk-skeleton::after,
   .sk-modal-overlay,
   .sk-modal,

@@ -4,7 +4,7 @@ import { providerIconHtml } from "../component/providers";
 import { AGENT_PROVIDERS, DEFAULT_PROVIDERS } from "../index";
 import type { StreakrInstance, StreakrProvider } from "../types";
 
-const ICON_KEYS = ["claude", "opencode", "copilot"];
+const ICON_KEYS = ["claude", "codex", "opencode", "copilot"];
 
 const byKey = (key: string): StreakrProvider => {
   const provider = AGENT_PROVIDERS.find((p) => p.key === key);
@@ -34,28 +34,19 @@ describe("AGENT_PROVIDERS", () => {
   });
 
   describe("icons", () => {
-    it("returns a currentColor SVG for claude, opencode, and copilot", () => {
+    it("returns an SVG for every agent key, theme-adaptive except Claude's brand orange", () => {
       ICON_KEYS.forEach((key) => {
         const icon = providerIconHtml(byKey(key));
         expect(icon).toBeTypeOf("string");
         expect(icon).toContain("<svg");
         expect(icon).toContain("viewBox");
-        expect(icon).toContain("currentColor");
+        expect(icon).toContain(key === "claude" ? "#d97757" : "currentColor");
       });
     });
 
-    it("returns null for codex so its chip falls back to the color dot", () => {
-      expect(providerIconHtml(byKey("codex"))).toBeNull();
-    });
-
-    it("resolves every preset entry to either null or an inline SVG", () => {
+    it("resolves every preset entry to an inline SVG", () => {
       AGENT_PROVIDERS.forEach((p) => {
-        const icon = providerIconHtml(p);
-        if (ICON_KEYS.includes(p.key)) {
-          expect(icon).toMatch(/^<svg /);
-        } else {
-          expect(icon).toBeNull();
-        }
+        expect(providerIconHtml(p)).toMatch(/^<svg /);
       });
     });
   });
@@ -95,35 +86,45 @@ describe("AGENT_PROVIDERS", () => {
 
     it("renders one chip per provider with agent labels and counts", () => {
       mount();
-      const titles = Array.from(target.querySelectorAll(".sk-provider")).map((chip) =>
-        chip.getAttribute("title"),
+      const labels = Array.from(target.querySelectorAll(".sk-provider")).map((chip) =>
+        chip.getAttribute("aria-label"),
       );
-      expect(titles).toEqual([
-        "GitHub — 0",
-        "GitLab — 0",
-        "Bitbucket — 0",
-        "Claude — 3",
-        "Codex — 1",
-        "opencode — 0",
-        "Copilot — 0",
+      expect(labels).toEqual([
+        "GitHub: 0 contributions, enabled",
+        "GitLab: 0 contributions, enabled",
+        "Bitbucket: 0 contributions, enabled",
+        "Claude: 3 contributions, enabled",
+        "Codex: 1 contributions, enabled",
+        "opencode: 0 contributions, enabled",
+        "Copilot: 0 contributions, enabled",
       ]);
     });
 
-    it("renders SVG icons for agent chips that ship one and a color dot for codex", () => {
+    it("renders SVG icons for every agent chip", () => {
       mount();
       const chips = Array.from(target.querySelectorAll<HTMLButtonElement>(".sk-provider"));
       const iconFor = (name: string) =>
         chips
-          .find((chip) => chip.getAttribute("title")?.startsWith(name))
+          .find((chip) => chip.getAttribute("aria-label")?.startsWith(name))
           ?.querySelector<HTMLElement>(".sk-provider-icon");
 
-      ["Claude", "opencode", "Copilot"].forEach((name) => {
+      ["Claude", "Codex", "opencode", "Copilot"].forEach((name) => {
         expect(iconFor(name)?.querySelector("svg")).toBeTruthy();
       });
+    });
 
-      const codexIcon = iconFor("Codex");
-      expect(codexIcon?.querySelector("svg")).toBeNull();
-      expect(codexIcon?.style.background.toLowerCase()).toContain("#10a37f");
+    it("shows a tooltip with the provider name on chip hover", () => {
+      mount();
+      const chips = Array.from(target.querySelectorAll<HTMLButtonElement>(".sk-provider"));
+      const codexChip = chips.find((chip) => chip.getAttribute("aria-label")?.startsWith("Codex"));
+      codexChip?.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }));
+
+      const tooltip = target.querySelector(".sk-tooltip");
+      expect(tooltip?.classList.contains("visible")).toBe(true);
+      expect(tooltip?.textContent).toBe("Codex");
+
+      codexChip?.dispatchEvent(new MouseEvent("mouseleave", { bubbles: true }));
+      expect(tooltip?.classList.contains("visible")).toBe(false);
     });
   });
 });
