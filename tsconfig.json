@@ -4,10 +4,12 @@
         "module": "ESNext",
         "lib": [
             "ES2020",
+            "ES2022.Error",
             "DOM",
             "DOM.Iterable"
         ],
         "moduleResolution": "bundler",
+        "types": ["node"],
         "strict": true,
         "esModuleInterop": true,
         "skipLibCheck": true,

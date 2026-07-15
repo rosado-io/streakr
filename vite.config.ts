@@ -12,13 +12,18 @@ export default defineConfig({
     ],
     build: {
         lib: {
-            entry: resolve(__dirname, "src/index.ts"),
-            name: "Streakr",
+            entry: {
+                index: resolve(__dirname, "src/index.ts"),
+                agents: resolve(__dirname, "src/agents.ts"),
+            },
             formats: ["es", "cjs"],
-            fileName: (format) => `streakr.${format === "es" ? "es" : "cjs"}.js`,
+            fileName: (format, entryName) => {
+                const base = entryName === "index" ? "streakr" : entryName;
+                return `${base}.${format === "es" ? "es" : "cjs"}.js`;
+            },
         },
         rollupOptions: {
-            external: [],
+            external: [/^node:/, "child_process", "fs", "path", "os", "util"],
         },
         sourcemap: true,
         minify: "esbuild",
