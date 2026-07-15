@@ -339,6 +339,23 @@ merge same-date entries into one daily series. See [docs/providers.md](docs/prov
 for authentication, self-hosted GitLab, rate-limit notes, and writing your own
 provider.
 
+### Agent records
+
+For coding-agent activity, two providers count `Co-authored-by:` trailers and
+return the same daily series keyed per agent (Claude, Codex, opencode, Copilot):
+`GitHubCoAuthorProvider` reads the GitHub commit search API, and
+`LocalGitCoAuthorProvider` (`@rosado-io/streakr/agents`, Node-only) scans local
+clones across all branches and hosts. Trailers count shipped commits, not agent
+usage, so the numbers are a lower bound. See [docs/agents.md](docs/agents.md) for
+semantics, the coverage table, route comparison, deployment patterns, and
+privacy.
+
+> ⚠️ **Availability.** Both providers land in PRs
+> [#156](https://github.com/rosado-io/streakr/pull/156) and
+> [#157](https://github.com/rosado-io/streakr/pull/157) and ship starting with
+> the release that includes them; until then their imports will not resolve. See
+> the [availability note in docs/agents.md](docs/agents.md#agent-records).
+
 ### Utilities
 
 `normalizeEventsToDaily(events)` accepts `ContributionDay[]` with `YYYY-MM-DD`

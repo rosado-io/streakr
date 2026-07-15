@@ -335,6 +335,10 @@ class MyProvider implements Provider {
 Provider output can contain gaps and duplicate dates. Call
 `normalizeEventsToDaily()` before computing streaks or building a grid.
 
+For coding-agent activity from `Co-authored-by:` trailers, see
+[docs/agents.md](./agents.md), which documents `GitHubCoAuthorProvider` and
+`LocalGitCoAuthorProvider`.
+
 ## Privacy and Token Handling
 
 - Treat GitHub and GitLab PATs as secrets.
