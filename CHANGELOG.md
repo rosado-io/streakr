@@ -1,3 +1,6 @@
+## [0.15.0](https://github.com/rosado-io/streakr/compare/v0.14.0...v0.15.0) (2026-07-15)
+* feat(demo): showcase AI agent providers and animate the heatmap reveal (#159) ([`cc0560d`](https://github.com/rosado-io/streakr/commit/cc0560dd9440bba7d171ed7750d3cd15593c5a18)) by ****
+
 ## [0.14.0](https://github.com/rosado-io/streakr/compare/v0.13.0...v0.14.0) (2026-07-15)
 * feat(agents): add LocalGitCoAuthorProvider via Node-only /agents subpath (#157) ([`19f5e22`](https://github.com/rosado-io/streakr/commit/19f5e22033411e5e9f572b3a43ffe375414e63fe)) by ****
 
