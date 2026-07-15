@@ -17,6 +17,16 @@
         "default": "./dist/streakr.cjs.js"
       }
     },
+    "./agents": {
+      "import": {
+        "types": "./dist/agents.d.ts",
+        "default": "./dist/agents.es.js"
+      },
+      "require": {
+        "types": "./dist/agents.d.ts",
+        "default": "./dist/agents.cjs.js"
+      }
+    },
     "./styles.css": "./dist/streakr.css",
     "./dist/streakr.css": "./dist/streakr.css"
   },
