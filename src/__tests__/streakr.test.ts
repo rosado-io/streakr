@@ -286,8 +286,8 @@ describe("createStreakr", () => {
       });
       const chips = target.querySelectorAll(".sk-provider");
       expect(chips).toHaveLength(2);
-      expect(chips[0].getAttribute("title")).toContain("Gitea");
-      expect(chips[1].getAttribute("title")).toContain("Forgejo");
+      expect(chips[0].getAttribute("aria-label")).toContain("Gitea");
+      expect(chips[1].getAttribute("aria-label")).toContain("Forgejo");
     });
 
     it("renders a custom icon when supplied", () => {
@@ -572,17 +572,57 @@ describe("createStreakr", () => {
       expect(cells[0].style.animationDelay).toBe("");
     });
 
-    it("replaces the animated skeleton with static ready cells on the loading→ready transition", () => {
+    it("staggers skeleton cells by column and varies their peak intensity", () => {
+      instance = createStreakr({ target, years, state: "loading", getDays });
+      const cells = Array.from(
+        target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-skeleton-cell"),
+      );
+      expect(cells.length).toBeGreaterThan(300);
+
+      const delays = new Set(cells.map((cell) => cell.style.animationDelay));
+      expect(delays.size).toBeGreaterThan(40);
+
+      const peaks = new Set(cells.map((cell) => cell.style.getPropertyValue("--sk-cell-peak")));
+      expect(peaks.size).toBeGreaterThanOrEqual(4);
+      peaks.forEach((peak) => {
+        expect(peak).toMatch(/^var\(--sk-heat-[0-4]\)$/);
+      });
+    });
+
+    it("reveals ready cells with a staggered sweep on the loading→ready transition", () => {
       instance = createStreakr({ target, years, state: "loading", getDays });
       expect(target.querySelector("rect.sk-heatmap-skeleton-cell")).toBeTruthy();
 
       instance.update({ state: "ready" });
 
       expect(target.querySelector("rect.sk-heatmap-skeleton-cell")).toBeNull();
+      const cells = Array.from(target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell"));
+      expect(cells.length).toBeGreaterThan(0);
+
+      const revealCells = cells.filter((cell) =>
+        cell.getAttribute("class")?.includes("sk-heatmap-cell--reveal"),
+      );
+      expect(revealCells.length).toBe(cells.length);
+
+      const delays = new Set(revealCells.map((cell) => cell.style.animationDelay));
+      expect(delays.size).toBeGreaterThan(40);
+
+      revealCells.forEach((cell) => {
+        const final = cell.style.getPropertyValue("--sk-cell-final");
+        expect(final).toMatch(/^var\(--sk-heat-[0-4]\)$/);
+        expect(final).toBe(cell.getAttribute("fill"));
+      });
+    });
+
+    it("does not replay the reveal sweep on a later render once already ready", () => {
+      instance = createStreakr({ target, years, state: "loading", getDays });
+      instance.update({ state: "ready" });
+      instance.update({ theme: "light" });
+
       const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell");
       expect(cells.length).toBeGreaterThan(0);
       cells.forEach((cell) => {
-        expect(cell.getAttribute("class")).not.toContain("sk-heatmap-skeleton-cell");
+        expect(cell.getAttribute("class")).not.toContain("sk-heatmap-cell--reveal");
         expect(cell.style.animationDelay).toBe("");
       });
     });

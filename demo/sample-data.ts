@@ -8,12 +8,20 @@ function seeded(seed: number): () => number {
   };
 }
 
+function agentAdoption(year: number): number {
+  if (year >= 2026) return 0.7;
+  if (year === 2025) return 0.45;
+  if (year === 2024) return 0.2;
+  return 0;
+}
+
 function generateYear(year: number, seed: number): StreakrDay[] {
   const rand = seeded(seed);
   const start = new Date(year, 0, 1);
   const end = new Date(year, 11, 31);
   const days: StreakrDay[] = [];
   const cur = new Date(start);
+  const adoption = agentAdoption(year);
   while (cur <= end) {
     const dow = cur.getDay();
     const weekendBias = dow === 0 || dow === 6 ? 0.55 : 1;
@@ -32,10 +40,20 @@ function generateYear(year: number, seed: number): StreakrDay[] {
         github = Math.max(0, total - gitlab - Math.round(rand()));
       }
     }
+    let claude = 0;
+    let codex = 0;
+    let opencode = 0;
+    let copilot = 0;
+    if (total > 0 && adoption > 0 && rand() < adoption) {
+      claude = 1 + Math.round(rand() * 4 * adoption * burst);
+      if (rand() < 0.3) codex = Math.round(rand() * 3);
+      if (rand() < 0.2) copilot = Math.round(rand() * 2);
+      if (rand() < 0.12) opencode = Math.round(rand() * 2);
+    }
     days.push({
       date: new Date(cur),
-      total: github + gitlab,
-      sources: { github, gitlab },
+      total: github + gitlab + claude + codex + opencode + copilot,
+      sources: { github, gitlab, claude, codex, opencode, copilot },
     });
     cur.setDate(cur.getDate() + 1);
   }
