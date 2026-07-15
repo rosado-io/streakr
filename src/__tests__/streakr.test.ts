@@ -612,7 +612,9 @@ describe("createStreakr", () => {
         expect(cell.style.getPropertyValue("--sk-cell-final")).toMatch(/^var\(--sk-heat-[0-4]\)$/);
       });
 
-      const finals = new Set(revealCells.map((cell) => cell.style.getPropertyValue("--sk-cell-final")));
+      const finals = new Set(
+        revealCells.map((cell) => cell.style.getPropertyValue("--sk-cell-final")),
+      );
       expect(finals.size).toBeGreaterThan(1);
     });
 

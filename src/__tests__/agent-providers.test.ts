@@ -116,9 +116,7 @@ describe("AGENT_PROVIDERS", () => {
     it("shows a tooltip with the provider name on chip hover", () => {
       mount();
       const chips = Array.from(target.querySelectorAll<HTMLButtonElement>(".sk-provider"));
-      const codexChip = chips.find((chip) =>
-        chip.getAttribute("aria-label")?.startsWith("Codex"),
-      );
+      const codexChip = chips.find((chip) => chip.getAttribute("aria-label")?.startsWith("Codex"));
       codexChip?.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }));
 
       const tooltip = target.querySelector(".sk-tooltip");
