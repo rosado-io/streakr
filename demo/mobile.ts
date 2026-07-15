@@ -1,4 +1,5 @@
 import {
+  AGENT_PROVIDERS,
   createStreakr,
   type StreakrInstance,
   type StreakrProvider,
@@ -13,11 +14,16 @@ const DEMO_PROVIDERS: StreakrProvider[] = [
   { key: "gitlab", name: "GitLab", color: "#fc6d26" },
 ];
 
+function providersFor(showAgents: boolean): StreakrProvider[] {
+  return showAgents ? [...DEMO_PROVIDERS, ...AGENT_PROVIDERS] : DEMO_PROVIDERS;
+}
+
 interface DemoState {
   theme: StreakrTheme;
   accent: string;
   showProviders: boolean;
   showStats: boolean;
+  showAgents: boolean;
   componentState: StreakrState;
 }
 
@@ -35,7 +41,7 @@ function mount(options: Partial<DemoState> = {}): void {
     showProviders: options.showProviders ?? true,
     showStats: options.showStats ?? true,
     state: options.componentState ?? "ready",
-    providers: DEMO_PROVIDERS,
+    providers: providersFor(options.showAgents ?? true),
     years: StreakrSampleData.availableYears,
     year: 2026,
     today: StreakrSampleData.today,
@@ -55,6 +61,8 @@ function update(options: Partial<DemoState>): void {
     showProviders: options.showProviders,
     showStats: options.showStats,
     state: options.componentState,
+    providers:
+      options.showAgents === undefined ? undefined : providersFor(options.showAgents),
   });
 }
 

@@ -2,6 +2,7 @@
 
 import "./styles.css";
 import {
+  AGENT_PROVIDERS,
   createStreakr,
   type StreakrInstance,
   type StreakrProvider,
@@ -22,6 +23,37 @@ const DEMO_PROVIDERS: StreakrProvider[] = [
   { key: "github", name: "GitHub", color: "#39d353" },
   { key: "gitlab", name: "GitLab", color: "#fc6d26" },
 ];
+
+const AGENT_SNIPPETS: Record<string, string> = {
+  github: `<span class="c-c">// count commits co-authored by agents via the GitHub search API (server-side)</span>
+<span class="c-k">import</span> { GitHubCoAuthorProvider, AGENT_PROVIDERS } <span class="c-k">from</span> <span class="c-s">'@rosado-io/streakr'</span>
+
+<span class="c-k">const</span> agents = <span class="c-k">new</span> <span class="c-fn">GitHubCoAuthorProvider</span>({ token: process.env.GITHUB_TOKEN })
+
+<span class="c-k">const</span> days = <span class="c-k">await</span> agents.<span class="c-fn">fetchEvents</span>({
+  user: <span class="c-s">'octocat'</span>,
+  start: <span class="c-s">'2026-01-01'</span>,
+  end: <span class="c-s">'2026-12-31'</span>,
+})
+<span class="c-c">// [{ date: '2026-07-14', count: 4, sources: { claude: 3, codex: 1 } }, ...]</span>
+
+<span class="c-c">// add the agent chips to the component</span>
+<span class="c-fn">createStreakr</span>({
+  <span class="c-c">/* ... */</span>
+  providers: [...DEFAULT_PROVIDERS, ...AGENT_PROVIDERS],
+})`,
+  local: `<span class="c-c">// scan local clones — every branch, every host, no token needed (Node)</span>
+<span class="c-k">import</span> { LocalGitCoAuthorProvider } <span class="c-k">from</span> <span class="c-s">'@rosado-io/streakr/agents'</span>
+
+<span class="c-k">const</span> local = <span class="c-k">new</span> <span class="c-fn">LocalGitCoAuthorProvider</span>({ roots: [<span class="c-s">'/Users/me/code'</span>] })
+
+<span class="c-k">const</span> days = <span class="c-k">await</span> local.<span class="c-fn">fetchEvents</span>({
+  user: <span class="c-s">'ignored'</span>, <span class="c-c">// local scan only uses the date range</span>
+  start: <span class="c-s">'2026-01-01'</span>,
+  end: <span class="c-s">'2026-12-31'</span>,
+})
+<span class="c-c">// parses Co-authored-by trailers: claude · codex · opencode · copilot</span>`,
+};
 
 const INSTALL_SNIPPETS: Record<string, string> = {
   npm: `<span class="c-c"># install</span>
@@ -92,6 +124,7 @@ root.innerHTML = `
       <nav class="lv1-nav-links">
         <a href="#playground">Playground</a>
         <a href="#install">Install</a>
+        <a href="#agents">Agents</a>
       </nav>
       <a href="https://github.com/rosado-io/streakr" class="lv1-star" target="_blank" rel="noreferrer">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
@@ -106,7 +139,8 @@ root.innerHTML = `
         <span class="lv1-h1-accent">Every platform.</span>
       </h1>
       <p class="lv1-sub">
-        A drop-in heatmap component that unifies GitHub and GitLab activity.
+        A drop-in heatmap component that unifies GitHub, GitLab, and commits
+        co-authored by Claude, Codex, Opencode, and Copilot.
         Themed, themable, and tiny. No build step.
       </p>
       <div class="lv1-cta">
@@ -146,6 +180,25 @@ root.innerHTML = `
           <button class="lv1-tab" data-tab="cdn">CDN</button>
         </div>
         <pre class="lv1-code" id="install-code"><code></code></pre>
+      </div>
+    </section>
+
+    <section class="lv1-install" id="agents">
+      <div class="lv1-eyebrow">
+        <span class="lv1-eyebrow-dot"></span>
+        AI agents
+      </div>
+      <p class="lv1-section-sub">
+        Streakr detects commits co-authored by Claude, Codex, Opencode, and Copilot
+        from their <code>Co-authored-by:</code> trailers, and renders each agent as
+        its own provider chip. Toggle the robot icon in the playground to see it live.
+      </p>
+      <div class="lv1-install-card">
+        <div class="lv1-install-tabs" id="agents-tabs">
+          <button class="lv1-tab active" data-tab="github">GitHub API</button>
+          <button class="lv1-tab" data-tab="local">Local git</button>
+        </div>
+        <pre class="lv1-code" id="agents-code"><code></code></pre>
       </div>
     </section>
 
@@ -222,9 +275,14 @@ const state = {
   accent: "#39d353",
   showProviders: true,
   showStats: true,
+  showAgents: true,
   componentState: "ready" as StreakrState,
   view: "desktop" as "desktop" | "mobile",
 };
+
+function activeProviders(): StreakrProvider[] {
+  return state.showAgents ? [...DEMO_PROVIDERS, ...AGENT_PROVIDERS] : DEMO_PROVIDERS;
+}
 
 let instance: StreakrInstance | null = null;
 let mobileIframe: HTMLIFrameElement | null = null;
@@ -271,7 +329,7 @@ function mountComponent(): void {
     showProviders: state.showProviders,
     showStats: state.showStats,
     state: state.componentState,
-    providers: DEMO_PROVIDERS,
+    providers: activeProviders(),
     years: StreakrSampleData.availableYears,
     year: 2026,
     today: StreakrSampleData.today,
@@ -320,6 +378,7 @@ function updateComponent(): void {
       showProviders: state.showProviders,
       showStats: state.showStats,
       state: state.componentState,
+      providers: activeProviders(),
     });
   } else {
     syncMobileState();
@@ -428,6 +487,19 @@ function renderControls(): void {
 
   controls.appendChild(
     makeToggle({
+      tip: state.showAgents ? "Hide AI agents" : "Show AI agents",
+      active: state.showAgents,
+      svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M12 9V5"/><circle cx="12" cy="4" r="1"/><path d="M9 14h.01M15 14h.01"/><path d="M9.5 17.5h5"/></svg>',
+      onClick: () => {
+        state.showAgents = !state.showAgents;
+        updateComponent();
+        renderControls();
+      },
+    }),
+  );
+
+  controls.appendChild(
+    makeToggle({
       tip: state.showStats ? "Hide stats" : "Show stats",
       active: state.showStats,
       svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h18"/></svg>',
@@ -455,20 +527,25 @@ function renderControls(): void {
   );
 }
 
-function renderInstallTabs(): void {
-  const tabs = document.querySelectorAll<HTMLButtonElement>("#install-tabs .lv1-tab");
-  const codeEl = document.querySelector<HTMLElement>("#install-code code");
+function renderCodeTabs(
+  tabsId: string,
+  codeId: string,
+  snippets: Record<string, string>,
+  initial: string,
+): void {
+  const tabs = document.querySelectorAll<HTMLButtonElement>(`#${tabsId} .lv1-tab`);
+  const codeEl = document.querySelector<HTMLElement>(`#${codeId} code`);
   if (!codeEl) return;
 
-  let active = "npm";
+  let active = initial;
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
-      active = tab.dataset.tab ?? "npm";
+      active = tab.dataset.tab ?? initial;
       tabs.forEach((t) => t.classList.toggle("active", t.dataset.tab === active));
-      codeEl.innerHTML = INSTALL_SNIPPETS[active] ?? "";
+      codeEl.innerHTML = snippets[active] ?? "";
     });
   });
-  codeEl.innerHTML = INSTALL_SNIPPETS[active];
+  codeEl.innerHTML = snippets[active];
 }
 
 function makeSep(): HTMLElement {
@@ -506,4 +583,5 @@ g.addEventListener("message", (event) => {
 renderComponent();
 renderControls();
 renderViewToggle();
-renderInstallTabs();
+renderCodeTabs("install-tabs", "install-code", INSTALL_SNIPPETS, "npm");
+renderCodeTabs("agents-tabs", "agents-code", AGENT_SNIPPETS, "github");

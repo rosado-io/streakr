@@ -34,10 +34,15 @@ const setSimpleAttr = (el: Element, key: string, value: SimpleAttr): void => {
   (simpleAttrSetters[key] ?? ((node, attrValue) => node.setAttribute(key, attrValue)))(el, str);
 };
 
-const setStyle = (el: Element, value: ElAttrValue): boolean =>
-  typeof value === "object" && value !== null
-    ? (Object.assign((el as HTMLElement).style, value), true)
-    : false;
+const setStyle = (el: Element, value: ElAttrValue): boolean => {
+  if (typeof value !== "object" || value === null) return false;
+  const style = (el as HTMLElement).style;
+  Object.entries(value as Record<string, string>).forEach(([key, val]) => {
+    if (key.startsWith("--")) style.setProperty(key, val);
+    else Object.assign(style, { [key]: val });
+  });
+  return true;
+};
 
 const setHtml = (el: Element, value: ElAttrValue): boolean =>
   isTrustedHtml(value)
