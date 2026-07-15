@@ -1,3 +1,6 @@
+## [0.14.0](https://github.com/rosado-io/streakr/compare/v0.13.0...v0.14.0) (2026-07-15)
+* feat(agents): add LocalGitCoAuthorProvider via Node-only /agents subpath (#157) ([`19f5e22`](https://github.com/rosado-io/streakr/commit/19f5e22033411e5e9f572b3a43ffe375414e63fe)) by ****
+
 ## [0.13.0](https://github.com/rosado-io/streakr/compare/v0.12.0...v0.13.0) (2026-07-14)
 * feat(agents): add GitHubCoAuthorProvider (commit search API) (#156) ([`9f8cebe`](https://github.com/rosado-io/streakr/commit/9f8cebee1ad45d3c06458b1d98d10ec83396b2ad)) by ****
 
