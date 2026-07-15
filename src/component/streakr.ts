@@ -406,7 +406,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         width: sq,
         height: sq,
         rx: Math.max(2, sq * 0.22),
-        fill: day ? `var(--sk-heat-${day.level})` : "transparent",
+        fill: day ? "var(--sk-heat-0)" : "transparent",
         style: day
           ? {
               cursor: "pointer",

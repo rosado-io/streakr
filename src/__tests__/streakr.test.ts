@@ -608,10 +608,12 @@ describe("createStreakr", () => {
       expect(delays.size).toBeGreaterThan(40);
 
       revealCells.forEach((cell) => {
-        const final = cell.style.getPropertyValue("--sk-cell-final");
-        expect(final).toMatch(/^var\(--sk-heat-[0-4]\)$/);
-        expect(final).toBe(cell.getAttribute("fill"));
+        expect(cell.getAttribute("fill")).toBe("var(--sk-heat-0)");
+        expect(cell.style.getPropertyValue("--sk-cell-final")).toMatch(/^var\(--sk-heat-[0-4]\)$/);
       });
+
+      const finals = new Set(revealCells.map((cell) => cell.style.getPropertyValue("--sk-cell-final")));
+      expect(finals.size).toBeGreaterThan(1);
     });
 
     it("does not replay the reveal sweep on a later render once already ready", () => {

@@ -517,13 +517,13 @@
 }
 
 .sk-heatmap-cell--reveal {
-  animation: sk-heatmap-reveal 700ms ease-out backwards;
+  animation: sk-heatmap-reveal 2860ms linear forwards;
 }
 
 @keyframes sk-heatmap-reveal {
-  0% { fill: var(--sk-heat-0); }
-  60% { fill: var(--sk-heat-4); }
-  100% { fill: var(--sk-cell-final, var(--sk-heat-0)); }
+  0% { fill: var(--sk-heat-4); }
+  8% { fill: color-mix(in oklab, var(--sk-heat-4) 50%, var(--sk-cell-final, var(--sk-heat-0))); }
+  52%, 100% { fill: var(--sk-cell-final, var(--sk-heat-0)); }
 }
 
 .sk-empty {
