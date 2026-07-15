@@ -168,6 +168,95 @@ For heavy usage:
 - GitLab returns an HTTP error while resolving users or fetching events.
 - The token cannot read the requested user's event stream.
 
+## GitHub Agent Co-Authors
+
+`GitHubCoAuthorProvider` counts commits co-authored by coding agents using the
+GitHub commit search API. For each configured agent it queries
+`/search/commits` with `author:<user>`, a `"co-authored-by: <match>"` phrase,
+and an `author-date:<start>..<end>` range, then buckets results by author date
+into a canonical daily series. Each day's `sources` are keyed per agent (for
+example `{ claude: 3 }`).
+
+Because it works exactly like `GitHubProvider` (PAT plus HTTP), it needs no
+access to the developer's machine and fits portfolio or static deployments with
+no publication step.
+
+```ts
+import { GitHubCoAuthorProvider } from "@rosado-io/streakr";
+
+const agents = new GitHubCoAuthorProvider({
+  token: process.env.GITHUB_TOKEN!,
+});
+
+const days = await agents.fetchEvents({
+  user: "rosado-io",
+  start: "2025-01-01",
+  end: "2025-12-31",
+});
+```
+
+Each returned day carries per-agent counts:
+
+```ts
+// { date: "2025-03-15", count: 4, sources: { claude: 3, codex: 1 } }
+```
+
+### Options
+
+```ts
+new GitHubCoAuthorProvider({
+  token: "ghp_...",
+  agents: ["claude", "codex"],
+  endpoint: "https://api.github.com/search/commits",
+  fetch: customFetch,
+});
+```
+
+- `token` is required and must be a non-empty GitHub Personal Access Token.
+- `agents` is optional and defaults to every key in `AGENT_TRAILER_RULES`
+  (`claude`, `codex`, `opencode`, `copilot`). Each key must exist in the
+  registry or the constructor throws. The searched co-author is the rule's
+  email when it is a literal string, otherwise its name.
+- `endpoint` is optional and defaults to `https://api.github.com/search/commits`.
+- `fetch` is optional and defaults to global `fetch`.
+
+### Pagination and Range Splitting
+
+Commit search returns up to 100 results per page and caps every query at 1000
+results. When a range reports more than 1000 matches, the provider splits it in
+half and re-queries each half, recursing until every sub-range fits under the
+cap (year to quarters to months in practice). Ranges under the cap are simply
+paged through.
+
+### Rate Limits
+
+Commit search allows roughly 30 requests per minute. The provider queries the
+configured agents sequentially to stay within that budget. A `403` or `429`
+response is surfaced as a clear secondary-rate-limit error.
+
+For heavy usage:
+
+- Cache normalized results by `{ provider, user, start, end }`.
+- Keep date windows bounded.
+- Prefer backend fetching so tokens stay out of the browser.
+
+### Known Limitations
+
+- Commit search only indexes the default branch and skips forks, with a slight
+  indexing lag.
+- Copilot's coding-agent commits are sometimes authored by the bot itself, so
+  `author:<user>` misses them.
+- Private repositories require the same `repo`-scoped PAT as `GitHubProvider`;
+  server-side usage is recommended.
+
+### Failure Behavior
+
+`fetchEvents()` throws when:
+
+- The date range is invalid.
+- A configured agent key is unknown (at construction time).
+- GitHub returns an HTTP error or a secondary rate limit.
+
 ## Aggregating Providers
 
 Use `aggregate()` to fetch from multiple providers concurrently:
