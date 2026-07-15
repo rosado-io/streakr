@@ -602,7 +602,7 @@ describe("createStreakr", () => {
       const revealCells = cells.filter((cell) =>
         cell.getAttribute("class")?.includes("sk-heatmap-cell--reveal"),
       );
-      expect(revealCells.length).toBe(cells.length);
+      expect(revealCells).toHaveLength(cells.length);
 
       const delays = new Set(revealCells.map((cell) => cell.style.animationDelay));
       expect(delays.size).toBeGreaterThan(40);

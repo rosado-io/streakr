@@ -330,7 +330,9 @@ html { scrollbar-color: #2a2a2a #0a0a0a; scrollbar-width: thin; }
   font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
   color: #ededed;
-  background: rgba(255,255,255,0.06);
+  /* Opaque equivalent of rgba(255,255,255,0.06) over #000 — kept hex so
+     contrast tools (and Sonar) can compute the foreground contrast. */
+  background: #0f0f0f;
   padding: 1px 5px;
   border-radius: 4px;
 }
