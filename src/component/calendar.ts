@@ -135,3 +135,12 @@ export const polarToCartesian = (
   x: cx + r * Math.cos(angle),
   y: cy + r * Math.sin(angle),
 });
+
+export const dayIndexToAngle = (day: Date, totalDays: number): number => {
+  const startOfYear = new Date(day.getFullYear(), 0, 1);
+  const idx = Math.round((day.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+  return dayAngle(Math.max(0, Math.min(totalDays - 1, idx)), totalDays);
+};
+
+export const dayToHandRotation = (day: Date, totalDays: number): number =>
+  dayIndexToAngle(day, totalDays) + Math.PI / 2;
