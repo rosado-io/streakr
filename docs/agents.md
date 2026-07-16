@@ -50,7 +50,7 @@ samples:
 | Agent | Key | Matched by | Sample trailer |
 | --- | --- | --- | --- |
 | Claude Code | `claude` | email `noreply@anthropic.com` | `Co-authored-by: Claude Sonnet 4.6 <noreply@anthropic.com>` |
-| Codex | `codex` | email `noreply@openai.com` | `Co-authored-by: Codex <noreply@openai.com>` |
+| Codex | `codex` | email `codex@openai.com` | `Co-authored-by: Codex <codex@openai.com>` |
 | opencode | `opencode` | email `noreply@opencode.ai` | `Co-authored-by: opencode (glm-5.2) <noreply@opencode.ai>` |
 | Copilot | `copilot` | name contains `copilot` + email ending `@users.noreply.github.com` | `Co-authored-by: Copilot <198982749+Copilot@users.noreply.github.com>` |
 
@@ -211,33 +211,52 @@ new LocalGitCoAuthorProvider({
 
 ## Composing with the rest of Streakr
 
-Both providers return `ContributionDay[]`, so they drop into `aggregate()` and
-`normalizeEventsToDaily()` alongside the Git host providers. `aggregate()` tags
-each returned day with the provider `name` in `sources`, while the per-agent keys
-the provider already set (`claude`, `codex`, …) are preserved.
+Both providers return `ContributionDay[]`, but co-authored commits are already
+part of the Git host total. Do not add the two series directly: that would count
+the same commit once under `github` and again under its agent key. Use
+`splitCoAuthored()` to subtract agent attributions from the GitHub remainder
+before exposing both kinds of provider chip.
 
 ```ts
 import {
-  aggregate,
+  AGENT_TRAILER_RULES,
   GitHubProvider,
   GitHubCoAuthorProvider,
-  normalizeEventsToDaily,
+  splitCoAuthored,
 } from "@rosado-io/streakr";
 
-const events = await aggregate(
-  [
-    new GitHubProvider({ token: process.env.GITHUB_TOKEN! }),
-    new GitHubCoAuthorProvider({ token: process.env.GITHUB_TOKEN! }),
-  ],
-  { user: "octocat", start: "2026-01-01", end: "2026-12-31" },
+const params = { user: "octocat", start: "2026-01-01", end: "2026-12-31" };
+const [githubDays, coauthoredDays] = await Promise.all([
+  new GitHubProvider({ token: process.env.GITHUB_TOKEN! }).fetchEvents(params),
+  new GitHubCoAuthorProvider({ token: process.env.GITHUB_TOKEN! }).fetchEvents(params),
+]);
+
+const perAgent = Object.fromEntries(
+  AGENT_TRAILER_RULES.map(({ key }) => [
+    key,
+    coauthoredDays.map((day) => ({
+      date: day.date,
+      count: day.sources?.[key] ?? 0,
+    })),
+  ]),
 );
 
-const days = normalizeEventsToDaily(events).map((day) => ({
+const days = splitCoAuthored(githubDays, perAgent).map((day) => ({
   date: new Date(`${day.date}T00:00:00`),
   total: day.count,
   sources: day.sources,
 }));
 ```
+
+If one commit has trailers for multiple agents, each agent keeps one attribution.
+In that case the summed attribution count can exceed the number of distinct
+commits; `splitCoAuthored()` prevents host/agent duplication but intentionally
+does not deduplicate different agent keys.
+
+All provider chips start enabled and behave as independent toggles. Clicking an
+agent chip removes or restores that agent's partition; it does not switch to an
+exclusive single-provider mode. To show only one agent, disable the other chips
+or call `setProviders()` with the desired provider state.
 
 For the local route you typically fetch once, then publish the daily series:
 

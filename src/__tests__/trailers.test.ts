@@ -124,7 +124,7 @@ describe("matchAgent", () => {
       "claude",
     ],
     ["bare Claude", "Claude", "noreply@anthropic.com", "claude"],
-    ["Codex", "Codex", "noreply@openai.com", "codex"],
+    ["Codex", "Codex", "codex@openai.com", "codex"],
     ["opencode running GLM", "opencode (glm-5.2)", "noreply@opencode.ai", "opencode"],
     ["Copilot", "Copilot", "175728472+Copilot@users.noreply.github.com", "copilot"],
     [
