@@ -15,7 +15,7 @@ import { formatTotalLabel } from "../metrics";
 import { isCurrentYear } from "../selectors";
 import { bindRingEvents } from "../ring-interaction";
 
-export const RING_SIZE = 360;
+const RING_SIZE = 360;
 export const RING_CX = RING_SIZE / 2;
 export const RING_CY = RING_SIZE / 2;
 const RING_INNER_R = 78;

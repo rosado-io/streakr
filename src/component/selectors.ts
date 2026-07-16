@@ -4,7 +4,7 @@ import type { ComponentCtx, ResolvedConfig } from "./config";
 import { sourceCount } from "./config";
 import { computeStats, levelize, type StreakrStats } from "./metrics";
 
-export const MAX_VISIBLE_YEARS = 5;
+const MAX_VISIBLE_YEARS = 5;
 
 export interface RenderFlags {
   isLoading: boolean;
@@ -20,14 +20,14 @@ export interface RenderFlags {
 export const isCurrentYear = (ctx: ComponentCtx): boolean =>
   ctx.state.year === ctx.cfg.today.getFullYear();
 
-export const activeDayTotal = (ctx: ComponentCtx, day: StreakrDay): number =>
+const activeDayTotal = (ctx: ComponentCtx, day: StreakrDay): number =>
   day.sources == null
     ? day.total
     : ctx.cfg.providers
         .filter((provider) => ctx.state.providers[provider.key])
         .reduce((total, provider) => total + sourceCount(day, provider.key), 0);
 
-export const getCurrentDays = (ctx: ComponentCtx): StreakrDay[] => {
+const getCurrentDays = (ctx: ComponentCtx): StreakrDay[] => {
   const { cfg, state } = ctx;
   if (cfg.state !== "ready" || state.year == null) return [];
   const currentYearDays = (cfg.getDays(state.year) || []).map((day) => ({
@@ -39,12 +39,12 @@ export const getCurrentDays = (ctx: ComponentCtx): StreakrDay[] => {
   return currentYearDays.filter((day) => day.date >= start && day.date <= end);
 };
 
-export const getHeatmapDays = (ctx: ComponentCtx, days: StreakrDay[]): StreakrDay[] => {
+const getHeatmapDays = (ctx: ComponentCtx, days: StreakrDay[]): StreakrDay[] => {
   if (ctx.state.year == null) return days;
   return padDaysToYear(days, ctx.state.year);
 };
 
-export const getStatsDays = (ctx: ComponentCtx, days: StreakrDay[]): StreakrDay[] => {
+const getStatsDays = (ctx: ComponentCtx, days: StreakrDay[]): StreakrDay[] => {
   if (ctx.state.year == null) return days;
   if (isCurrentYear(ctx)) {
     const { start, end } = yearToDateRange(ctx.cfg.today);

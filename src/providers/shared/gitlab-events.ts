@@ -2,14 +2,14 @@ import type { ContributionDay, FetchParams } from "../../types";
 import { validateDateRange } from "../../core/date";
 import { toCanonicalDays } from "../../core/normalize";
 
-export const EVENTS_PER_PAGE = 100;
+const EVENTS_PER_PAGE = 100;
 
-export interface GitLabUser {
+interface GitLabUser {
   id: number;
   username: string;
 }
 
-export interface GitLabEvent {
+interface GitLabEvent {
   created_at: string;
 }
 

@@ -3,8 +3,8 @@ import { DAY_LABELS, gridFromDays, monthHeaders, padDaysToYear } from "../calend
 import type { ComponentCtx } from "../config";
 import { h, svg } from "../dom";
 
-export const MOBILE_BREAKPOINT = 520;
-export const HEATMAP_SKELETON_SWEEP_MS = 2860;
+const MOBILE_BREAKPOINT = 520;
+const HEATMAP_SKELETON_SWEEP_MS = 2860;
 
 export const isMobileHeatmap = (wrap: HTMLElement): boolean =>
   wrap.getBoundingClientRect().width < MOBILE_BREAKPOINT;

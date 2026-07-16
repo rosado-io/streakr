@@ -4,10 +4,10 @@ import { toCanonicalDays } from "../../core/normalize";
 import type { AgentMatch } from "../trailers";
 
 export const PER_PAGE = 100;
-export const SEARCH_RESULT_CAP = 1000;
+const SEARCH_RESULT_CAP = 1000;
 const MAX_PAGES = SEARCH_RESULT_CAP / PER_PAGE;
 
-export interface CommitSearchItem {
+interface CommitSearchItem {
   commit: { author: { date: string } };
 }
 

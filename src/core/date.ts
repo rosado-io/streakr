@@ -1,7 +1,7 @@
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
-export const formatDateYYYYMMDD = (d: Date): string => {
+const formatDateYYYYMMDD = (d: Date): string => {
   const y = d.getUTCFullYear();
   const m = d.getUTCMonth() + 1;
   const day = d.getUTCDate();

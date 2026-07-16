@@ -46,15 +46,11 @@ export interface GitHubGraphQLResponse {
   errors?: { message: string }[];
 }
 
-export interface GitHubGraphQLVariables {
+export type GitHubGraphQLRequest = (variables: {
   login: string;
   from: string;
   to: string;
-}
-
-export type GitHubGraphQLRequest = (
-  variables: GitHubGraphQLVariables,
-) => Promise<GitHubGraphQLResponse>;
+}) => Promise<GitHubGraphQLResponse>;
 
 export const fetchContributionCalendar = async (
   request: GitHubGraphQLRequest,
