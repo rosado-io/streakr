@@ -8,7 +8,7 @@ import { LocalGitCoAuthorProvider } from "../providers/local-git-coauthor";
 import type { FetchParams } from "../types";
 
 const CLAUDE = "Co-authored-by: Claude <noreply@anthropic.com>";
-const CODEX = "Co-authored-by: Codex <noreply@openai.com>";
+const CODEX = "Co-authored-by: Codex <codex@openai.com>";
 const HUMAN = "Co-authored-by: Jane Doe <jane@example.com>";
 
 const git = (cwd: string, args: string[], date?: string): string =>

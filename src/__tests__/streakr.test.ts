@@ -382,6 +382,21 @@ describe("createStreakr", () => {
       expect(target.querySelector(".sk-noprov")).toBeNull();
       expect(target.querySelectorAll(".sk-provider.active")).toHaveLength(3);
     });
+
+    it("offers 'Enable all' when only zero-count providers remain enabled", () => {
+      instance = createStreakr({ target, years, getDays });
+      instance.setProviders({ github: false, gitlab: false, bitbucket: true });
+
+      const empty = target.querySelector(".sk-empty");
+      const enable = Array.from(empty?.querySelectorAll<HTMLButtonElement>("button") ?? []).find(
+        (button) => button.textContent === "Enable all",
+      );
+      expect(enable).toBeTruthy();
+
+      enable?.click();
+      expect(target.querySelector(".sk-empty")).toBeNull();
+      expect(target.querySelectorAll(".sk-provider.active")).toHaveLength(3);
+    });
   });
 
   describe("ready body", () => {
@@ -726,6 +741,7 @@ describe("createStreakr", () => {
         getDays: () => [{ date: new Date(2026, 0, 1), total: 0, sources: {} }],
       });
       expect(target.querySelector(".sk-empty")).toBeTruthy();
+      expect(target.querySelector(".sk-empty button")).toBeNull();
     });
 
     it("renders the empty illustration when no years are available", () => {

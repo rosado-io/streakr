@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createStreakr } from "../component/streakr";
 import { providerIconHtml } from "../component/providers";
-import { AGENT_PROVIDERS, DEFAULT_PROVIDERS } from "../index";
+import { AGENT_PROVIDERS, DEFAULT_PROVIDERS, splitCoAuthored } from "../index";
 import type { StreakrInstance, StreakrProvider } from "../types";
 
 const ICON_KEYS = ["claude", "codex", "opencode", "copilot"];
@@ -125,6 +125,52 @@ describe("AGENT_PROVIDERS", () => {
 
       codexChip?.dispatchEvent(new MouseEvent("mouseleave", { bubbles: true }));
       expect(tooltip?.classList.contains("visible")).toBe(false);
+    });
+
+    it("filters split host and agent buckets independently", () => {
+      const date = "2026-01-05";
+      const [splitDay] = splitCoAuthored([{ date, count: 10 }], {
+        claude: [{ date, count: 3 }],
+        codex: [{ date, count: 1 }],
+      });
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        today: new Date(2026, 5, 20),
+        providers: [...DEFAULT_PROVIDERS, ...AGENT_PROVIDERS],
+        getDays: () => [
+          {
+            date: new Date(2026, 0, 5),
+            total: splitDay.count,
+            sources: splitDay.sources ?? {},
+          },
+        ],
+      });
+      const total = () => target.querySelector(".sk-stat-value")?.textContent?.trim();
+      const claudeChip = Array.from(
+        target.querySelectorAll<HTMLButtonElement>(".sk-provider"),
+      ).find((chip) => chip.getAttribute("aria-label")?.startsWith("Claude"));
+
+      expect(total()).toBe("10");
+      claudeChip?.click();
+      expect(total()).toBe("7");
+      expect(
+        Array.from(target.querySelectorAll<HTMLButtonElement>(".sk-provider"))
+          .find((chip) => chip.getAttribute("aria-label")?.startsWith("Claude"))
+          ?.getAttribute("aria-pressed"),
+      ).toBe("false");
+
+      instance.setProviders({
+        github: false,
+        gitlab: false,
+        bitbucket: false,
+        claude: true,
+        codex: false,
+        opencode: false,
+        copilot: false,
+      });
+      expect(total()).toBe("3");
     });
   });
 });
