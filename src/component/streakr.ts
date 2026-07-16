@@ -1491,8 +1491,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     },
   } satisfies UpdateHandlers;
 
+  // Object.hasOwn() requires ES2022, while the published library targets ES2020.
   const isUpdateKey = (key: string): key is keyof typeof updateHandlers =>
-    Object.prototype.hasOwnProperty.call(updateHandlers, key);
+    Object.getOwnPropertyDescriptor(updateHandlers, key) !== undefined;
 
   document.addEventListener("keydown", onKey);
   setupThemeListener();
