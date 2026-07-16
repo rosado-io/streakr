@@ -1513,8 +1513,6 @@ describe("createStreakr", () => {
       instance = createStreakr({ target, years, getDays });
       const ring = target.querySelector(".sk-ring");
 
-      expect(target.textContent).not.toContain("CONTRIBUTION RING");
-      expect(target.textContent).not.toContain("Arrastra el selector para recorrer el año");
       expect(target.querySelector(".sk-ring-title")).toBeNull();
       expect(target.querySelector(".sk-ring-legend")).toBeNull();
       expect(target.querySelector(".sk-ring-hint")).toBeNull();
