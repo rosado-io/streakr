@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -272,6 +272,136 @@ describe("LocalGitCoAuthorProvider", () => {
     await expect(provider.fetchEvents(params("2025-06-01", "2025-06-01"))).resolves.toEqual([
       { date: "2025-06-01", count: 1, sources: { claude: 1 } },
     ]);
+  });
+
+  it("counts published commits when refScope is remote", async () => {
+    const repo = join(root, "remote-scope");
+    initRepo(repo);
+    commit(repo, "2025-06-01", [CLAUDE]);
+    git(repo, ["update-ref", "refs/remotes/origin/main", "HEAD"]);
+    git(repo, ["switch", "-q", "-c", "feature"]);
+    commit(repo, "2025-06-01", [CODEX]);
+
+    const provider = new LocalGitCoAuthorProvider({
+      repos: [repo],
+      identities: OWNER_IDENTITIES,
+      refScope: "remote",
+    });
+
+    await expect(provider.fetchEvents(params("2025-06-01", "2025-06-01"))).resolves.toEqual([
+      { date: "2025-06-01", count: 1, sources: { claude: 1 } },
+    ]);
+  });
+
+  it("falls back to conventional default branches when the remote HEAD is unknown", async () => {
+    const repo = join(root, "conventional-default");
+    initRepo(repo);
+    commit(repo, "2025-06-01", [CLAUDE]);
+    git(repo, ["remote", "add", "origin", repo]);
+    git(repo, ["update-ref", "refs/remotes/origin/main", "HEAD"]);
+    git(repo, ["switch", "-q", "-c", "feature"]);
+    commit(repo, "2025-06-01", [CODEX]);
+
+    const provider = new LocalGitCoAuthorProvider({
+      repos: [repo],
+      identities: OWNER_IDENTITIES,
+    });
+
+    await expect(provider.fetchEvents(params("2025-06-01", "2025-06-01"))).resolves.toEqual([
+      { date: "2025-06-01", count: 1, sources: { claude: 1 } },
+    ]);
+  });
+
+  it("returns empty counts when no published refs can be resolved", async () => {
+    const repo = join(root, "no-remote");
+    initRepo(repo);
+    commit(repo, "2025-06-01", [CLAUDE]);
+
+    const provider = new LocalGitCoAuthorProvider({
+      repos: [repo],
+      identities: OWNER_IDENTITIES,
+    });
+
+    await expect(provider.fetchEvents(params("2025-06-01", "2025-06-01"))).resolves.toEqual([
+      { date: "2025-06-01", count: 0 },
+    ]);
+  });
+
+  it("ignores roots that cannot be read", async () => {
+    const repo = join(root, "readable");
+    initRepo(repo);
+    commit(repo, "2025-06-01", [CLAUDE]);
+
+    const provider = new LocalGitCoAuthorProvider({
+      repos: [repo],
+      roots: [join(root, "missing-root")],
+      identities: OWNER_IDENTITIES,
+      refScope: "all",
+    });
+
+    await expect(provider.fetchEvents(params("2025-06-01", "2025-06-01"))).resolves.toEqual([
+      { date: "2025-06-01", count: 1, sources: { claude: 1 } },
+    ]);
+  });
+
+  it("matches identities defined with global regular expressions", async () => {
+    const repo = join(root, "regex-identity");
+    initRepo(repo);
+    commit(repo, "2025-06-01", [CLAUDE]);
+    commit(repo, "2025-06-01", [CLAUDE], COLLEAGUE);
+
+    const provider = new LocalGitCoAuthorProvider({
+      repos: [repo],
+      identities: [{ email: /owner@example\.com/g }],
+      refScope: "all",
+    });
+
+    await expect(provider.fetchEvents(params("2025-06-01", "2025-06-01"))).resolves.toEqual([
+      { date: "2025-06-01", count: 1, sources: { claude: 1 } },
+    ]);
+  });
+
+  it("counts nothing when no identity is configured or discoverable", async () => {
+    const repo = join(root, "anonymous");
+    initRepo(repo);
+    commit(repo, "2025-06-01", [CLAUDE]);
+    git(repo, ["config", "--unset", "user.name"]);
+    git(repo, ["config", "--unset", "user.email"]);
+
+    const provider = new LocalGitCoAuthorProvider({ repos: [repo], refScope: "all" });
+
+    const savedGlobal = process.env.GIT_CONFIG_GLOBAL;
+    const savedSystem = process.env.GIT_CONFIG_SYSTEM;
+    process.env.GIT_CONFIG_GLOBAL = "/dev/null";
+    process.env.GIT_CONFIG_SYSTEM = "/dev/null";
+    try {
+      await expect(provider.fetchEvents(params("2025-06-01", "2025-06-01"))).resolves.toEqual([
+        { date: "2025-06-01", count: 0 },
+      ]);
+    } finally {
+      if (savedGlobal === undefined) delete process.env.GIT_CONFIG_GLOBAL;
+      else process.env.GIT_CONFIG_GLOBAL = savedGlobal;
+      if (savedSystem === undefined) delete process.env.GIT_CONFIG_SYSTEM;
+      else process.env.GIT_CONFIG_SYSTEM = savedSystem;
+    }
+  });
+
+  it("propagates unexpected failures from the git executable", async () => {
+    const repo = join(root, "broken-git");
+    initRepo(repo);
+    const brokenGit = join(root, "not-executable-git");
+    writeFileSync(brokenGit, "#!/bin/sh\n");
+    chmodSync(brokenGit, 0o644);
+
+    const provider = new LocalGitCoAuthorProvider({
+      repos: [repo],
+      identities: OWNER_IDENTITIES,
+      git: brokenGit,
+    });
+
+    await expect(provider.fetchEvents(params("2025-06-01", "2025-06-01"))).rejects.toThrow(
+      /EACCES|not found/,
+    );
   });
 
   it("validates the date range", async () => {

@@ -54,6 +54,59 @@ describe("public snapshots", () => {
         agents: [],
       }),
     ).toThrow(/non-negative integer/i);
+
+    expect(() =>
+      createPublicSnapshot({
+        range: { start: "2026-01-01", end: "2026-01-02" },
+        activity: { github: [{ date: "01/02/2026", count: 1 }] },
+        agents: [],
+      }),
+    ).toThrow(/invalid contribution date/i);
+
+    expect(() =>
+      createPublicSnapshot({
+        range: { start: "2026-01-01", end: "2026-01-02" },
+        activity: { "../secrets": [{ date: "2026-01-01", count: 1 }] },
+        agents: [],
+      }),
+    ).toThrow(/invalid public source key/i);
+
+    expect(() =>
+      createPublicSnapshot({
+        generatedAt: "not-a-date",
+        range: { start: "2026-01-01", end: "2026-01-02" },
+        activity: {},
+        agents: [],
+      }),
+    ).toThrow(/invalid snapshot generation date/i);
+
+    expect(() =>
+      createPublicSnapshot({
+        range: { start: "2026-01-01", end: "2026-01-02" },
+        activity: {},
+        agents: [{ date: "2026-01-01", count: 1, sources: { "bad key": 1 } }],
+      }),
+    ).toThrow(/invalid public source key/i);
+  });
+
+  it("stamps the generation time and sorts days chronologically", () => {
+    const snapshot = createPublicSnapshot({
+      range: { start: "2026-01-01", end: "2026-01-05" },
+      activity: {
+        github: [
+          { date: "2026-01-05", count: 1 },
+          { date: "2026-01-02", count: 2 },
+        ],
+      },
+      agents: [
+        { date: "2026-01-04", count: 1, sources: { codex: 1 } },
+        { date: "2026-01-01", count: 2, sources: { claude: 2 } },
+      ],
+    });
+
+    expect(Number.isNaN(Date.parse(snapshot.generatedAt))).toBe(false);
+    expect(snapshot.activity.github.map(({ date }) => date)).toEqual(["2026-01-02", "2026-01-05"]);
+    expect(snapshot.agents.map(({ date }) => date)).toEqual(["2026-01-01", "2026-01-04"]);
   });
 
   it("replaces the previous file only after a complete snapshot is ready", async () => {
