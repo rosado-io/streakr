@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { GitHubCliProvider } from "../providers/github-cli";
+import { GitHubCliCoAuthorProvider } from "../providers/github-cli-coauthor";
 import { GitLabCliProvider } from "../providers/gitlab-cli";
 import { withoutAuthEnvironment, type CliRunner } from "../providers/local-cli";
 
@@ -92,6 +93,34 @@ describe("GitHubCliProvider", () => {
     expect(runner).toHaveBeenCalledTimes(2);
     expect(runner.mock.calls[0]?.[1]).toContain("to=2025-12-31T23:59:59Z");
     expect(runner.mock.calls[1]?.[1]).toContain("from=2026-01-01T00:00:00Z");
+  });
+});
+
+describe("GitHubCliCoAuthorProvider", () => {
+  it("searches agent commits through the authenticated CLI session", async () => {
+    const runner = vi.fn<CliRunner>().mockImplementation(async (_executable, args) => {
+      const query = args.find((arg) => arg.startsWith("q=")) ?? "";
+      const source = query.includes("codex@openai.com") ? "codex" : "claude";
+      const date = source === "codex" ? "2026-01-02" : "2026-01-01";
+      return JSON.stringify({
+        total_count: 1,
+        items: [{ commit: { author: { date: `${date}T12:00:00Z` } } }],
+      });
+    });
+    const provider = new GitHubCliCoAuthorProvider({
+      agents: ["claude", "codex"],
+      runner,
+    });
+
+    await expect(provider.fetchEvents(params)).resolves.toEqual([
+      { date: "2026-01-01", count: 1, sources: { claude: 1 } },
+      { date: "2026-01-02", count: 1, sources: { codex: 1 } },
+      { date: "2026-01-03", count: 0 },
+    ]);
+    expect(runner).toHaveBeenCalledTimes(2);
+    expect(runner.mock.calls.flatMap(([, args]) => args).join(" ")).not.toMatch(
+      /token|authorization/i,
+    );
   });
 });
 

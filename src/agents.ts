@@ -1,5 +1,6 @@
 export { LocalGitCoAuthorProvider } from "./providers/local-git-coauthor";
 export { GitHubCliProvider } from "./providers/github-cli";
+export { GitHubCliCoAuthorProvider } from "./providers/github-cli-coauthor";
 export { GitLabCliProvider } from "./providers/gitlab-cli";
 export {
   createPublicSnapshot,
@@ -12,6 +13,7 @@ export type {
   LocalGitRefScope,
 } from "./providers/local-git-coauthor";
 export type { GitHubCliProviderOptions } from "./providers/github-cli";
+export type { GitHubCliCoAuthorProviderOptions } from "./providers/github-cli-coauthor";
 export type { GitLabCliProviderOptions } from "./providers/gitlab-cli";
 export type { CliRunner } from "./providers/local-cli";
 export type {

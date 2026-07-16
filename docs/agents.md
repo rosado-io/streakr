@@ -16,8 +16,8 @@ type ContributionDay = {
 - `GitHubCoAuthorProvider` (main entry) queries the GitHub commit search API.
 - `LocalGitCoAuthorProvider` (`@rosado-io/streakr/agents`, Node-only) scans local
   clones with `git log`.
-- `GitHubCliProvider` and `GitLabCliProvider` reuse authenticated local CLI
-  sessions without accepting or exposing tokens.
+- `GitHubCliProvider`, `GitHubCliCoAuthorProvider`, and `GitLabCliProvider` reuse
+  authenticated local CLI sessions without accepting or exposing tokens.
 
 They compose with `aggregate()` and `normalizeEventsToDaily()` exactly like the
 [Git host providers](./providers.md).
@@ -267,23 +267,18 @@ versioned snapshot:
 ```ts
 import {
   GitHubCliProvider,
+  GitHubCliCoAuthorProvider,
   GitLabCliProvider,
-  LocalGitCoAuthorProvider,
   createPublicSnapshot,
   writePublicSnapshot,
 } from "@rosado-io/streakr/agents";
 
 const params = { user: "octocat", start: "2026-01-01", end: "2026-12-31" };
-const local = new LocalGitCoAuthorProvider({
-  roots: ["/Users/me/code"],
-  identities: [{ email: "me@example.com" }],
-  strict: true,
-});
 
 const [github, gitlab, agents] = await Promise.all([
   new GitHubCliProvider().fetchEvents(params),
   new GitLabCliProvider().fetchEvents(params),
-  local.fetchEvents(params),
+  new GitHubCliCoAuthorProvider().fetchEvents(params),
 ]);
 
 const snapshot = createPublicSnapshot({
