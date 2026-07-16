@@ -1,3 +1,6 @@
+## [0.16.0](https://github.com/rosado-io/streakr/compare/v0.15.1...v0.16.0) (2026-07-16)
+* feat(agents): Agrega snapshots locales seguros (#164) ([`8b140a9`](https://github.com/rosado-io/streakr/commit/8b140a9ca42398bb60f59cbd1063af2780f5debb)) by ****
+
 ## [0.15.1](https://github.com/rosado-io/streakr/compare/v0.15.0...v0.15.1) (2026-07-16)
 * fix(agents): Corrige detección y filtros de proveedores (#163) ([`27bea75`](https://github.com/rosado-io/streakr/commit/27bea750c7e745ae67b7ded3a35a2e94555a3445)) by ****
 
