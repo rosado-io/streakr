@@ -90,31 +90,31 @@ variables (`--sk-*`).
 
 ### `createStreakr(options): StreakrInstance`
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `target` | `HTMLElement` | required | Where to mount the component. |
-| `theme` | `"dark" \| "light" \| "system"` | `"dark"` | Visual theme. `"system"` follows `prefers-color-scheme`. |
-| `accent` | `string` (CSS color) | `"#39d353"` | Drives chip/stat highlights and (optionally) the heatmap palette. |
-| `tintHeatmap` | `boolean` | `true` | When true, the heatmap palette is derived from `accent`. |
-| `showProviders` | `boolean` | `true` | Toggle the provider chip row. |
-| `showStats` | `boolean` | `true` | Toggle the stats grid. |
-| `state` | `"loading" \| "empty" \| "ready"` | `"ready"` | Override the lifecycle state. |
-| `years` | `number[]` | required | Years offered in the year tabs / picker. |
-| `year` | `number` | last `years` entry | Currently selected year. |
-| `today` | `Date` | `new Date()` | Reference date for the current-year year-to-date view. |
-| `getDays` | `(year) => StreakrDay[]` | required | Returns the days for a given year. |
-| `providers` | `StreakrProvider[]` | `[github, gitlab, bitbucket]` | Visual provider chips and source keys (see below). |
-| `onYearChange` | `(year) => void` | — | Fires after the user picks a different year. |
-| `onProviderToggle` | `(key, enabled, all) => void` | — | Fires after a provider chip is toggled. |
+| Option             | Type                              | Default                       | Description                                                       |
+| ------------------ | --------------------------------- | ----------------------------- | ----------------------------------------------------------------- |
+| `target`           | `HTMLElement`                     | required                      | Where to mount the component.                                     |
+| `theme`            | `"dark" \| "light" \| "system"`   | `"dark"`                      | Visual theme. `"system"` follows `prefers-color-scheme`.          |
+| `accent`           | `string` (CSS color)              | `"#39d353"`                   | Drives chip/stat highlights and (optionally) the heatmap palette. |
+| `tintHeatmap`      | `boolean`                         | `true`                        | When true, the heatmap palette is derived from `accent`.          |
+| `showProviders`    | `boolean`                         | `true`                        | Toggle the provider chip row.                                     |
+| `showStats`        | `boolean`                         | `true`                        | Toggle the stats grid.                                            |
+| `state`            | `"loading" \| "empty" \| "ready"` | `"ready"`                     | Override the lifecycle state.                                     |
+| `years`            | `number[]`                        | required                      | Years offered in the year tabs / picker.                          |
+| `year`             | `number`                          | last `years` entry            | Currently selected year.                                          |
+| `today`            | `Date`                            | `new Date()`                  | Reference date for the current-year year-to-date view.            |
+| `getDays`          | `(year) => StreakrDay[]`          | required                      | Returns the days for a given year.                                |
+| `providers`        | `StreakrProvider[]`               | `[github, gitlab, bitbucket]` | Visual provider chips and source keys (see below).                |
+| `onYearChange`     | `(year) => void`                  | —                             | Fires after the user picks a different year.                      |
+| `onProviderToggle` | `(key, enabled, all) => void`     | —                             | Fires after a provider chip is toggled.                           |
 
 ### `StreakrInstance`
 
-| Method | Description |
-| --- | --- |
-| `update(patch)` | Patches any `StreakrOptions` value and re-renders. Undefined values are ignored. `target` cannot be updated after mount — call `destroy()` and recreate the instance with `createStreakr()` to move to a different element. |
-| `setYear(year)` | Changes the active year, fires `onYearChange`, and re-renders. |
-| `setProviders(next)` | Patches provider enabled/disabled state by provider key. |
-| `destroy()` | Removes DOM nodes, resize observers, tooltip, and keyboard listeners. |
+| Method               | Description                                                                                                                                                                                                                 |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `update(patch)`      | Patches any `StreakrOptions` value and re-renders. Undefined values are ignored. `target` cannot be updated after mount — call `destroy()` and recreate the instance with `createStreakr()` to move to a different element. |
+| `setYear(year)`      | Changes the active year, fires `onYearChange`, and re-renders.                                                                                                                                                              |
+| `setProviders(next)` | Patches provider enabled/disabled state by provider key.                                                                                                                                                                    |
+| `destroy()`          | Removes DOM nodes, resize observers, tooltip, and keyboard listeners.                                                                                                                                                       |
 
 > ⚠️ **`update({ target })` throws.** The component is mounted into `target` at
 > creation time and the root node is not moved afterwards. Calling
@@ -127,8 +127,8 @@ variables (`--sk-*`).
 ```ts
 interface StreakrDay {
   date: Date;
-  total: number;                       // sum across all providers
-  sources?: Record<string, number>;    // keyed by `StreakrProvider.key`
+  total: number; // sum across all providers
+  sources?: Record<string, number>; // keyed by `StreakrProvider.key`
 }
 ```
 
@@ -141,10 +141,10 @@ cannot split that day by source.
 
 ```ts
 interface StreakrProvider {
-  key: string;     // matches a key in StreakrDay.sources
-  name: string;    // display label
-  color: string;   // dot/accent color in chips and tooltip
-  icon?: string;   // optional inline SVG (built-in for github, gitlab, bitbucket)
+  key: string; // matches a key in StreakrDay.sources
+  name: string; // display label
+  color: string; // dot/accent color in chips and tooltip
+  icon?: string; // optional inline SVG (built-in for github, gitlab, bitbucket)
 }
 ```
 
@@ -163,7 +163,7 @@ createStreakr({
   target: el,
   years: [2026],
   providers: [
-    { key: "gitea",   name: "Gitea",   color: "#609926" },
+    { key: "gitea", name: "Gitea", color: "#609926" },
     { key: "forgejo", name: "Forgejo", color: "#d97706" },
     {
       key: "linear",
@@ -213,9 +213,9 @@ the agent chips. Partition the host total from the agent attributions with
 ## Lifecycle states
 
 ```ts
-sk.update({ state: "loading" });   // shimmer skeleton
-sk.update({ state: "empty" });     // empty illustration with the active year
-sk.update({ state: "ready" });     // normal render
+sk.update({ state: "loading" }); // shimmer skeleton
+sk.update({ state: "empty" }); // empty illustration with the active year
+sk.update({ state: "ready" }); // normal render
 ```
 
 `"ready"` with a year that has zero contributions automatically falls back to
@@ -282,7 +282,8 @@ const el = ref<HTMLElement | null>(null);
 let sk: StreakrInstance | null = null;
 
 onMounted(() => {
-  if (el.value) sk = createStreakr({ target: el.value, years: props.years, getDays: props.getDays });
+  if (el.value)
+    sk = createStreakr({ target: el.value, years: props.years, getDays: props.getDays });
 });
 onBeforeUnmount(() => sk?.destroy());
 </script>
@@ -355,16 +356,12 @@ For coding-agent activity, two providers count `Co-authored-by:` trailers and
 return the same daily series keyed per agent (Claude, Codex, opencode, Copilot):
 `GitHubCoAuthorProvider` reads the GitHub commit search API, and
 `LocalGitCoAuthorProvider` (`@rosado-io/streakr/agents`, Node-only) scans local
-clones across all branches and hosts. Trailers count shipped commits, not agent
-usage, so the numbers are a lower bound. See [docs/agents.md](docs/agents.md) for
-semantics, the coverage table, route comparison, deployment patterns, and
-privacy.
-
-> ⚠️ **Availability.** Both providers land in PRs
-> [#156](https://github.com/rosado-io/streakr/pull/156) and
-> [#157](https://github.com/rosado-io/streakr/pull/157) and ship starting with
-> the release that includes them; until then their imports will not resolve. See
-> the [availability note in docs/agents.md](docs/agents.md#agent-records).
+clones across GitHub, GitLab, and self-hosted origins. Published default branches
+are the safe default; all remote or local refs are opt-in. `GitHubCliProvider`
+and `GitLabCliProvider` can reuse local CLI sessions without accepting tokens,
+and the snapshot helper publishes only sanitized counts. Trailers count shipped
+commits, not agent usage, so the numbers are a lower bound. See
+[docs/agents.md](docs/agents.md) for semantics, configuration, and privacy.
 
 ### Utilities
 

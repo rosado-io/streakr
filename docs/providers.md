@@ -337,7 +337,8 @@ Provider output can contain gaps and duplicate dates. Call
 
 For coding-agent activity from `Co-authored-by:` trailers, see
 [docs/agents.md](./agents.md), which documents `GitHubCoAuthorProvider` and
-`LocalGitCoAuthorProvider`.
+`LocalGitCoAuthorProvider`, plus tokenless local collection through authenticated
+`gh` and `glab` sessions.
 
 ## Privacy and Token Handling
 
@@ -350,3 +351,5 @@ For coding-agent activity from `Co-authored-by:` trailers, see
   aggregate results, or omit private providers when publishing public profiles.
 - Store cached provider responses with the same access controls as the source
   data.
+- For static public sites, prefer local collection plus a sanitized
+  `PublicStreakrSnapshot`; CI then needs no collection PATs.
