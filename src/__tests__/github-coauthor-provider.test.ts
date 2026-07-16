@@ -96,6 +96,23 @@ describe("GitHubCoAuthorProvider", () => {
     expect(query).not.toContain('"co-authored-by:');
   });
 
+  it("uses Codex's real co-author email as the commit search match", async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL) =>
+      json({ total_count: 0, items: [] }),
+    );
+
+    const provider = new GitHubCoAuthorProvider({
+      token: "ghp_token",
+      agents: ["codex"],
+      fetch: fetchMock,
+    });
+
+    await provider.fetchEvents({ user: "octocat", start: "2025-06-01", end: "2025-06-01" });
+
+    const query = parseQuery(fetchMock.mock.calls[0][0] as RequestInfo | URL);
+    expect(query).toBe('author:octocat "codex@openai.com" author-date:2025-06-01..2025-06-01');
+  });
+
   it("matches trailers whose display name sits between the label and the email", async () => {
     // Simulates GitHub commit search over `Co-Authored-By: Claude <noreply@anthropic.com>`:
     // the label glued to the email never matches (the old buggy query), only the

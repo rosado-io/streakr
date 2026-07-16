@@ -15,7 +15,7 @@ export interface AgentTrailerRule {
 
 export const AGENT_TRAILER_RULES: readonly AgentTrailerRule[] = [
   { key: "claude", email: "noreply@anthropic.com" },
-  { key: "codex", email: "noreply@openai.com" },
+  { key: "codex", email: "codex@openai.com" },
   { key: "opencode", email: "noreply@opencode.ai" },
   { key: "copilot", name: "copilot", email: /@users\.noreply\.github\.com$/i },
 ];

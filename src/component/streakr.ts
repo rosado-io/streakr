@@ -863,6 +863,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     isLoading: boolean;
     isEmpty: boolean;
     allOff: boolean;
+    canEnableAll: boolean;
     days: StreakrDay[];
     providersWithDataCount: number;
     leveled: StreakrLeveledDay[];
@@ -899,11 +900,27 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       !hasTotalOnlyDays &&
       cfg.providers.length > 0 &&
       cfg.providers.every((p) => !state.providers[p.key]);
+    const canEnableAll =
+      cfg.state === "ready" &&
+      yearTotal === 0 &&
+      cfg.providers.some(
+        (provider) =>
+          !state.providers[provider.key] && days.some((day) => dayCount(day, provider.key) > 0),
+      );
     const providersWithDataCount =
       cfg.state === "ready"
         ? cfg.providers.filter((p) => days.some((d) => dayCount(d, p.key) > 0)).length
         : 0;
-    return { isLoading, isEmpty, allOff, days, providersWithDataCount, leveled, stats };
+    return {
+      isLoading,
+      isEmpty,
+      allOff,
+      canEnableAll,
+      days,
+      providersWithDataCount,
+      leveled,
+      stats,
+    };
   };
 
   const renderTitleRow = (): HTMLElement => {
@@ -983,7 +1000,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     const stateBody = [
       [flags.isLoading, renderLoadingBody],
       [flags.allOff, renderNoProviders],
-      [flags.isEmpty, renderEmpty],
+      [flags.isEmpty, () => renderEmpty(flags.canEnableAll)],
     ].find(([matches]) => matches) as [boolean, () => HTMLElement] | undefined;
 
     if (stateBody) {
@@ -1047,7 +1064,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         {
           class: "sk-provider" + (active ? " active" : ""),
           "aria-label": ariaLabel,
-          "aria-pressed": active,
+          "aria-pressed": String(active),
           onclick: () => toggleProvider(p.key),
         },
         [
@@ -1202,7 +1219,14 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     return body;
   };
 
-  const renderEmpty = (): HTMLElement =>
+  const renderEnableAllButton = (): HTMLElement =>
+    h("button", {
+      class: "sk-year-tab",
+      onclick: () => enableAllProviders(),
+      text: "Enable all",
+    });
+
+  const renderEmpty = (canEnableAll = false): HTMLElement =>
     h("div", { class: "sk-empty" }, [
       h("div", {
         class: "sk-empty-icon",
@@ -1222,6 +1246,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         class: "sk-empty-sub",
         text: "When you commit, push, or open PRs across your connected accounts, they'll show up here.",
       }),
+      canEnableAll ? renderEnableAllButton() : null,
     ]);
 
   const renderNoProviders = (): HTMLElement =>
@@ -1231,11 +1256,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         style: { flex: "1" },
         text: "All providers are disabled — toggle one above to see contributions.",
       }),
-      h("button", {
-        class: "sk-year-tab",
-        onclick: () => enableAllProviders(),
-        text: "Enable all",
-      }),
+      renderEnableAllButton(),
     ]);
 
   const renderReadyBody = (

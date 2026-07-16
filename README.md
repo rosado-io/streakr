@@ -200,6 +200,16 @@ createStreakr({
 });
 ```
 
+Provider chips are independent on/off toggles and every provider starts enabled.
+Clicking Claude disables or re-enables Claude; to show only Claude, disable the
+other providers or call `setProviders()` with their keys set to `false`.
+
+Agent co-authored commits are usually already included in the GitHub total, so
+adding both raw counts would double-count them and make the GitHub chip overlap
+the agent chips. Partition the host total from the agent attributions with
+`splitCoAuthored()` first; see
+[Composing with the rest of Streakr](docs/agents.md#composing-with-the-rest-of-streakr).
+
 ## Lifecycle states
 
 ```ts
