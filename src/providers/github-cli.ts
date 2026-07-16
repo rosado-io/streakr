@@ -48,6 +48,14 @@ export class GitHubCliProvider implements Provider {
 
   public async fetchEvents(params: FetchParams): Promise<ContributionDay[]> {
     validateInputDates(params.start, params.end);
+    const days: ContributionDay[] = [];
+    for (const range of splitByYear(params.start, params.end)) {
+      days.push(...(await this.fetchRange(params.user, range.start, range.end)));
+    }
+    return toCanonicalDays(days, params.start, params.end);
+  }
+
+  private async fetchRange(user: string, start: string, end: string): Promise<ContributionDay[]> {
     const output = await runAuthenticatedCli(
       "GitHub",
       `Run \`${this.cli} auth login --hostname ${this.host}\` locally.`,
@@ -61,11 +69,11 @@ export class GitHubCliProvider implements Provider {
         "-f",
         `query=${CONTRIBUTIONS_QUERY}`,
         "-F",
-        `login=${params.user}`,
+        `login=${user}`,
         "-F",
-        `from=${params.start}T00:00:00Z`,
+        `from=${start}T00:00:00Z`,
         "-F",
-        `to=${params.end}T23:59:59Z`,
+        `to=${end}T23:59:59Z`,
       ],
     );
     const payload = parseCliJson<GitHubCliResponse>("GitHub", output);
@@ -74,15 +82,26 @@ export class GitHubCliProvider implements Provider {
         `GitHub GraphQL error: ${payload.errors.map(({ message }) => message).join("; ")}`,
       );
     }
-    if (!payload.data?.user) throw new Error(`GitHub user "${params.user}" not found`);
+    if (!payload.data?.user) throw new Error(`GitHub user "${user}" not found`);
 
-    const days = payload.data.user.contributionsCollection.contributionCalendar.weeks
+    return payload.data.user.contributionsCollection.contributionCalendar.weeks
       .flatMap(({ contributionDays }) => contributionDays)
-      .filter(({ date }) => date >= params.start && date <= params.end)
+      .filter(({ date }) => date >= start && date <= end)
       .map<ContributionDay>(({ date, contributionCount }) => ({
         date,
         count: contributionCount,
       }));
-    return toCanonicalDays(days, params.start, params.end);
   }
 }
+
+const splitByYear = (start: string, end: string): { start: string; end: string }[] => {
+  const startYear = Number(start.slice(0, 4));
+  const endYear = Number(end.slice(0, 4));
+  return Array.from({ length: endYear - startYear + 1 }, (_, index) => {
+    const year = startYear + index;
+    return {
+      start: year === startYear ? start : `${year}-01-01`,
+      end: year === endYear ? end : `${year}-12-31`,
+    };
+  });
+};

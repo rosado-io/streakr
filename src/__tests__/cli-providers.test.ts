@@ -65,6 +65,34 @@ describe("GitHubCliProvider", () => {
     const provider = new GitHubCliProvider({ runner: async () => "not-json" });
     await expect(provider.fetchEvents(params)).rejects.toThrow(/invalid JSON/i);
   });
+
+  it("splits multi-year calendars into supported GitHub ranges", async () => {
+    const runner = vi.fn<CliRunner>().mockImplementation(async (_executable, args) => {
+      const year = args.includes("from=2025-12-30T00:00:00Z") ? "2025" : "2026";
+      return JSON.stringify({
+        data: {
+          user: {
+            contributionsCollection: {
+              contributionCalendar: {
+                weeks: [
+                  {
+                    contributionDays: [{ date: `${year}-12-31`, contributionCount: 1 }],
+                  },
+                ],
+              },
+            },
+          },
+        },
+      });
+    });
+    const provider = new GitHubCliProvider({ runner });
+
+    await provider.fetchEvents({ user: "eros", start: "2025-12-30", end: "2026-12-31" });
+
+    expect(runner).toHaveBeenCalledTimes(2);
+    expect(runner.mock.calls[0]?.[1]).toContain("to=2025-12-31T23:59:59Z");
+    expect(runner.mock.calls[1]?.[1]).toContain("from=2026-01-01T00:00:00Z");
+  });
 });
 
 describe("GitLabCliProvider", () => {
