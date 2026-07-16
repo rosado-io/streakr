@@ -16,21 +16,23 @@ const RECORD = "\x1e";
 const DEFAULT_MAX_DEPTH = 6;
 const MAX_BUFFER = 64 * 1024 * 1024;
 
-const PRETTY = `format:%H${UNIT}%as${UNIT}%(trailers:key=Co-authored-by,valueonly,separator=${RECORD})`;
+const PRETTY = `format:%H${UNIT}%as${UNIT}%an${UNIT}%ae${UNIT}%(trailers:key=Co-authored-by,valueonly,separator=${RECORD})`;
 
-const LOG_ARGS = [
-  "log",
-  "--all",
-  "--no-merges",
-  "-i",
-  "--grep=co-authored-by",
-  "-z",
-  `--pretty=${PRETTY}`,
-];
+const LOG_ARGS = ["log", "--no-merges", "-i", "--grep=co-authored-by", "-z", `--pretty=${PRETTY}`];
+
+export interface GitAuthorIdentity {
+  name?: string | RegExp;
+  email?: string | RegExp;
+}
+
+export type LocalGitRefScope = "default" | "remote" | "all";
 
 export interface LocalGitCoAuthorProviderOptions {
   repos?: string[];
   roots?: string[];
+  identities?: readonly GitAuthorIdentity[];
+  refScope?: LocalGitRefScope;
+  strict?: boolean;
   maxDepth?: number;
   rules?: readonly AgentTrailerRule[];
   git?: string;
@@ -56,6 +58,9 @@ export class LocalGitCoAuthorProvider implements Provider {
 
   private readonly repos: string[];
   private readonly roots: string[];
+  private readonly identities: readonly GitAuthorIdentity[];
+  private readonly refScope: LocalGitRefScope;
+  private readonly strict: boolean;
   private readonly maxDepth: number;
   private readonly rules: readonly AgentTrailerRule[];
   private readonly git: string;
@@ -63,6 +68,9 @@ export class LocalGitCoAuthorProvider implements Provider {
   public constructor(options: LocalGitCoAuthorProviderOptions) {
     this.repos = options.repos ?? [];
     this.roots = options.roots ?? [];
+    this.identities = options.identities?.filter(hasIdentityMatcher) ?? [];
+    this.refScope = options.refScope ?? "default";
+    this.strict = options.strict ?? false;
     this.maxDepth = options.maxDepth ?? DEFAULT_MAX_DEPTH;
     this.rules = options.rules ?? AGENT_TRAILER_RULES;
     this.git = options.git ?? "git";
@@ -72,8 +80,8 @@ export class LocalGitCoAuthorProvider implements Provider {
     }
   }
 
-  // `params.user` is ignored: the "user" here is the owner of the local repositories,
-  // not a remote account. Only the date range is honoured.
+  // Local authorship is resolved from the configured Git identities. `params.user`
+  // remains unused because one person can have different logins on different hosts.
   public async fetchEvents(params: FetchParams): Promise<ContributionDay[]> {
     validateInputDates(params.start, params.end);
 
@@ -84,8 +92,15 @@ export class LocalGitCoAuthorProvider implements Provider {
 
     for (const repo of repos) {
       try {
-        this.collectRepo(await this.readRepo(repo), commits);
-      } catch {
+        const identities =
+          this.identities.length > 0 ? this.identities : await this.readConfiguredIdentity(repo);
+        this.collectRepo(await this.readRepo(repo), commits, identities);
+      } catch (error) {
+        if (this.strict) {
+          throw new Error(`LocalGitCoAuthorProvider could not scan repository: ${repo}`, {
+            cause: error,
+          });
+        }
         continue;
       }
     }
@@ -117,20 +132,100 @@ export class LocalGitCoAuthorProvider implements Provider {
   }
 
   private async readRepo(cwd: string): Promise<string> {
-    const { stdout } = await execFileAsync(this.git, LOG_ARGS, { cwd, maxBuffer: MAX_BUFFER });
+    const refs = await this.resolveLogRefs(cwd);
+    if (refs.length === 0) return "";
+    const { stdout } = await execFileAsync(this.git, [...LOG_ARGS, ...refs], {
+      cwd,
+      maxBuffer: MAX_BUFFER,
+    });
     return stdout;
   }
 
-  private collectRepo(stdout: string, commits: Map<string, CommitInfo>): void {
+  private async readConfiguredIdentity(cwd: string): Promise<readonly GitAuthorIdentity[]> {
+    const read = async (key: "user.name" | "user.email"): Promise<string | undefined> => {
+      try {
+        const { stdout } = await execFileAsync(this.git, ["config", "--get", key], {
+          cwd,
+          maxBuffer: MAX_BUFFER,
+        });
+        return stdout.trim() || undefined;
+      } catch {
+        return undefined;
+      }
+    };
+    const [name, email] = await Promise.all([read("user.name"), read("user.email")]);
+    return name || email ? [{ ...(name ? { name } : {}), ...(email ? { email } : {}) }] : [];
+  }
+
+  private async resolveLogRefs(cwd: string): Promise<string[]> {
+    if (this.refScope === "all") return ["--all"];
+    if (this.refScope === "remote") return ["--remotes"];
+
+    const { stdout } = await execFileAsync(
+      this.git,
+      ["for-each-ref", "--format=%(symref:short)", "refs/remotes/*/HEAD"],
+      { cwd, maxBuffer: MAX_BUFFER },
+    );
+    const symbolicDefaults = stdout
+      .split(/\r?\n/)
+      .map((ref) => ref.trim())
+      .filter((ref) => ref.length > 0);
+    if (symbolicDefaults.length > 0) return symbolicDefaults;
+
+    const remotes = await this.listRemotes(cwd);
+    const conventionalDefaults = (
+      await Promise.all(
+        remotes.flatMap((remote) =>
+          ["main", "master"].map(async (branch) => {
+            const ref = `refs/remotes/${remote}/${branch}`;
+            try {
+              await execFileAsync(this.git, ["rev-parse", "--verify", "--quiet", ref], {
+                cwd,
+                maxBuffer: MAX_BUFFER,
+              });
+              return ref;
+            } catch {
+              return null;
+            }
+          }),
+        ),
+      )
+    ).filter((ref): ref is string => ref !== null);
+
+    return conventionalDefaults;
+  }
+
+  private async listRemotes(cwd: string): Promise<string[]> {
+    const { stdout } = await execFileAsync(this.git, ["remote"], { cwd, maxBuffer: MAX_BUFFER });
+    return stdout
+      .split(/\r?\n/)
+      .map((remote) => remote.trim())
+      .filter((remote) => remote.length > 0);
+  }
+
+  private collectRepo(
+    stdout: string,
+    commits: Map<string, CommitInfo>,
+    identities: readonly GitAuthorIdentity[],
+  ): void {
     for (const record of stdout.split("\0")) {
       if (record.length === 0) continue;
-      const [sha, date, blob = ""] = record.split(UNIT);
+      const [sha, date, authorName, authorEmail, blob = ""] = record.split(UNIT);
       if (!sha || !date || commits.has(sha)) continue;
 
+      const author = { name: authorName ?? "", email: authorEmail ?? "" };
+      const coAuthors = blob
+        .split(RECORD)
+        .map((value) => (value.trim().length === 0 ? null : parseCoAuthorValue(value)))
+        .filter((coAuthor): coAuthor is CoAuthor => coAuthor !== null);
+      const belongsToUser = [author, ...coAuthors].some((person) =>
+        matchesAnyIdentity(person, identities),
+      );
+      if (!belongsToUser) continue;
+
       const keys = new Set<string>();
-      for (const value of blob.split(RECORD)) {
-        const coAuthor = value.trim().length === 0 ? null : parseCoAuthorValue(value);
-        const key = coAuthor && matchAgent(coAuthor, this.rules);
+      for (const person of [author, ...coAuthors]) {
+        const key = matchAgent(person, this.rules);
         if (key) keys.add(key);
       }
 
@@ -184,3 +279,31 @@ const discoverRepos = (root: string, maxDepth: number): string[] => {
   walk(root, 0);
   return found;
 };
+
+const testStateless = (pattern: RegExp, value: string): boolean => {
+  if (!pattern.global && !pattern.sticky) return pattern.test(value);
+  const lastIndex = pattern.lastIndex;
+  pattern.lastIndex = 0;
+  const matched = pattern.test(value);
+  pattern.lastIndex = lastIndex;
+  return matched;
+};
+
+const hasIdentityMatcher = (identity: GitAuthorIdentity): boolean =>
+  [identity.name, identity.email].some((value) =>
+    typeof value === "string" ? value.trim().length > 0 : value instanceof RegExp,
+  );
+
+const matchesIdentityField = (value: string, expected: string | RegExp | undefined): boolean => {
+  if (expected === undefined) return true;
+  if (expected instanceof RegExp) return testStateless(expected, value);
+  return value.toLowerCase() === expected.trim().toLowerCase();
+};
+
+const matchesAnyIdentity = (person: CoAuthor, identities: readonly GitAuthorIdentity[]): boolean =>
+  identities.some(
+    (identity) =>
+      hasIdentityMatcher(identity) &&
+      matchesIdentityField(person.name, identity.name) &&
+      matchesIdentityField(person.email, identity.email),
+  );

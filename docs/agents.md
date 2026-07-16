@@ -16,16 +16,11 @@ type ContributionDay = {
 - `GitHubCoAuthorProvider` (main entry) queries the GitHub commit search API.
 - `LocalGitCoAuthorProvider` (`@rosado-io/streakr/agents`, Node-only) scans local
   clones with `git log`.
+- `GitHubCliProvider` and `GitLabCliProvider` reuse authenticated local CLI
+  sessions without accepting or exposing tokens.
 
-Both compose with `aggregate()` and `normalizeEventsToDaily()` exactly like the
+They compose with `aggregate()` and `normalizeEventsToDaily()` exactly like the
 [Git host providers](./providers.md).
-
-> ⚠️ **Availability.** `GitHubCoAuthorProvider` (main entry `@rosado-io/streakr`)
-> and `LocalGitCoAuthorProvider` (subpath `@rosado-io/streakr/agents`) land in
-> PRs [#156](https://github.com/rosado-io/streakr/pull/156) and
-> [#157](https://github.com/rosado-io/streakr/pull/157). They ship starting with
-> the release that includes those PRs; until then the imports in this guide will
-> not resolve against the published package.
 
 ## What the counts mean
 
@@ -47,12 +42,12 @@ co-author to an agent key by email and/or name. A trailer is
 `Co-authored-by: <name> <<email>>`. These are the four built-in rules with real
 samples:
 
-| Agent | Key | Matched by | Sample trailer |
-| --- | --- | --- | --- |
-| Claude Code | `claude` | email `noreply@anthropic.com` | `Co-authored-by: Claude Sonnet 4.6 <noreply@anthropic.com>` |
-| Codex | `codex` | email `codex@openai.com` | `Co-authored-by: Codex <codex@openai.com>` |
-| opencode | `opencode` | email `noreply@opencode.ai` | `Co-authored-by: opencode (glm-5.2) <noreply@opencode.ai>` |
-| Copilot | `copilot` | name contains `copilot` + email ending `@users.noreply.github.com` | `Co-authored-by: Copilot <198982749+Copilot@users.noreply.github.com>` |
+| Agent       | Key        | Matched by                                                         | Sample trailer                                                         |
+| ----------- | ---------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| Claude Code | `claude`   | email `noreply@anthropic.com`                                      | `Co-authored-by: Claude Sonnet 4.6 <noreply@anthropic.com>`            |
+| Codex       | `codex`    | email `codex@openai.com`                                           | `Co-authored-by: Codex <codex@openai.com>`                             |
+| opencode    | `opencode` | email `noreply@opencode.ai`                                        | `Co-authored-by: opencode (glm-5.2) <noreply@opencode.ai>`             |
+| Copilot     | `copilot`  | name contains `copilot` + email ending `@users.noreply.github.com` | `Co-authored-by: Copilot <198982749+Copilot@users.noreply.github.com>` |
 
 Notes on the samples:
 
@@ -74,32 +69,21 @@ substring) or a `RegExp`.
 
 The two providers answer the same question from different vantage points.
 
-| | `GitHubCoAuthorProvider` | `LocalGitCoAuthorProvider` |
-| --- | --- | --- |
-| Source | GitHub commit search API | `git log --all` over local clones |
-| Scope | Default branch only | All branches, all hosts |
-| Hosts | GitHub public repos (private with `repo` PAT) | Anything cloned locally — GitLab, self-hosted, unpushed |
-| Auth | GitHub PAT | None (runs where the repos live) |
-| Publication step | None — safe to call server-side on demand | Required — output is meant to be published as a static snapshot |
-| Indexing lag | Yes (search index) | No |
+|                  | `GitHubCoAuthorProvider`                      | `LocalGitCoAuthorProvider`                                      |
+| ---------------- | --------------------------------------------- | --------------------------------------------------------------- |
+| Source           | GitHub commit search API                      | `git log` over local clones                                     |
+| Scope            | Default branch only                           | Published default branches by default; configurable             |
+| Hosts            | GitHub public repos (private with `repo` PAT) | Anything cloned locally — GitLab, self-hosted, unpushed         |
+| Auth             | GitHub PAT                                    | None (runs where the repos live)                                |
+| Publication step | None — safe to call server-side on demand     | Required — output is meant to be published as a static snapshot |
+| Indexing lag     | Yes (search index)                            | No                                                              |
 
 ### Why the numbers differ
 
-Measured against the same set of work:
-
-- **API route:** 233 commits via 3 search requests.
-- **Local route:** 397 commits across 14 repos in ~0.3 s.
-
-The local scan sees more because:
-
-- **Branches.** The search API only indexes the default branch; the local scan
-  reads every branch via `git log --all`.
-- **Hosts and unpublished work.** The local scan covers repos that never reached
-  GitHub — GitLab, self-hosted, or not yet pushed.
-- **Indexing lag.** Recently pushed commits may not be searchable yet.
-- **Copilot authorship.** The GitHub coding agent's commits are sometimes
-  authored by the bot itself, so an `author:<user>` search misses them (measured:
-  132 Copilot commits found by the local scan vs 14 via search).
+The local scan can cover GitLab, self-hosted repositories, and freshly pushed
+commits that GitHub search has not indexed yet. Setting `refScope: "all"` also
+includes unpublished local branches, so it intentionally produces a different
+metric from public contribution calendars.
 
 Rule of thumb: use the API route for a zero-infrastructure server-side fetch of
 public GitHub work; use the local route when you want the full, cross-host
@@ -159,10 +143,10 @@ the `fetchEvents` params.
 
 ## `LocalGitCoAuthorProvider`
 
-Scans local repositories with `git log --all`, parses `Co-authored-by:` trailers
-against the registry, dedupes by commit SHA, and buckets by day keyed per agent.
-Because it runs where the repos live, it sees every branch and host — including
-GitLab, self-hosted, and never-pushed work — without a token.
+Scans local repositories with `git log`, verifies that the author or a co-author
+matches one of the configured owner identities, parses agent trailers, dedupes
+by commit SHA, and buckets by day. It uses published default branches by default
+and can opt into every remote or local ref.
 
 This provider lives in the Node-only subpath:
 
@@ -171,6 +155,10 @@ import { LocalGitCoAuthorProvider } from "@rosado-io/streakr/agents";
 
 const local = new LocalGitCoAuthorProvider({
   roots: ["/Users/me/code"],
+  identities: [
+    { email: "me@example.com" },
+    { email: /@users\.noreply\.github\.com$/i, name: "My GitHub Name" },
+  ],
 });
 
 const days = await local.fetchEvents({
@@ -186,6 +174,9 @@ const days = await local.fetchEvents({
 new LocalGitCoAuthorProvider({
   repos: ["/Users/me/code/streakr"],
   roots: ["/Users/me/code"],
+  identities: [{ email: "me@example.com" }],
+  refScope: "default",
+  strict: true,
   maxDepth: 6,
   rules: AGENT_TRAILER_RULES,
   git: "git",
@@ -194,6 +185,14 @@ new LocalGitCoAuthorProvider({
 
 - `repos` is an explicit list of repository paths to scan.
 - `roots` are directories to walk (up to `maxDepth`) looking for repos.
+- `identities` accepts owner name/email strings or regular expressions. A commit
+  counts only when its author or a co-author matches. When omitted, each repo's
+  effective `user.name` and `user.email` Git configuration are used.
+- `refScope` defaults to `"default"` for published default branches. `"remote"`
+  scans all remote branches and `"all"` also includes local-only refs.
+- `strict` defaults to `false` for backwards-compatible best-effort scans. Use
+  `true` for published snapshots so a Git failure aborts the update. Repositories
+  with no refs in the selected scope contribute zero and are not failures.
 - The constructor **throws if neither `repos` nor `roots` is provided.**
 - `maxDepth` is optional and defaults to `6`.
 - `rules` is optional and defaults to `AGENT_TRAILER_RULES`.
@@ -201,8 +200,12 @@ new LocalGitCoAuthorProvider({
 
 ### Caveats
 
-- **`FetchParams.user` is ignored.** The "user" is the owner of the local repos;
-  only `start` and `end` narrow the range.
+- **`FetchParams.user` is ignored.** Local authorship comes from `identities`,
+  since one person can use different logins across hosts.
+- **No colleague leakage.** Agent trailers on commits that do not match an owner
+  identity are ignored, even when the repository is cloned locally.
+- **Published by default.** Local-only branches count only with
+  `refScope: "all"`.
 - **SHA dedupe.** The same commit reached through multiple clones or linked
   worktrees is counted once.
 - **Publish the output.** Because it reads private, local history, its result is
@@ -258,36 +261,53 @@ agent chip removes or restores that agent's partition; it does not switch to an
 exclusive single-provider mode. To show only one agent, disable the other chips
 or call `setProviders()` with the desired provider state.
 
-For the local route you typically fetch once, then publish the daily series:
+For a tokenless CI route, collect everything locally and atomically publish a
+versioned snapshot:
 
 ```ts
-import { LocalGitCoAuthorProvider } from "@rosado-io/streakr/agents";
-import { normalizeEventsToDaily } from "@rosado-io/streakr";
+import {
+  GitHubCliProvider,
+  GitLabCliProvider,
+  LocalGitCoAuthorProvider,
+  createPublicSnapshot,
+  writePublicSnapshot,
+} from "@rosado-io/streakr/agents";
 
-const local = new LocalGitCoAuthorProvider({ roots: [process.env.CODE_ROOT!] });
-
-const raw = await local.fetchEvents({
-  user: "",
-  start: "2026-01-01",
-  end: "2026-12-31",
+const params = { user: "octocat", start: "2026-01-01", end: "2026-12-31" };
+const local = new LocalGitCoAuthorProvider({
+  roots: ["/Users/me/code"],
+  identities: [{ email: "me@example.com" }],
+  strict: true,
 });
 
-const days = normalizeEventsToDaily(raw); // { date, count, sources }
+const [github, gitlab, agents] = await Promise.all([
+  new GitHubCliProvider().fetchEvents(params),
+  new GitLabCliProvider().fetchEvents(params),
+  local.fetchEvents(params),
+]);
+
+const snapshot = createPublicSnapshot({
+  range: { start: params.start, end: params.end },
+  activity: { github, gitlab },
+  agents,
+});
+await writePublicSnapshot("public/contributions.json", snapshot);
 ```
 
-Pair the agent chips (`AGENT_PROVIDERS`) with the daily series so the heatmap can
-toggle by agent — see the [agent providers preset](../README.md#agent-providers-preset).
+Authenticate once with `gh auth login` and `glab auth login --use-keyring`. The
+providers execute those CLIs and parse their JSON; they never request a token or
+place one in arguments, files, snapshots, or CI. The GitLab session only needs
+the read-only `read_user` scope for the Events API.
 
 ## Deployment patterns for the local route
 
 The local scan reads private history, so it should never run in a browser. Run
-it where the repos live and publish only the daily series. In every pattern below
-**only `{ date, count, sources }` leaves the machine** — no paths, no messages,
-no repo names.
+it where the repos live and publish only a `PublicStreakrSnapshot`. It contains
+only schema version, generation time, range, dates, counts, and source keys — no
+paths, messages, emails, hashes, or repository names.
 
-- **Commit a snapshot at build time.** A build script runs the scan, writes
-  `agents.json`, and commits it. The site imports/fetches that file. Simplest
-  option; updates on each build.
+- **Commit a snapshot locally.** A local scheduled job runs the scan, writes the
+  snapshot atomically, and pushes it. CI only builds the sanitized file.
 - **Update a gist from a local cron/hook.** A cron job or Git `post-commit` hook
   runs the scan and `PATCH`es a secret gist; the site fetches the gist's raw URL.
   Keeps the site static while refreshing on your schedule.
@@ -297,13 +317,13 @@ no repo names.
 
 ## Privacy
 
-- **Metadata only.** Both providers read commit metadata — dates, authorship,
+- **Metadata only.** The providers read commit metadata — dates, authorship,
   and `Co-authored-by:` trailers. They never read transcripts, prompts, diffs, or
   message content.
 - **Counts still reveal patterns.** Daily contribution counts expose work cadence
   the same way any contribution calendar does. The
   [README privacy guidance](../README.md#privacy) applies: aggregate, redact, or
   limit ranges before publishing, and keep tokens out of browser code.
-- **Local output is the sensitive surface.** For `LocalGitCoAuthorProvider`,
-  publish only the normalized `{ date, count, sources }` series — never repo paths
-  or raw log output.
+- **Fail closed.** `writePublicSnapshot()` writes a temporary private file and
+  renames it only after a complete, validated snapshot exists. A failed provider
+  leaves the last known-good snapshot untouched.
