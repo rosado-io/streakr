@@ -26,9 +26,9 @@ const DEMO_PROVIDERS: StreakrProvider[] = [
 
 const AGENT_SNIPPETS: Record<string, string> = {
   github: `<span class="c-c">// count commits co-authored by agents via the GitHub search API (server-side)</span>
-<span class="c-k">import</span> { GitHubCoAuthorProvider, AGENT_PROVIDERS } <span class="c-k">from</span> <span class="c-s">'@rosado-io/streakr'</span>
+<span class="c-k">import</span> { githubCoAuthorProvider, AGENT_PROVIDERS } <span class="c-k">from</span> <span class="c-s">'@rosado-io/streakr'</span>
 
-<span class="c-k">const</span> agents = <span class="c-k">new</span> <span class="c-fn">GitHubCoAuthorProvider</span>({ token: process.env.GITHUB_TOKEN })
+<span class="c-k">const</span> agents = <span class="c-fn">githubCoAuthorProvider</span>({ token: process.env.GITHUB_TOKEN })
 
 <span class="c-k">const</span> days = <span class="c-k">await</span> agents.<span class="c-fn">fetchEvents</span>({
   user: <span class="c-s">'octocat'</span>,
@@ -43,9 +43,9 @@ const AGENT_SNIPPETS: Record<string, string> = {
   providers: [...DEFAULT_PROVIDERS, ...AGENT_PROVIDERS],
 })`,
   local: `<span class="c-c">// scan local clones — every branch, every host, no token needed (Node)</span>
-<span class="c-k">import</span> { LocalGitCoAuthorProvider } <span class="c-k">from</span> <span class="c-s">'@rosado-io/streakr/agents'</span>
+<span class="c-k">import</span> { localGitCoAuthorProvider } <span class="c-k">from</span> <span class="c-s">'@rosado-io/streakr/agents'</span>
 
-<span class="c-k">const</span> local = <span class="c-k">new</span> <span class="c-fn">LocalGitCoAuthorProvider</span>({ roots: [<span class="c-s">'/Users/me/code'</span>] })
+<span class="c-k">const</span> local = <span class="c-fn">localGitCoAuthorProvider</span>({ roots: [<span class="c-s">'/Users/me/code'</span>] })
 
 <span class="c-k">const</span> days = <span class="c-k">await</span> local.<span class="c-fn">fetchEvents</span>({
   user: <span class="c-s">'ignored'</span>, <span class="c-c">// local scan only uses the date range</span>

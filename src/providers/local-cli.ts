@@ -1,8 +1,12 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
+import type { CliRunner } from "./types";
+
 const execFileAsync = promisify(execFile);
-const MAX_BUFFER = 64 * 1024 * 1024;
+
+export const MAX_BUFFER = 64 * 1024 * 1024;
+
 const AUTH_ENVIRONMENT_KEYS = new Set([
   "GH_TOKEN",
   "GITHUB_TOKEN",
@@ -14,8 +18,6 @@ const AUTH_ENVIRONMENT_KEYS = new Set([
   "OAUTH_TOKEN",
   "CI_JOB_TOKEN",
 ]);
-
-export type CliRunner = (executable: string, args: readonly string[]) => Promise<string>;
 
 export const runLocalCli: CliRunner = async (executable, args) => {
   const { stdout } = await execFileAsync(executable, [...args], {

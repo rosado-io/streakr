@@ -4,7 +4,7 @@ import { chmodSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:f
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { LocalGitCoAuthorProvider } from "../providers/local-git-coauthor";
+import { localGitCoAuthorProvider } from "../providers/local-git-coauthor";
 import type { FetchParams } from "../types";
 
 const CLAUDE = "Co-authored-by: Claude <noreply@anthropic.com>";
@@ -74,7 +74,7 @@ afterAll(() => {
   rmSync(root, { recursive: true, force: true });
 });
 
-describe("LocalGitCoAuthorProvider", () => {
+describe("localGitCoAuthorProvider", () => {
   it("buckets agent co-authored commits by author date with per-agent sources", async () => {
     const repo = join(root, "basic");
     initRepo(repo);
@@ -83,7 +83,7 @@ describe("LocalGitCoAuthorProvider", () => {
     commit(repo, "2025-06-02", [HUMAN]);
     commit(repo, "2025-06-03", [CLAUDE, CODEX]);
 
-    const provider = new LocalGitCoAuthorProvider({
+    const provider = localGitCoAuthorProvider({
       repos: [repo],
       identities: OWNER_IDENTITIES,
       refScope: "all",
@@ -106,7 +106,7 @@ describe("LocalGitCoAuthorProvider", () => {
 
     commit(repo, "2025-06-02", [CODEX], COLLEAGUE);
 
-    const provider = new LocalGitCoAuthorProvider({
+    const provider = localGitCoAuthorProvider({
       repos: [repo],
       identities: OWNER_IDENTITIES,
       refScope: "all",
@@ -126,7 +126,7 @@ describe("LocalGitCoAuthorProvider", () => {
     commit(repo, "2025-06-01", ["Co-authored-by: Owner <owner@example.com>"], CLAUDE_AUTHOR);
     commit(repo, "2025-06-01", [], CLAUDE_AUTHOR);
 
-    const provider = new LocalGitCoAuthorProvider({
+    const provider = localGitCoAuthorProvider({
       repos: [repo],
       identities: OWNER_IDENTITIES,
       refScope: "all",
@@ -145,11 +145,11 @@ describe("LocalGitCoAuthorProvider", () => {
     git(repo, ["switch", "-q", "-c", "feature"]);
     commit(repo, "2025-06-01", [CODEX]);
 
-    const published = new LocalGitCoAuthorProvider({
+    const published = localGitCoAuthorProvider({
       repos: [repo],
       identities: OWNER_IDENTITIES,
     });
-    const local = new LocalGitCoAuthorProvider({
+    const local = localGitCoAuthorProvider({
       repos: [repo],
       identities: OWNER_IDENTITIES,
       refScope: "all",
@@ -175,7 +175,7 @@ describe("LocalGitCoAuthorProvider", () => {
     const worktree = join(root, "wt");
     git(repo, ["worktree", "add", "-q", "-b", "feature", worktree]);
 
-    const provider = new LocalGitCoAuthorProvider({
+    const provider = localGitCoAuthorProvider({
       repos: [repo, clone, worktree],
       identities: OWNER_IDENTITIES,
       refScope: "all",
@@ -197,7 +197,7 @@ describe("LocalGitCoAuthorProvider", () => {
     commit(repoB, "2025-06-01", [CODEX]);
     commit(decoy, "2025-06-01", [CLAUDE]);
 
-    const provider = new LocalGitCoAuthorProvider({
+    const provider = localGitCoAuthorProvider({
       roots: [base],
       identities: OWNER_IDENTITIES,
       refScope: "all",
@@ -214,7 +214,7 @@ describe("LocalGitCoAuthorProvider", () => {
 
     const missing = join(root, "does-not-exist");
 
-    const provider = new LocalGitCoAuthorProvider({
+    const provider = localGitCoAuthorProvider({
       repos: [missing, good],
       identities: OWNER_IDENTITIES,
       refScope: "all",
@@ -229,7 +229,7 @@ describe("LocalGitCoAuthorProvider", () => {
     initRepo(good);
     commit(good, "2025-06-01", [CLAUDE]);
 
-    const provider = new LocalGitCoAuthorProvider({
+    const provider = localGitCoAuthorProvider({
       repos: [good, join(root, "strict-missing")],
       identities: OWNER_IDENTITIES,
       refScope: "all",
@@ -245,7 +245,7 @@ describe("LocalGitCoAuthorProvider", () => {
     const repo = join(root, "nogit");
     initRepo(repo);
 
-    const provider = new LocalGitCoAuthorProvider({
+    const provider = localGitCoAuthorProvider({
       repos: [repo],
       identities: OWNER_IDENTITIES,
       git: "streakr-nonexistent-git-binary",
@@ -257,7 +257,7 @@ describe("LocalGitCoAuthorProvider", () => {
   });
 
   it("requires at least one of repos or roots", () => {
-    expect(() => new LocalGitCoAuthorProvider({ identities: OWNER_IDENTITIES })).toThrow(
+    expect(() => localGitCoAuthorProvider({ identities: OWNER_IDENTITIES })).toThrow(
       /requires at least one/,
     );
   });
@@ -267,7 +267,7 @@ describe("LocalGitCoAuthorProvider", () => {
     initRepo(repo);
     commit(repo, "2025-06-01", [CLAUDE]);
 
-    const provider = new LocalGitCoAuthorProvider({ repos: [repo], refScope: "all" });
+    const provider = localGitCoAuthorProvider({ repos: [repo], refScope: "all" });
 
     await expect(provider.fetchEvents(params("2025-06-01", "2025-06-01"))).resolves.toEqual([
       { date: "2025-06-01", count: 1, sources: { claude: 1 } },
@@ -282,7 +282,7 @@ describe("LocalGitCoAuthorProvider", () => {
     git(repo, ["switch", "-q", "-c", "feature"]);
     commit(repo, "2025-06-01", [CODEX]);
 
-    const provider = new LocalGitCoAuthorProvider({
+    const provider = localGitCoAuthorProvider({
       repos: [repo],
       identities: OWNER_IDENTITIES,
       refScope: "remote",
@@ -302,7 +302,7 @@ describe("LocalGitCoAuthorProvider", () => {
     git(repo, ["switch", "-q", "-c", "feature"]);
     commit(repo, "2025-06-01", [CODEX]);
 
-    const provider = new LocalGitCoAuthorProvider({
+    const provider = localGitCoAuthorProvider({
       repos: [repo],
       identities: OWNER_IDENTITIES,
     });
@@ -317,7 +317,7 @@ describe("LocalGitCoAuthorProvider", () => {
     initRepo(repo);
     commit(repo, "2025-06-01", [CLAUDE]);
 
-    const provider = new LocalGitCoAuthorProvider({
+    const provider = localGitCoAuthorProvider({
       repos: [repo],
       identities: OWNER_IDENTITIES,
     });
@@ -332,7 +332,7 @@ describe("LocalGitCoAuthorProvider", () => {
     initRepo(repo);
     commit(repo, "2025-06-01", [CLAUDE]);
 
-    const provider = new LocalGitCoAuthorProvider({
+    const provider = localGitCoAuthorProvider({
       repos: [repo],
       roots: [join(root, "missing-root")],
       identities: OWNER_IDENTITIES,
@@ -350,7 +350,7 @@ describe("LocalGitCoAuthorProvider", () => {
     commit(repo, "2025-06-01", [CLAUDE]);
     commit(repo, "2025-06-01", [CLAUDE], COLLEAGUE);
 
-    const provider = new LocalGitCoAuthorProvider({
+    const provider = localGitCoAuthorProvider({
       repos: [repo],
       identities: [{ email: /owner@example\.com/g }],
       refScope: "all",
@@ -368,7 +368,7 @@ describe("LocalGitCoAuthorProvider", () => {
     git(repo, ["config", "--unset", "user.name"]);
     git(repo, ["config", "--unset", "user.email"]);
 
-    const provider = new LocalGitCoAuthorProvider({ repos: [repo], refScope: "all" });
+    const provider = localGitCoAuthorProvider({ repos: [repo], refScope: "all" });
 
     const savedGlobal = process.env.GIT_CONFIG_GLOBAL;
     const savedSystem = process.env.GIT_CONFIG_SYSTEM;
@@ -393,7 +393,7 @@ describe("LocalGitCoAuthorProvider", () => {
     writeFileSync(brokenGit, "#!/bin/sh\n");
     chmodSync(brokenGit, 0o644);
 
-    const provider = new LocalGitCoAuthorProvider({
+    const provider = localGitCoAuthorProvider({
       repos: [repo],
       identities: OWNER_IDENTITIES,
       git: brokenGit,
@@ -407,7 +407,7 @@ describe("LocalGitCoAuthorProvider", () => {
   it("validates the date range", async () => {
     const repo = join(root, "validate");
     initRepo(repo);
-    const provider = new LocalGitCoAuthorProvider({
+    const provider = localGitCoAuthorProvider({
       repos: [repo],
       identities: OWNER_IDENTITIES,
       refScope: "all",

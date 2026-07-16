@@ -3,7 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { createPublicSnapshot, writePublicSnapshot } from "../snapshot";
+import { createPublicSnapshot } from "../snapshot/create";
+import { writePublicSnapshot } from "../snapshot/write";
 
 const roots: string[] = [];
 

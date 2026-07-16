@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { GitHubCoAuthorProvider } from "../providers/github-coauthor";
+import { githubCoAuthorProvider } from "../providers/github-coauthor";
 import type { FetchParams } from "../types";
 
 const baseParams: FetchParams = {
@@ -23,7 +23,7 @@ const authorDateRange = (query: string): [string, string] => {
   return match ? [match[1], match[2]] : ["", ""];
 };
 
-describe("GitHubCoAuthorProvider", () => {
+describe("githubCoAuthorProvider", () => {
   it("buckets commits by author date with per-agent sources", async () => {
     const fetchMock = vi.fn(async () =>
       json({
@@ -32,7 +32,7 @@ describe("GitHubCoAuthorProvider", () => {
       }),
     );
 
-    const provider = new GitHubCoAuthorProvider({
+    const provider = githubCoAuthorProvider({
       token: "ghp_test",
       agents: ["claude"],
       fetch: fetchMock,
@@ -52,7 +52,7 @@ describe("GitHubCoAuthorProvider", () => {
       json({ total_count: 0, items: [] }),
     );
 
-    const provider = new GitHubCoAuthorProvider({
+    const provider = githubCoAuthorProvider({
       token: "ghp_token",
       agents: ["claude"],
       fetch: fetchMock,
@@ -83,7 +83,7 @@ describe("GitHubCoAuthorProvider", () => {
       json({ total_count: 0, items: [] }),
     );
 
-    const provider = new GitHubCoAuthorProvider({
+    const provider = githubCoAuthorProvider({
       token: "ghp_token",
       agents: ["copilot"],
       fetch: fetchMock,
@@ -101,7 +101,7 @@ describe("GitHubCoAuthorProvider", () => {
       json({ total_count: 0, items: [] }),
     );
 
-    const provider = new GitHubCoAuthorProvider({
+    const provider = githubCoAuthorProvider({
       token: "ghp_token",
       agents: ["codex"],
       fetch: fetchMock,
@@ -128,7 +128,7 @@ describe("GitHubCoAuthorProvider", () => {
       return json({ total_count: 0, items: [] });
     });
 
-    const provider = new GitHubCoAuthorProvider({
+    const provider = githubCoAuthorProvider({
       token: "ghp_token",
       agents: ["claude"],
       fetch: fetchMock,
@@ -147,7 +147,7 @@ describe("GitHubCoAuthorProvider", () => {
         : json({ total_count: 150, items: Array.from({ length: 50 }, () => commit("2025-06-02")) });
     });
 
-    const provider = new GitHubCoAuthorProvider({
+    const provider = githubCoAuthorProvider({
       token: "ghp_token",
       agents: ["claude"],
       fetch: fetchMock,
@@ -175,7 +175,7 @@ describe("GitHubCoAuthorProvider", () => {
       return json({ total_count: 1, items: [commit("2025-09-20")] });
     });
 
-    const provider = new GitHubCoAuthorProvider({
+    const provider = githubCoAuthorProvider({
       token: "ghp_token",
       agents: ["claude"],
       fetch: fetchMock,
@@ -207,7 +207,7 @@ describe("GitHubCoAuthorProvider", () => {
       return json({ total_count: 1, items: [commit("2025-06-01")] });
     });
 
-    const provider = new GitHubCoAuthorProvider({
+    const provider = githubCoAuthorProvider({
       token: "ghp_token",
       agents: ["claude", "codex"],
       fetch: fetchMock,
@@ -226,7 +226,7 @@ describe("GitHubCoAuthorProvider", () => {
   it("returns a zero-filled canonical range when no commits match", async () => {
     const fetchMock = vi.fn(async () => json({ total_count: 0, items: [] }));
 
-    const provider = new GitHubCoAuthorProvider({
+    const provider = githubCoAuthorProvider({
       token: "ghp_token",
       agents: ["claude"],
       fetch: fetchMock,
@@ -250,7 +250,7 @@ describe("GitHubCoAuthorProvider", () => {
         }),
     );
 
-    const provider = new GitHubCoAuthorProvider({
+    const provider = githubCoAuthorProvider({
       token: "ghp_token",
       agents: ["claude"],
       fetch: fetchMock,
@@ -266,7 +266,7 @@ describe("GitHubCoAuthorProvider", () => {
       async () => new Response("boom", { status: 500, statusText: "Internal Server Error" }),
     );
 
-    const provider = new GitHubCoAuthorProvider({
+    const provider = githubCoAuthorProvider({
       token: "ghp_token",
       agents: ["claude"],
       fetch: fetchMock,
@@ -280,7 +280,7 @@ describe("GitHubCoAuthorProvider", () => {
   it("validates date formats and ranges before calling fetch", async () => {
     const fetchMock = vi.fn(async () => json({ total_count: 0, items: [] }));
 
-    const provider = new GitHubCoAuthorProvider({
+    const provider = githubCoAuthorProvider({
       token: "ghp_token",
       agents: ["claude"],
       fetch: fetchMock,
@@ -294,14 +294,14 @@ describe("GitHubCoAuthorProvider", () => {
   });
 
   it("throws when constructed with an unknown agent key", () => {
-    expect(() => new GitHubCoAuthorProvider({ token: "ghp_token", agents: ["nope"] })).toThrow(
+    expect(() => githubCoAuthorProvider({ token: "ghp_token", agents: ["nope"] })).toThrow(
       'Unknown agent key "nope"',
     );
   });
 
   it("throws when constructed with an empty token", () => {
-    expect(() => new GitHubCoAuthorProvider({ token: "  " })).toThrow(
-      "GitHubCoAuthorProvider requires a non-empty PAT token",
+    expect(() => githubCoAuthorProvider({ token: "  " })).toThrow(
+      "githubCoAuthorProvider requires a non-empty PAT token",
     );
   });
 });

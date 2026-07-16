@@ -1,4 +1,5 @@
 import type { ContributionDay } from "../types";
+import { addDays, daysInRange } from "./date";
 
 const mergeSources = (
   current: ContributionDay["sources"] = {},
@@ -34,13 +35,6 @@ const mergeDay = (
   };
 };
 
-export const formatDateYYYYMMDD = (d: Date): string => {
-  const y = d.getUTCFullYear();
-  const m = d.getUTCMonth() + 1;
-  const day = d.getUTCDate();
-  return `${y}-${m < 10 ? "0" + m : m}-${day < 10 ? "0" + day : day}`;
-};
-
 export const normalizeEventsToDaily = (events: ContributionDay[]): ContributionDay[] => {
   if (events.length === 0) return [];
 
@@ -53,16 +47,23 @@ export const normalizeEventsToDaily = (events: ContributionDay[]): ContributionD
   const startDate = dates[0];
   const endDate = dates[dates.length - 1];
 
-  const [startY, startM, startD] = startDate.split("-").map(Number);
-  const [endY, endM, endD] = endDate.split("-").map(Number);
-  const startUTC = Date.UTC(startY, startM - 1, startD);
-  const endUTC = Date.UTC(endY, endM - 1, endD);
-
-  const dayCount = Math.round((endUTC - startUTC) / (1000 * 60 * 60 * 24)) + 1;
-
-  return Array.from({ length: dayCount }, (_, i) => {
-    const d = new Date(Date.UTC(startY, startM - 1, startD + i));
-    const dateStr = formatDateYYYYMMDD(d);
+  return Array.from({ length: daysInRange(startDate, endDate) }, (_, i) => {
+    const dateStr = addDays(startDate, i);
     return merged.get(dateStr) ?? { date: dateStr, count: 0 };
   });
+};
+
+export const toCanonicalDays = (
+  days: ContributionDay[],
+  start: string,
+  end: string,
+): ContributionDay[] => {
+  const anchors =
+    start === end
+      ? [{ date: start, count: 0 }]
+      : [
+          { date: start, count: 0 },
+          { date: end, count: 0 },
+        ];
+  return normalizeEventsToDaily([...anchors, ...days]);
 };

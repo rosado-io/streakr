@@ -1,29 +1,30 @@
 import { describe, it, expect } from "vitest";
-import { validateInputDates, toCanonicalDays } from "../providers/validation";
+import { validateDateRange } from "../core/date";
+import { toCanonicalDays } from "../core/normalize";
 
-describe("validateInputDates", () => {
+describe("validateDateRange", () => {
   it("accepts valid date ranges", () => {
-    expect(() => validateInputDates("2025-01-01", "2025-12-31")).not.toThrow();
+    expect(() => validateDateRange("2025-01-01", "2025-12-31")).not.toThrow();
   });
 
   it("accepts same start and end date", () => {
-    expect(() => validateInputDates("2025-06-15", "2025-06-15")).not.toThrow();
+    expect(() => validateDateRange("2025-06-15", "2025-06-15")).not.toThrow();
   });
 
   it("throws on invalid start date", () => {
-    expect(() => validateInputDates("bad", "2025-06-15")).toThrow("Invalid start date");
+    expect(() => validateDateRange("bad", "2025-06-15")).toThrow("Invalid start date");
   });
 
   it("throws on impossible calendar dates", () => {
-    expect(() => validateInputDates("2025-02-30", "2025-06-15")).toThrow("Invalid start date");
+    expect(() => validateDateRange("2025-02-30", "2025-06-15")).toThrow("Invalid start date");
   });
 
   it("throws on invalid end date", () => {
-    expect(() => validateInputDates("2025-06-15", "bad")).toThrow("Invalid end date");
+    expect(() => validateDateRange("2025-06-15", "bad")).toThrow("Invalid end date");
   });
 
   it("throws when start is after end", () => {
-    expect(() => validateInputDates("2025-06-20", "2025-06-10")).toThrow("Invalid range");
+    expect(() => validateDateRange("2025-06-20", "2025-06-10")).toThrow("Invalid range");
   });
 });
 
