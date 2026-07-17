@@ -3,7 +3,7 @@
   "version": "0.16.0",
   "description": "The universal Git contribution calendar. Aggregate activity from GitHub, GitLab, and more into one beautiful, framework-agnostic heatmap.",
   "type": "module",
-  "main": "./dist/streakr.cjs.js",
+  "main": "./dist/streakr.cjs",
   "module": "./dist/streakr.es.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -14,7 +14,7 @@
       },
       "require": {
         "types": "./dist/index.d.ts",
-        "default": "./dist/streakr.cjs.js"
+        "default": "./dist/streakr.cjs"
       }
     },
     "./agents": {
@@ -25,7 +25,7 @@
         },
         "require": {
           "types": "./dist/agents.d.ts",
-          "default": "./dist/agents.cjs.js"
+          "default": "./dist/agents.cjs"
         }
       }
     },

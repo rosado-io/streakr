@@ -13,10 +13,10 @@ type ContributionDay = {
 };
 ```
 
-- `GitHubCoAuthorProvider` (main entry) queries the GitHub commit search API.
-- `LocalGitCoAuthorProvider` (`@rosado-io/streakr/agents`, Node-only) scans local
+- `githubCoAuthorProvider` (main entry) queries the GitHub commit search API.
+- `localGitCoAuthorProvider` (`@rosado-io/streakr/agents`, Node-only) scans local
   clones with `git log`.
-- `GitHubCliProvider`, `GitHubCliCoAuthorProvider`, and `GitLabCliProvider` reuse
+- `githubCliProvider`, `githubCliCoAuthorProvider`, and `gitlabCliProvider` reuse
   authenticated local CLI sessions without accepting or exposing tokens.
 
 They compose with `aggregate()` and `normalizeEventsToDaily()` exactly like the
@@ -69,7 +69,7 @@ substring) or a `RegExp`.
 
 The two providers answer the same question from different vantage points.
 
-|                  | `GitHubCoAuthorProvider`                      | `LocalGitCoAuthorProvider`                                      |
+|                  | `githubCoAuthorProvider`                      | `localGitCoAuthorProvider`                                      |
 | ---------------- | --------------------------------------------- | --------------------------------------------------------------- |
 | Source           | GitHub commit search API                      | `git log` over local clones                                     |
 | Scope            | Default branch only                           | Published default branches by default; configurable             |
@@ -89,7 +89,7 @@ Rule of thumb: use the API route for a zero-infrastructure server-side fetch of
 public GitHub work; use the local route when you want the full, cross-host
 picture and can publish a snapshot.
 
-## `GitHubCoAuthorProvider`
+## `githubCoAuthorProvider`
 
 Counts commits co-authored by agents through the GitHub commit search API. For
 each agent it runs a query shaped like
@@ -97,9 +97,9 @@ each agent it runs a query shaped like
 the results by day, keyed per agent in `sources`.
 
 ```ts
-import { GitHubCoAuthorProvider } from "@rosado-io/streakr";
+import { githubCoAuthorProvider } from "@rosado-io/streakr";
 
-const agents = new GitHubCoAuthorProvider({
+const agents = githubCoAuthorProvider({
   token: process.env.GITHUB_TOKEN!,
 });
 
@@ -113,11 +113,12 @@ const days = await agents.fetchEvents({
 ### Options
 
 ```ts
-new GitHubCoAuthorProvider({
+githubCoAuthorProvider({
   token: "ghp_...",
   agents: ["claude", "codex", "opencode", "copilot"],
   endpoint: "https://api.github.com/search/commits",
   fetch: customFetch,
+  name: "github-agents",
 });
 ```
 
@@ -127,9 +128,11 @@ new GitHubCoAuthorProvider({
 - `endpoint` is optional and defaults to
   `https://api.github.com/search/commits`.
 - `fetch` is optional and defaults to global `fetch`.
+- `name` is optional and defaults to `"github-agents"`. Override it when
+  aggregating two instances of the same source, e.g. github.com plus a GitHub
+  Enterprise host.
 
-The provider `name` is `"github-agents"`. `user`, `start`, and `end` come from
-the `fetchEvents` params.
+`user`, `start`, and `end` come from the `fetchEvents` params.
 
 ### Caveats
 
@@ -141,19 +144,21 @@ the `fetchEvents` params.
 - **Private repos** require a PAT with `repo` scope.
 - **Run server-side.** Keep the PAT out of browser bundles.
 
-## `LocalGitCoAuthorProvider`
+## `localGitCoAuthorProvider`
 
 Scans local repositories with `git log`, verifies that the author or a co-author
 matches one of the configured owner identities, parses agent trailers, dedupes
 by commit SHA, and buckets by day. It uses published default branches by default
 and can opt into every remote or local ref.
 
-This provider lives in the Node-only subpath:
+This provider lives in the Node-only subpath. The `./agents` export is declared
+behind a `node` export condition, so bundling it for a browser target fails
+loudly at resolve time instead of shipping Node built-ins to the client:
 
 ```ts
-import { LocalGitCoAuthorProvider } from "@rosado-io/streakr/agents";
+import { localGitCoAuthorProvider } from "@rosado-io/streakr/agents";
 
-const local = new LocalGitCoAuthorProvider({
+const local = localGitCoAuthorProvider({
   roots: ["/Users/me/code"],
   identities: [
     { email: "me@example.com" },
@@ -171,7 +176,7 @@ const days = await local.fetchEvents({
 ### Options
 
 ```ts
-new LocalGitCoAuthorProvider({
+localGitCoAuthorProvider({
   repos: ["/Users/me/code/streakr"],
   roots: ["/Users/me/code"],
   identities: [{ email: "me@example.com" }],
@@ -180,6 +185,7 @@ new LocalGitCoAuthorProvider({
   maxDepth: 6,
   rules: AGENT_TRAILER_RULES,
   git: "git",
+  name: "local-git",
 });
 ```
 
@@ -193,10 +199,11 @@ new LocalGitCoAuthorProvider({
 - `strict` defaults to `false` for backwards-compatible best-effort scans. Use
   `true` for published snapshots so a Git failure aborts the update. Repositories
   with no refs in the selected scope contribute zero and are not failures.
-- The constructor **throws if neither `repos` nor `roots` is provided.**
+- The factory **throws if neither `repos` nor `roots` is provided.**
 - `maxDepth` is optional and defaults to `6`.
 - `rules` is optional and defaults to `AGENT_TRAILER_RULES`.
 - `git` is optional and defaults to `"git"` (the executable to invoke).
+- `name` is optional and defaults to `"local-git"`.
 
 ### Caveats
 

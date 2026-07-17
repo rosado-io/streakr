@@ -27,7 +27,7 @@ export default defineConfig({
       formats: ["es", "cjs"],
       fileName: (format, entryName) => {
         const base = entryName === "index" ? "streakr" : entryName;
-        return `${base}.${format === "es" ? "es" : "cjs"}.js`;
+        return format === "es" ? `${base}.es.js` : `${base}.cjs`;
       },
     },
     rollupOptions: {
