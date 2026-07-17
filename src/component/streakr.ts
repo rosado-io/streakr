@@ -28,13 +28,22 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   root.appendChild(tooltip.el);
 
   let currentDraw: (() => void) | null = null;
-  let skipNextResizeRedraw = false;
+  let observedWrap: HTMLElement | null = null;
+  let lastDrawWidth = 0;
   let wasLoading = false;
+  // Redraw only when the wrap width actually changed since the last draw. This
+  // makes the observer's initial callback a natural no-op without a skip flag,
+  // which would swallow the first real resize when that callback never fires
+  // (e.g. some embedded browsers, or elements without a box at observe time).
   const resizeObs = new ResizeObserver(() => {
-    if (skipNextResizeRedraw) {
-      skipNextResizeRedraw = false;
+    if (!observedWrap) {
       return;
     }
+    const width = observedWrap.getBoundingClientRect().width;
+    if (Math.abs(width - lastDrawWidth) < 1) {
+      return;
+    }
+    lastDrawWidth = width;
     currentDraw?.();
   });
 
@@ -74,8 +83,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     card.appendChild(bodyEl);
     bodyEl.__skDraw?.();
     if (bodyEl.__skObserveTarget) {
-      skipNextResizeRedraw = true;
-      resizeObs.observe(bodyEl.__skObserveTarget);
+      observedWrap = bodyEl.__skObserveTarget;
+      lastDrawWidth = observedWrap.getBoundingClientRect().width;
+      resizeObs.observe(observedWrap);
     }
   };
 
@@ -84,6 +94,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     tooltip.hide();
     resizeObs.disconnect();
     currentDraw = null;
+    observedWrap = null;
 
     const wasOpen = state.yearModalOpen;
     const flags = computeRenderFlags(ctx);

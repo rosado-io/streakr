@@ -28,6 +28,24 @@ describe("createStreakr", () => {
   const years = [2022, 2023, 2024, 2025, 2026];
   const getDays = (year: number) => makeYearDays(year);
 
+  const rect = (width: number): DOMRect => ({
+    width,
+    height: 600,
+    top: 0,
+    left: 0,
+    right: width,
+    bottom: 600,
+    x: 0,
+    y: 0,
+    toJSON: () => "",
+  });
+
+  const setContainerWidth = (width: number) => {
+    HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
+      return rect(width);
+    };
+  };
+
   beforeEach(() => {
     originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
     HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
@@ -1071,25 +1089,78 @@ describe("createStreakr", () => {
     });
   });
 
-  describe("mobile contribution ring", () => {
-    const rect = (width: number): DOMRect => ({
-      width,
-      height: 600,
-      top: 0,
-      left: 0,
-      right: width,
-      bottom: 600,
-      x: 0,
-      y: 0,
-      toJSON: () => "",
+  describe("resize handling", () => {
+    let resizeCallback: ResizeObserverCallback | null = null;
+    let OriginalResizeObserver: typeof ResizeObserver;
+    let observed: Element[] = [];
+
+    beforeEach(() => {
+      OriginalResizeObserver = globalThis.ResizeObserver;
+      resizeCallback = null;
+      observed = [];
+      globalThis.ResizeObserver = class {
+        constructor(cb: ResizeObserverCallback) {
+          resizeCallback = cb;
+        }
+        observe(el: Element): void {
+          observed.push(el);
+        }
+        unobserve(): void {}
+        disconnect(): void {}
+      };
     });
 
-    const setContainerWidth = (width: number) => {
-      HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
-        return rect(width);
-      };
+    afterEach(() => {
+      globalThis.ResizeObserver = OriginalResizeObserver;
+    });
+
+    const fireResize = () => {
+      resizeCallback?.([], {} as ResizeObserver);
     };
 
+    it("observes the heatmap wrap after mount", () => {
+      instance = createStreakr({ target, years, getDays });
+      expect(observed.some((el) => el.classList.contains("sk-heatmap-wrap"))).toBe(true);
+    });
+
+    it("keeps the current layout when the observer fires without a width change", () => {
+      setContainerWidth(1024);
+      instance = createStreakr({ target, years, getDays });
+      const svgBefore = target.querySelector(".sk-heatmap-svg");
+      expect(svgBefore).toBeTruthy();
+
+      fireResize();
+
+      expect(target.querySelector(".sk-heatmap-svg")).toBe(svgBefore);
+    });
+
+    it("switches to the ring on the first resize below the breakpoint even when the initial observation never fired", () => {
+      setContainerWidth(1024);
+      instance = createStreakr({ target, years, getDays });
+      expect(target.querySelector(".sk-heatmap-svg")).toBeTruthy();
+      expect(target.querySelector(".sk-ring-svg")).toBeNull();
+
+      setContainerWidth(375);
+      fireResize();
+
+      expect(target.querySelector(".sk-ring-svg")).toBeTruthy();
+      expect(target.querySelector(".sk-heatmap-svg")).toBeNull();
+    });
+
+    it("switches back to the heatmap when resized above the breakpoint", () => {
+      setContainerWidth(375);
+      instance = createStreakr({ target, years, getDays });
+      expect(target.querySelector(".sk-ring-svg")).toBeTruthy();
+
+      setContainerWidth(1024);
+      fireResize();
+
+      expect(target.querySelector(".sk-heatmap-svg")).toBeTruthy();
+      expect(target.querySelector(".sk-ring-svg")).toBeNull();
+    });
+  });
+
+  describe("mobile contribution ring", () => {
     const svgRect = (): DOMRect => ({
       width: 360,
       height: 360,
