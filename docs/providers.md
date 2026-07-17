@@ -258,7 +258,7 @@ For heavy usage:
   indexing lag.
 - Copilot's coding-agent commits are sometimes authored by the bot itself, so
   `author:<user>` misses them.
-- Private repositories require the same `repo`-scoped PAT as `GitHubProvider`;
+- Private repositories require the same `repo`-scoped PAT as `githubProvider`;
   server-side usage is recommended.
 
 ### Failure Behavior

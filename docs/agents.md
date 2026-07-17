@@ -230,15 +230,15 @@ before exposing both kinds of provider chip.
 ```ts
 import {
   AGENT_TRAILER_RULES,
-  GitHubProvider,
-  GitHubCoAuthorProvider,
+  githubProvider,
+  githubCoAuthorProvider,
   splitCoAuthored,
 } from "@rosado-io/streakr";
 
 const params = { user: "octocat", start: "2026-01-01", end: "2026-12-31" };
 const [githubDays, coauthoredDays] = await Promise.all([
-  new GitHubProvider({ token: process.env.GITHUB_TOKEN! }).fetchEvents(params),
-  new GitHubCoAuthorProvider({ token: process.env.GITHUB_TOKEN! }).fetchEvents(params),
+  githubProvider({ token: process.env.GITHUB_TOKEN! }).fetchEvents(params),
+  githubCoAuthorProvider({ token: process.env.GITHUB_TOKEN! }).fetchEvents(params),
 ]);
 
 const perAgent = Object.fromEntries(
@@ -273,9 +273,9 @@ versioned snapshot:
 
 ```ts
 import {
-  GitHubCliProvider,
-  GitHubCliCoAuthorProvider,
-  GitLabCliProvider,
+  githubCliProvider,
+  githubCliCoAuthorProvider,
+  gitlabCliProvider,
   createPublicSnapshot,
   writePublicSnapshot,
 } from "@rosado-io/streakr/agents";
@@ -283,9 +283,9 @@ import {
 const params = { user: "octocat", start: "2026-01-01", end: "2026-12-31" };
 
 const [github, gitlab, agents] = await Promise.all([
-  new GitHubCliProvider().fetchEvents(params),
-  new GitLabCliProvider().fetchEvents(params),
-  new GitHubCliCoAuthorProvider().fetchEvents(params),
+  githubCliProvider().fetchEvents(params),
+  gitlabCliProvider().fetchEvents(params),
+  githubCliCoAuthorProvider().fetchEvents(params),
 ]);
 
 const snapshot = createPublicSnapshot({
