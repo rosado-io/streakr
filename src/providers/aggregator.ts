@@ -11,7 +11,7 @@ export const aggregate = async (
 
   return providers.flatMap((provider, index) => {
     const result = results[index];
-    if (!result || result.status !== "fulfilled") return [];
+    if (result?.status !== "fulfilled") return [];
     return result.value.map((day) => ({
       date: day.date,
       count: day.count,

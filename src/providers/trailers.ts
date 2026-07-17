@@ -40,8 +40,13 @@ export const resolveAgentMatches = (
   (keys ?? rules.map((rule) => rule.key)).map((key) => {
     const rule = rules.find((candidate) => candidate.key === key);
     if (!rule) throw new Error(`Unknown agent key "${key}"`);
-    const match = typeof rule.email === "string" ? rule.email : rule.name;
-    if (typeof match !== "string") {
+    const match =
+      typeof rule.email === "string"
+        ? rule.email
+        : typeof rule.name === "string"
+          ? rule.name
+          : null;
+    if (match === null) {
       throw new Error(`Agent "${key}" has no searchable co-author match`);
     }
     return { key, match };
