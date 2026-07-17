@@ -1,16 +1,16 @@
-export { normalizeEventsToDaily } from "./core/normalize";
+export { normalizeEventsToDaily, toCanonicalDays } from "./core/normalize";
 export { computeStreaks } from "./core/streaks";
 export { splitCoAuthored } from "./core/split";
 export type { SplitCoAuthoredOptions } from "./core/split";
 export { buildCalendarGrid } from "./core/grid";
 
-export type { Provider } from "./providers/types";
+export type { Provider, FetchLike } from "./providers/types";
 export { aggregate } from "./providers/aggregator";
-export { GitHubProvider } from "./providers/github";
+export { githubProvider } from "./providers/github";
 export type { GitHubProviderOptions } from "./providers/github";
-export { GitLabProvider } from "./providers/gitlab";
+export { gitlabProvider } from "./providers/gitlab";
 export type { GitLabProviderOptions } from "./providers/gitlab";
-export { GitHubCoAuthorProvider } from "./providers/github-coauthor";
+export { githubCoAuthorProvider } from "./providers/github-coauthor";
 export type { GitHubCoAuthorProviderOptions } from "./providers/github-coauthor";
 export {
   AGENT_TRAILER_RULES,

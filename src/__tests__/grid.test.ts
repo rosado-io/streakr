@@ -20,13 +20,13 @@ describe("buildCalendarGrid", () => {
     const result = buildCalendarGrid([day("2025-06-15", 5)]);
     expect(result.totalContributions).toBe(5);
     expect(result.weeks).toHaveLength(1);
-    expect(result.weeks[0][0]).toEqual({
+    expect(result.weeks[0]![0]).toEqual({
       date: "2025-06-15",
       count: 5,
       level: 1,
     });
     for (let i = 1; i < 7; i++) {
-      expect(result.weeks[0][i]).toBeNull();
+      expect(result.weeks[0]![i]).toBeNull();
     }
   });
 
@@ -47,10 +47,10 @@ describe("buildCalendarGrid", () => {
 
   it("pads the first week with nulls for days before startDate", () => {
     const result = buildCalendarGrid([day("2025-06-18", 1)]);
-    expect(result.weeks[0][0]).toBeNull();
-    expect(result.weeks[0][1]).toBeNull();
-    expect(result.weeks[0][2]).toBeNull();
-    const wed = result.weeks[0][3];
+    expect(result.weeks[0]![0]).toBeNull();
+    expect(result.weeks[0]![1]).toBeNull();
+    expect(result.weeks[0]![2]).toBeNull();
+    const wed = result.weeks[0]![3];
     expect(wed).not.toBeNull();
     expect(wed?.date).toBe("2025-06-18");
   });
@@ -59,9 +59,9 @@ describe("buildCalendarGrid", () => {
     const result = buildCalendarGrid([day("2025-06-18", 1)], {
       weekStartsOn: 1,
     });
-    expect(result.weeks[0][0]).toBeNull();
-    expect(result.weeks[0][1]).toBeNull();
-    const wed = result.weeks[0][2];
+    expect(result.weeks[0]![0]).toBeNull();
+    expect(result.weeks[0]![1]).toBeNull();
+    const wed = result.weeks[0]![2];
     expect(wed).not.toBeNull();
     expect(wed?.date).toBe("2025-06-18");
   });
@@ -133,7 +133,7 @@ describe("buildCalendarGrid", () => {
     const result = buildCalendarGrid(input);
     expect(result.totalContributions).toBe(30);
     expect(countCells(result.weeks)).toBe(30);
-    const firstCell = result.weeks[0][0];
+    const firstCell = result.weeks[0]![0];
     expect(firstCell).not.toBeNull();
     expect(firstCell?.date).toBe("2025-06-01");
   });

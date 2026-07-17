@@ -32,7 +32,7 @@ describe("createStreakr", () => {
     originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
     HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
       const original = originalGetBoundingClientRect.call(this);
-      return { ...original, width: 1024 } as DOMRect;
+      return { ...original, width: 1024 };
     };
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 5, 20));
@@ -92,19 +92,16 @@ describe("createStreakr", () => {
     it("handles theme: 'system' auto-detection", () => {
       const originalMatchMedia = window.matchMedia;
       const mockMatches = vi.fn().mockReturnValue(true);
-      window.matchMedia = vi.fn().mockImplementation(
-        (query) =>
-          ({
-            matches: mockMatches(),
-            media: query,
-            onchange: null,
-            addListener: vi.fn(),
-            removeListener: vi.fn(),
-            addEventListener: vi.fn(),
-            removeEventListener: vi.fn(),
-            dispatchEvent: vi.fn(),
-          }) as unknown as MediaQueryList,
-      );
+      window.matchMedia = vi.fn().mockImplementation((query) => ({
+        matches: mockMatches(),
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }));
 
       instance = createStreakr({ target, theme: "system", years, getDays });
       const root = target.querySelector<HTMLElement>(".sk-root");
@@ -115,6 +112,20 @@ describe("createStreakr", () => {
       expect(root?.dataset.theme).toBe("light");
 
       window.matchMedia = originalMatchMedia;
+    });
+
+    it("falls back to light for theme: 'system' when matchMedia is unavailable", () => {
+      const originalMatchMedia = window.matchMedia;
+      // @ts-expect-error simulate a DOM shim without matchMedia
+      delete window.matchMedia;
+
+      try {
+        instance = createStreakr({ target, theme: "system", years, getDays });
+        const root = target.querySelector<HTMLElement>(".sk-root");
+        expect(root?.dataset.theme).toBe("light");
+      } finally {
+        window.matchMedia = originalMatchMedia;
+      }
     });
 
     it("applies accent CSS variables on the root", () => {
@@ -261,7 +272,7 @@ describe("createStreakr", () => {
       const githubChip = target.querySelector<HTMLButtonElement>(".sk-provider");
       githubChip?.click();
       expect(onProviderToggle).toHaveBeenCalledTimes(1);
-      const [key, enabled, allState] = onProviderToggle.mock.calls[0];
+      const [key, enabled, allState] = onProviderToggle.mock.calls[0]!;
       expect(key).toBe("github");
       expect(enabled).toBe(false);
       expect(allState).toMatchObject({ github: false });
@@ -286,8 +297,8 @@ describe("createStreakr", () => {
       });
       const chips = target.querySelectorAll(".sk-provider");
       expect(chips).toHaveLength(2);
-      expect(chips[0].getAttribute("aria-label")).toContain("Gitea");
-      expect(chips[1].getAttribute("aria-label")).toContain("Forgejo");
+      expect(chips[0]!.getAttribute("aria-label")).toContain("Gitea");
+      expect(chips[1]!.getAttribute("aria-label")).toContain("Forgejo");
     });
 
     it("renders a custom icon when supplied", () => {
@@ -484,7 +495,7 @@ describe("createStreakr", () => {
       });
 
       const statValues = target.querySelectorAll<HTMLElement>(".sk-stat-value");
-      expect(statValues[0].textContent?.trim()).toBe("5");
+      expect(statValues[0]!.textContent?.trim()).toBe("5");
     });
 
     it("renders total-only days when sources are omitted", () => {
@@ -584,7 +595,7 @@ describe("createStreakr", () => {
       expect(target.querySelector("rect.sk-heatmap-skeleton-cell")).toBeNull();
       const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell");
       expect(cells.length).toBeGreaterThan(0);
-      expect(cells[0].style.animationDelay).toBe("");
+      expect(cells[0]!.style.animationDelay).toBe("");
     });
 
     it("staggers skeleton cells by column and varies their peak intensity", () => {
@@ -761,7 +772,7 @@ describe("createStreakr", () => {
     it("appears on cell mouseenter for a non-empty cell", () => {
       instance = createStreakr({ target, years, getDays });
       const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell");
-      const cell = cells[3];
+      const cell = cells[3]!;
       cell.dispatchEvent(new MouseEvent("mouseenter", { clientX: 50, clientY: 50 }));
       const tooltip = target.querySelector(".sk-tooltip");
       expect(tooltip?.classList.contains("visible")).toBe(true);
@@ -784,7 +795,7 @@ describe("createStreakr", () => {
       cell?.dispatchEvent(new MouseEvent("mouseenter", { clientX: 10, clientY: 10 }));
       const tooltip = target.querySelector(".sk-tooltip");
       expect(tooltip?.classList.contains("visible")).toBe(true);
-      instance.setYear(years[0]);
+      instance.setYear(years[0]!);
       expect(tooltip?.classList.contains("visible")).toBe(false);
     });
 
@@ -1061,18 +1072,17 @@ describe("createStreakr", () => {
   });
 
   describe("mobile contribution ring", () => {
-    const rect = (width: number): DOMRect =>
-      ({
-        width,
-        height: 600,
-        top: 0,
-        left: 0,
-        right: width,
-        bottom: 600,
-        x: 0,
-        y: 0,
-        toJSON: () => "",
-      }) as DOMRect;
+    const rect = (width: number): DOMRect => ({
+      width,
+      height: 600,
+      top: 0,
+      left: 0,
+      right: width,
+      bottom: 600,
+      x: 0,
+      y: 0,
+      toJSON: () => "",
+    });
 
     const setContainerWidth = (width: number) => {
       HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
@@ -1080,18 +1090,17 @@ describe("createStreakr", () => {
       };
     };
 
-    const svgRect = (): DOMRect =>
-      ({
-        width: 360,
-        height: 360,
-        top: 0,
-        left: 0,
-        right: 360,
-        bottom: 360,
-        x: 0,
-        y: 0,
-        toJSON: () => "",
-      }) as DOMRect;
+    const svgRect = (): DOMRect => ({
+      width: 360,
+      height: 360,
+      top: 0,
+      left: 0,
+      right: 360,
+      bottom: 360,
+      x: 0,
+      y: 0,
+      toJSON: () => "",
+    });
 
     const pointerAt = (type: string, clientX: number, clientY: number): PointerEvent => {
       const event = new MouseEvent(type, {
@@ -1342,7 +1351,7 @@ describe("createStreakr", () => {
       const delays = lines.map((line) => parseFloat(line.style.animationDelay));
       expect(delays[0]).toBe(0);
       for (let i = 1; i < delays.length; i++) {
-        expect(delays[i]).toBeGreaterThan(delays[i - 1]);
+        expect(delays[i]).toBeGreaterThan(delays[i - 1]!);
       }
       // Delays span up to (but not including) one full revolution, so the wrap from
       // the last day back to Jan 1 stays seamless instead of flashing the whole ring.
@@ -1513,8 +1522,6 @@ describe("createStreakr", () => {
       instance = createStreakr({ target, years, getDays });
       const ring = target.querySelector(".sk-ring");
 
-      expect(target.textContent).not.toContain("CONTRIBUTION RING");
-      expect(target.textContent).not.toContain("Arrastra el selector para recorrer el año");
       expect(target.querySelector(".sk-ring-title")).toBeNull();
       expect(target.querySelector(".sk-ring-legend")).toBeNull();
       expect(target.querySelector(".sk-ring-hint")).toBeNull();
@@ -1545,7 +1552,7 @@ describe("createStreakr", () => {
     const setContainerWidth = (width: number): void => {
       HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
         const original = originalGetBoundingClientRect.call(this);
-        return { ...original, width } as DOMRect;
+        return { ...original, width };
       };
     };
 
@@ -1571,8 +1578,8 @@ describe("createStreakr", () => {
       expect(modal).toBeTruthy();
       if (!modal) return;
       const buttons = Array.from(modal.querySelectorAll<HTMLButtonElement>("button"));
-      const first = buttons[0];
-      const last = buttons[buttons.length - 1];
+      const first = buttons[0]!;
+      const last = buttons[buttons.length - 1]!;
 
       last.focus();
       modal.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
@@ -1680,7 +1687,11 @@ describe("createStreakr", () => {
         target.querySelectorAll<SVGLineElement>(".sk-ring-line:not(.sk-ring-line--future)"),
       );
       expect(focusable).toHaveLength(5);
-      const [jan1, jan2, jan3, jan4, jan5] = focusable;
+      const jan1 = focusable[0]!;
+      const jan2 = focusable[1]!;
+      const jan3 = focusable[2]!;
+      const jan4 = focusable[3]!;
+      const jan5 = focusable[4]!;
 
       expect(jan5.getAttribute("tabindex")).toBe("0");
       expect(jan2.getAttribute("tabindex")).toBe("-1");

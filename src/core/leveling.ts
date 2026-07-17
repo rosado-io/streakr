@@ -18,7 +18,8 @@ const LEVEL_PERCENTILES = [0.25, 0.55, 0.8] as const;
 export const computeLevelThresholds = (counts: number[]): [number, number, number] => {
   const active = counts.filter((c) => c > 0).sort((a, b) => a - b);
   if (active.length === 0) return [0, 0, 0];
-  const at = (q: number) => active[Math.min(active.length - 1, Math.floor(active.length * q))];
+  const at = (q: number): number =>
+    active[Math.min(active.length - 1, Math.floor(active.length * q))] ?? 0;
   return [at(LEVEL_PERCENTILES[0]), at(LEVEL_PERCENTILES[1]), at(LEVEL_PERCENTILES[2])];
 };
 

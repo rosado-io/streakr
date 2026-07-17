@@ -26,9 +26,9 @@ const DEMO_PROVIDERS: StreakrProvider[] = [
 
 const AGENT_SNIPPETS: Record<string, string> = {
   github: `<span class="c-c">// count commits co-authored by agents via the GitHub search API (server-side)</span>
-<span class="c-k">import</span> { GitHubCoAuthorProvider, AGENT_PROVIDERS } <span class="c-k">from</span> <span class="c-s">'@rosado-io/streakr'</span>
+<span class="c-k">import</span> { githubCoAuthorProvider, AGENT_PROVIDERS } <span class="c-k">from</span> <span class="c-s">'@rosado-io/streakr'</span>
 
-<span class="c-k">const</span> agents = <span class="c-k">new</span> <span class="c-fn">GitHubCoAuthorProvider</span>({ token: process.env.GITHUB_TOKEN })
+<span class="c-k">const</span> agents = <span class="c-fn">githubCoAuthorProvider</span>({ token: process.env.GITHUB_TOKEN })
 
 <span class="c-k">const</span> days = <span class="c-k">await</span> agents.<span class="c-fn">fetchEvents</span>({
   user: <span class="c-s">'octocat'</span>,
@@ -43,9 +43,9 @@ const AGENT_SNIPPETS: Record<string, string> = {
   providers: [...DEFAULT_PROVIDERS, ...AGENT_PROVIDERS],
 })`,
   local: `<span class="c-c">// scan local clones — every branch, every host, no token needed (Node)</span>
-<span class="c-k">import</span> { LocalGitCoAuthorProvider } <span class="c-k">from</span> <span class="c-s">'@rosado-io/streakr/agents'</span>
+<span class="c-k">import</span> { localGitCoAuthorProvider } <span class="c-k">from</span> <span class="c-s">'@rosado-io/streakr/agents'</span>
 
-<span class="c-k">const</span> local = <span class="c-k">new</span> <span class="c-fn">LocalGitCoAuthorProvider</span>({ roots: [<span class="c-s">'/Users/me/code'</span>] })
+<span class="c-k">const</span> local = <span class="c-fn">localGitCoAuthorProvider</span>({ roots: [<span class="c-s">'/Users/me/code'</span>] })
 
 <span class="c-k">const</span> days = <span class="c-k">await</span> local.<span class="c-fn">fetchEvents</span>({
   user: <span class="c-s">'ignored'</span>, <span class="c-c">// local scan only uses the date range</span>
@@ -307,7 +307,7 @@ function syncMobileState(): void {
   if (!mobileReady || !mobileIframe?.contentWindow) return;
   mobileIframe.contentWindow.postMessage(
     { type: "streakr-demo-state", payload: state },
-    g.location.origin
+    g.location.origin,
   );
 }
 
@@ -370,7 +370,10 @@ function renderComponent(): void {
 
 function updateComponent(): void {
   if (state.view === "desktop") {
-    if (!instance) return mountComponent();
+    if (!instance) {
+      mountComponent();
+      return;
+    }
     instance.update({
       theme: state.theme,
       accent: state.accent,
@@ -575,7 +578,14 @@ function makeToggle({ tip, active, svg, onClick }: ToggleOpts): HTMLElement {
 
 g.addEventListener("message", (event) => {
   if (event.origin !== g.location.origin) return;
-  if (event.data?.type !== "streakr-mobile-ready") return;
+  const data: unknown = event.data;
+  if (
+    !data ||
+    typeof data !== "object" ||
+    (data as { type?: unknown }).type !== "streakr-mobile-ready"
+  ) {
+    return;
+  }
   mobileReady = true;
   syncMobileState();
 });

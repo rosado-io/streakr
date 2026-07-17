@@ -323,16 +323,16 @@ result for the component.
 
 ```ts
 import {
-  GitHubProvider,
-  GitLabProvider,
+  githubProvider,
+  gitlabProvider,
   aggregate,
   normalizeEventsToDaily,
 } from "@rosado-io/streakr";
 
 const events = await aggregate(
   [
-    new GitHubProvider({ token: process.env.GITHUB_TOKEN! }),
-    new GitLabProvider({ token: process.env.GITLAB_TOKEN! }),
+    githubProvider({ token: process.env.GITHUB_TOKEN! }),
+    gitlabProvider({ token: process.env.GITLAB_TOKEN! }),
   ],
   { user: "octocat", start: "2026-01-01", end: "2026-12-31" },
 );
@@ -354,11 +354,11 @@ provider.
 
 For coding-agent activity, two providers count `Co-authored-by:` trailers and
 return the same daily series keyed per agent (Claude, Codex, opencode, Copilot):
-`GitHubCoAuthorProvider` reads the GitHub commit search API, and
-`LocalGitCoAuthorProvider` (`@rosado-io/streakr/agents`, Node-only) scans local
+`githubCoAuthorProvider` reads the GitHub commit search API, and
+`localGitCoAuthorProvider` (`@rosado-io/streakr/agents`, Node-only) scans local
 clones across GitHub, GitLab, and self-hosted origins. Published default branches
-are the safe default; all remote or local refs are opt-in. `GitHubCliProvider`
-and `GitLabCliProvider` can reuse local CLI sessions without accepting tokens,
+are the safe default; all remote or local refs are opt-in. `githubCliProvider`
+and `gitlabCliProvider` can reuse local CLI sessions without accepting tokens,
 and the snapshot helper publishes only sanitized counts. Trailers count shipped
 commits, not agent usage, so the numbers are a lower bound. See
 [docs/agents.md](docs/agents.md) for semantics, configuration, and privacy.
@@ -391,8 +391,8 @@ These are independent helpers — useful if you want to plug custom data into
 ```ts
 import {
   createStreakr,
-  GitHubProvider,
-  GitLabProvider,
+  githubProvider,
+  gitlabProvider,
   aggregate,
   normalizeEventsToDaily,
   computeStreaks,
@@ -404,7 +404,7 @@ import {
 
 Streakr does not send data to any Streakr-owned service and does not include
 analytics, cookies, or background network calls. The component renders whatever
-`getDays` returns into the DOM. Provider classes call the configured Git host
+`getDays` returns into the DOM. Providers call the configured Git host
 directly from the environment where your code runs.
 
 Treat tokens as secrets:

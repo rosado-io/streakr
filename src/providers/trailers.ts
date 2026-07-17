@@ -13,6 +13,11 @@ export interface AgentTrailerRule {
   name?: string | RegExp;
 }
 
+export interface AgentMatch {
+  key: string;
+  match: string;
+}
+
 export const AGENT_TRAILER_RULES: readonly AgentTrailerRule[] = [
   { key: "claude", email: "noreply@anthropic.com" },
   { key: "codex", email: "codex@openai.com" },
@@ -20,7 +25,33 @@ export const AGENT_TRAILER_RULES: readonly AgentTrailerRule[] = [
   { key: "copilot", name: "copilot", email: /@users\.noreply\.github\.com$/i },
 ];
 
-const TRAILER_RE = /^co-authored-by:(.*)<([^<>]+)>$/i;
+const TRAILER_RE = /^co-authored-by:(.*)$/i;
+const CO_AUTHOR_RE = /^(.*?)<([^<>]+)>\s*$/;
+
+export const parseCoAuthorValue = (value: string): CoAuthor | null => {
+  const match = CO_AUTHOR_RE.exec(value.trim());
+  return match ? { name: (match[1] ?? "").trim(), email: (match[2] ?? "").trim() } : null;
+};
+
+const searchableMatch = (rule: AgentTrailerRule): string | null => {
+  if (typeof rule.email === "string") return rule.email;
+  if (typeof rule.name === "string") return rule.name;
+  return null;
+};
+
+export const resolveAgentMatches = (
+  keys?: readonly string[],
+  rules: readonly AgentTrailerRule[] = AGENT_TRAILER_RULES,
+): AgentMatch[] =>
+  (keys ?? rules.map((rule) => rule.key)).map((key) => {
+    const rule = rules.find((candidate) => candidate.key === key);
+    if (!rule) throw new Error(`Unknown agent key "${key}"`);
+    const match = searchableMatch(rule);
+    if (match === null) {
+      throw new Error(`Agent "${key}" has no searchable co-author match`);
+    }
+    return { key, match };
+  });
 
 const finalBlock = (message: string): string[] => {
   const lines = message.split(/\r?\n/).map((line) => line.trimEnd());
@@ -35,9 +66,10 @@ export const parseCoAuthors = (message: string): CoAuthor[] =>
   finalBlock(message)
     .map((line) => TRAILER_RE.exec(line))
     .filter((match): match is RegExpExecArray => match !== null)
-    .map((match) => ({ name: match[1].trim(), email: match[2].trim() }));
+    .map((match) => parseCoAuthorValue(match[1] ?? ""))
+    .filter((coAuthor): coAuthor is CoAuthor => coAuthor !== null);
 
-const testStateless = (pattern: RegExp, value: string): boolean => {
+export const testStateless = (pattern: RegExp, value: string): boolean => {
   if (!pattern.global && !pattern.sticky) return pattern.test(value);
   const lastIndex = pattern.lastIndex;
   pattern.lastIndex = 0;

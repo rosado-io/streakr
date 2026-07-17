@@ -34,12 +34,10 @@ const MONTHS = [
 
 const DOW = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-export const localDateKey = (d: Date): string => {
-  const y = d.getFullYear();
-  const m = d.getMonth() + 1;
-  const date = d.getDate();
-  return `${y}-${m < 10 ? "0" + m : m}-${date < 10 ? "0" + date : date}`;
-};
+const pad2 = (value: number): string => String(value).padStart(2, "0");
+
+export const localDateKey = (d: Date): string =>
+  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 
 export const padDaysToYear = (days: StreakrDay[], year: number): StreakrDay[] => {
   const byDate = new Map(days.map((day) => [localDateKey(day.date), day]));
@@ -75,32 +73,33 @@ export const yearToDateRange = (today: Date): { start: Date; end: Date } => ({
   end: new Date(today),
 });
 
-export const gridFromDays = <T extends StreakrDay>(days: T[]): (T | null)[][] =>
-  days.length === 0
-    ? []
-    : padGridColumns(
-        days.reduce<(T | null)[][]>(
-          (cols, day) =>
-            cols[cols.length - 1].length === 7
-              ? [...cols, [day]]
-              : [...cols.slice(0, -1), [...cols[cols.length - 1], day]],
-          [new Array<T | null>(days[0].date.getDay()).fill(null)],
-        ),
-      );
+export const gridFromDays = <T extends StreakrDay>(days: T[]): (T | null)[][] => {
+  const first = days[0];
+  if (!first) return [];
+  return padGridColumns(
+    days.reduce<(T | null)[][]>(
+      (cols, day) => {
+        const lastCol = cols[cols.length - 1];
+        return !lastCol || lastCol.length === 7
+          ? [...cols, [day]]
+          : [...cols.slice(0, -1), [...lastCol, day]];
+      },
+      [new Array<T | null>(first.date.getDay()).fill(null)],
+    ),
+  );
+};
 
-export const monthHeaders = <T extends StreakrDay>(
-  cols: (T | null)[][],
-): { col: number; label: string }[] =>
+export const monthHeaders = (cols: (StreakrDay | null)[][]): { col: number; label: string }[] =>
   cols.reduce<{ headers: { col: number; label: string }[]; lastMonth: number }>(
     (state, col, index) => {
-      const firstDay = col.find((day): day is T => Boolean(day));
+      const firstDay = col.find((day): day is StreakrDay => Boolean(day));
       const month = firstDay?.date.getMonth();
       const lastHeader = state.headers[state.headers.length - 1];
       const hasRoom = !lastHeader || index - lastHeader.col >= 3;
 
       const nextHeaders =
         month !== undefined && month !== state.lastMonth && hasRoom
-          ? [...state.headers, { col: index, label: MONTH_LABELS_SHORT[month] }]
+          ? [...state.headers, { col: index, label: MONTH_LABELS_SHORT[month] ?? "" }]
           : state.headers;
 
       return {
@@ -135,3 +134,12 @@ export const polarToCartesian = (
   x: cx + r * Math.cos(angle),
   y: cy + r * Math.sin(angle),
 });
+
+const dayIndexToAngle = (day: Date, totalDays: number): number => {
+  const startOfYear = new Date(day.getFullYear(), 0, 1);
+  const idx = Math.round((day.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+  return dayAngle(Math.max(0, Math.min(totalDays - 1, idx)), totalDays);
+};
+
+export const dayToHandRotation = (day: Date, totalDays: number): number =>
+  dayIndexToAngle(day, totalDays) + Math.PI / 2;

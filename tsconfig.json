@@ -24,7 +24,11 @@
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true,
-        "exactOptionalPropertyTypes": true
+        "exactOptionalPropertyTypes": true,
+        "noUncheckedIndexedAccess": true,
+        "noImplicitReturns": true,
+        "noImplicitOverride": true,
+        "verbatimModuleSyntax": true
     },
     "include": [
         "src"

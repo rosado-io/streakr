@@ -24,14 +24,16 @@ Recommended production shape:
 
 ## GitHub
 
-`GitHubProvider` uses the GitHub GraphQL API and the
+`githubProvider` uses the GitHub GraphQL API and the
 `contributionsCollection.contributionCalendar` field. It returns a canonical
-daily series for the requested range, including zero-count days.
+daily series for the requested range, including zero-count days. Ranges longer
+than one year are automatically split into per-year GraphQL queries, so
+multi-year fetches work out of the box.
 
 ```ts
-import { GitHubProvider } from "@rosado-io/streakr";
+import { githubProvider } from "@rosado-io/streakr";
 
-const github = new GitHubProvider({
+const github = githubProvider({
   token: process.env.GITHUB_TOKEN!,
 });
 
@@ -45,16 +47,20 @@ const days = await github.fetchEvents({
 ### Options
 
 ```ts
-new GitHubProvider({
+githubProvider({
   token: "ghp_...",
   endpoint: "https://api.github.com/graphql",
   fetch: customFetch,
+  name: "github",
 });
 ```
 
 - `token` is required and must be a non-empty GitHub Personal Access Token.
 - `endpoint` is optional and defaults to `https://api.github.com/graphql`.
 - `fetch` is optional and defaults to global `fetch`.
+- `name` is optional and defaults to `"github"`. Override it to tag this
+  instance's `sources` key, e.g. when aggregating github.com and a GitHub
+  Enterprise host side by side.
 
 ### Token Scopes
 
@@ -92,15 +98,15 @@ For heavy usage:
 
 ## GitLab
 
-`GitLabProvider` uses the GitLab REST API. It resolves a username through
+`gitlabProvider` uses the GitLab REST API. It resolves a username through
 `/api/v4/users?username=...`, then fetches paginated user events from
 `/api/v4/users/:id/events`. It returns a canonical daily series for the
 requested range, including zero-count days.
 
 ```ts
-import { GitLabProvider } from "@rosado-io/streakr";
+import { gitlabProvider } from "@rosado-io/streakr";
 
-const gitlab = new GitLabProvider({
+const gitlab = gitlabProvider({
   token: process.env.GITLAB_TOKEN!,
 });
 
@@ -114,23 +120,27 @@ const days = await gitlab.fetchEvents({
 ### Options
 
 ```ts
-new GitLabProvider({
+gitlabProvider({
   token: "glpat_...",
   baseUrl: "https://gitlab.com",
   fetch: customFetch,
+  name: "gitlab",
 });
 ```
 
 - `token` is required and must be a non-empty GitLab Personal Access Token.
 - `baseUrl` is optional and defaults to `https://gitlab.com`.
 - `fetch` is optional and defaults to global `fetch`.
+- `name` is optional and defaults to `"gitlab"`. Override it to tag this
+  instance's `sources` key, e.g. when aggregating gitlab.com and a self-hosted
+  instance side by side.
 
 ### Self-Hosted GitLab
 
 Set `baseUrl` to the origin of your GitLab instance:
 
 ```ts
-const gitlab = new GitLabProvider({
+const gitlab = gitlabProvider({
   token: process.env.GITLAB_TOKEN!,
   baseUrl: "https://gitlab.example.com",
 });
@@ -150,8 +160,8 @@ instances, confirm the instance's token policy and event visibility settings.
 
 ### Pagination and Rate Limits
 
-The provider requests up to 100 events per page and follows GitLab `Link` headers
-with `rel="next"` until all pages in the range are collected.
+The provider requests up to 100 events per page and increments the `page` query
+parameter until all pages in the range are collected.
 
 For heavy usage:
 
@@ -170,21 +180,21 @@ For heavy usage:
 
 ## GitHub Agent Co-Authors
 
-`GitHubCoAuthorProvider` counts commits co-authored by coding agents using the
+`githubCoAuthorProvider` counts commits co-authored by coding agents using the
 GitHub commit search API. For each configured agent it queries
 `/search/commits` with `author:<user>`, a `"co-authored-by: <match>"` phrase,
 and an `author-date:<start>..<end>` range, then buckets results by author date
 into a canonical daily series. Each day's `sources` are keyed per agent (for
 example `{ claude: 3 }`).
 
-Because it works exactly like `GitHubProvider` (PAT plus HTTP), it needs no
+Because it works exactly like `githubProvider` (PAT plus HTTP), it needs no
 access to the developer's machine and fits portfolio or static deployments with
 no publication step.
 
 ```ts
-import { GitHubCoAuthorProvider } from "@rosado-io/streakr";
+import { githubCoAuthorProvider } from "@rosado-io/streakr";
 
-const agents = new GitHubCoAuthorProvider({
+const agents = githubCoAuthorProvider({
   token: process.env.GITHUB_TOKEN!,
 });
 
@@ -204,21 +214,23 @@ Each returned day carries per-agent counts:
 ### Options
 
 ```ts
-new GitHubCoAuthorProvider({
+githubCoAuthorProvider({
   token: "ghp_...",
   agents: ["claude", "codex"],
   endpoint: "https://api.github.com/search/commits",
   fetch: customFetch,
+  name: "github-agents",
 });
 ```
 
 - `token` is required and must be a non-empty GitHub Personal Access Token.
 - `agents` is optional and defaults to every key in `AGENT_TRAILER_RULES`
   (`claude`, `codex`, `opencode`, `copilot`). Each key must exist in the
-  registry or the constructor throws. The searched co-author is the rule's
+  registry or the factory throws. The searched co-author is the rule's
   email when it is a literal string, otherwise its name.
 - `endpoint` is optional and defaults to `https://api.github.com/search/commits`.
 - `fetch` is optional and defaults to global `fetch`.
+- `name` is optional and defaults to `"github-agents"`.
 
 ### Pagination and Range Splitting
 
@@ -246,7 +258,7 @@ For heavy usage:
   indexing lag.
 - Copilot's coding-agent commits are sometimes authored by the bot itself, so
   `author:<user>` misses them.
-- Private repositories require the same `repo`-scoped PAT as `GitHubProvider`;
+- Private repositories require the same `repo`-scoped PAT as `githubProvider`;
   server-side usage is recommended.
 
 ### Failure Behavior
@@ -254,7 +266,7 @@ For heavy usage:
 `fetchEvents()` throws when:
 
 - The date range is invalid.
-- A configured agent key is unknown (at construction time).
+- A configured agent key is unknown (when the factory is called).
 - GitHub returns an HTTP error or a secondary rate limit.
 
 ## Aggregating Providers
@@ -264,15 +276,15 @@ Use `aggregate()` to fetch from multiple providers concurrently:
 ```ts
 import {
   aggregate,
-  GitHubProvider,
-  GitLabProvider,
+  githubProvider,
+  gitlabProvider,
   normalizeEventsToDaily,
 } from "@rosado-io/streakr";
 
 const raw = await aggregate(
   [
-    new GitHubProvider({ token: process.env.GITHUB_TOKEN! }),
-    new GitLabProvider({ token: process.env.GITLAB_TOKEN! }),
+    githubProvider({ token: process.env.GITHUB_TOKEN! }),
+    gitlabProvider({ token: process.env.GITLAB_TOKEN! }),
   ],
   { user: "octocat", start: "2025-01-01", end: "2025-12-31" },
 );
@@ -288,6 +300,24 @@ succeeded.
 
 If you need fail-fast behavior, call each provider's `fetchEvents()` directly and
 handle errors in your application.
+
+To aggregate two instances of the same source — for example github.com plus a
+GitHub Enterprise host — give one of them a distinct `name` so their entries
+don't merge under the same `sources` key:
+
+```ts
+const raw = await aggregate(
+  [
+    githubProvider({ token: process.env.GITHUB_TOKEN! }),
+    githubProvider({
+      token: process.env.GHE_TOKEN!,
+      endpoint: "https://github.example.com/api/graphql",
+      name: "github-enterprise",
+    }),
+  ],
+  { user: "octocat", start: "2025-01-01", end: "2025-12-31" },
+);
+```
 
 ## Using Provider Data with `createStreakr`
 
@@ -320,24 +350,24 @@ Implement the `Provider` interface to connect another source:
 ```ts
 import type { ContributionDay, FetchParams, Provider } from "@rosado-io/streakr";
 
-class MyProvider implements Provider {
-  readonly name = "my-provider";
+const myProvider: Provider = {
+  name: "my-provider",
 
   async fetchEvents(params: FetchParams): Promise<ContributionDay[]> {
     return [
       { date: params.start, count: 1 },
       { date: params.end, count: 3 },
     ];
-  }
-}
+  },
+};
 ```
 
 Provider output can contain gaps and duplicate dates. Call
 `normalizeEventsToDaily()` before computing streaks or building a grid.
 
 For coding-agent activity from `Co-authored-by:` trailers, see
-[docs/agents.md](./agents.md), which documents `GitHubCoAuthorProvider` and
-`LocalGitCoAuthorProvider`, plus tokenless local collection through authenticated
+[docs/agents.md](./agents.md), which documents `githubCoAuthorProvider` and
+`localGitCoAuthorProvider`, plus tokenless local collection through authenticated
 `gh` and `glab` sessions.
 
 ## Privacy and Token Handling
