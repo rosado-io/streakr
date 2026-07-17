@@ -22,7 +22,7 @@ export const gitlabCliProvider = (options: GitLabCliProviderOptions = {}): Provi
       cli,
       ["api", "--hostname", host, path],
     );
-    return parseCliJson<T>("GitLab", output);
+    return parseCliJson("GitLab", output) as T;
   };
 
   return {

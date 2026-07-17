@@ -137,6 +137,7 @@ export const bindRingEvents = (
     if (targetIndex === currentIndex) return;
     const currentLine = focusableLines[currentIndex];
     const targetLine = focusableLines[targetIndex];
+    if (!currentLine || !targetLine) return;
     currentLine.setAttribute("tabindex", "-1");
     targetLine.setAttribute("tabindex", "0");
     targetLine.focus();

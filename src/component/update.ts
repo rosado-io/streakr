@@ -43,7 +43,7 @@ export const createUpdateHandlers = (
       if (years !== undefined) {
         cfg.years = years;
         if (cfg.years.length && (state.year == null || !cfg.years.includes(state.year))) {
-          state.year = cfg.years[cfg.years.length - 1];
+          state.year = cfg.years[cfg.years.length - 1] ?? null;
         }
       }
     },

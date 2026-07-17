@@ -40,7 +40,7 @@ export const githubCliProvider = (options: GitHubCliProviderOptions = {}): Provi
         `to=${variables.to}`,
       ],
     );
-    return parseCliJson<GitHubGraphQLResponse>("GitHub", output);
+    return parseCliJson("GitHub", output) as GitHubGraphQLResponse;
   };
 
   return {

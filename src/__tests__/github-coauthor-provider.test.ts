@@ -20,7 +20,7 @@ const parsePage = (input: RequestInfo | URL): number =>
 
 const authorDateRange = (query: string): [string, string] => {
   const match = /author-date:(\d{4}-\d{2}-\d{2})\.\.(\d{4}-\d{2}-\d{2})/.exec(query);
-  return match ? [match[1], match[2]] : ["", ""];
+  return match ? [match[1]!, match[2]!] : ["", ""];
 };
 
 describe("githubCoAuthorProvider", () => {
@@ -91,7 +91,7 @@ describe("githubCoAuthorProvider", () => {
 
     await provider.fetchEvents({ user: "octocat", start: "2025-06-01", end: "2025-06-01" });
 
-    const query = parseQuery(fetchMock.mock.calls[0][0] as RequestInfo | URL);
+    const query = parseQuery(fetchMock.mock.calls[0]![0]);
     expect(query).toContain('"copilot"');
     expect(query).not.toContain('"co-authored-by:');
   });
@@ -109,7 +109,7 @@ describe("githubCoAuthorProvider", () => {
 
     await provider.fetchEvents({ user: "octocat", start: "2025-06-01", end: "2025-06-01" });
 
-    const query = parseQuery(fetchMock.mock.calls[0][0] as RequestInfo | URL);
+    const query = parseQuery(fetchMock.mock.calls[0]![0]);
     expect(query).toBe('author:octocat "codex@openai.com" author-date:2025-06-01..2025-06-01');
   });
 

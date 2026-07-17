@@ -307,7 +307,7 @@ function syncMobileState(): void {
   if (!mobileReady || !mobileIframe?.contentWindow) return;
   mobileIframe.contentWindow.postMessage(
     { type: "streakr-demo-state", payload: state },
-    g.location.origin
+    g.location.origin,
   );
 }
 
@@ -370,7 +370,10 @@ function renderComponent(): void {
 
 function updateComponent(): void {
   if (state.view === "desktop") {
-    if (!instance) return mountComponent();
+    if (!instance) {
+      mountComponent();
+      return;
+    }
     instance.update({
       theme: state.theme,
       accent: state.accent,
@@ -575,7 +578,14 @@ function makeToggle({ tip, active, svg, onClick }: ToggleOpts): HTMLElement {
 
 g.addEventListener("message", (event) => {
   if (event.origin !== g.location.origin) return;
-  if (event.data?.type !== "streakr-mobile-ready") return;
+  const data: unknown = event.data;
+  if (
+    !data ||
+    typeof data !== "object" ||
+    (data as { type?: unknown }).type !== "streakr-mobile-ready"
+  ) {
+    return;
+  }
   mobileReady = true;
   syncMobileState();
 });

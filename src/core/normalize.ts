@@ -5,7 +5,7 @@ const mergeSources = (
   current: ContributionDay["sources"] = {},
   next: ContributionDay["sources"] = {},
 ): ContributionDay["sources"] => {
-  const entries = Object.entries(next).map(([source, count]) => [
+  const entries = Object.entries(next).map(([source, count]): [string, number] => [
     source,
     (current[source] ?? 0) + count,
   ]);
@@ -46,6 +46,7 @@ export const normalizeEventsToDaily = (events: ContributionDay[]): ContributionD
   const dates = [...merged.keys()].sort((a, b) => a.localeCompare(b));
   const startDate = dates[0];
   const endDate = dates[dates.length - 1];
+  if (startDate === undefined || endDate === undefined) return [];
 
   return Array.from({ length: daysInRange(startDate, endDate) }, (_, i) => {
     const dateStr = addDays(startDate, i);

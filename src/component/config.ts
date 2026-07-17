@@ -25,7 +25,8 @@ export interface ResolvedConfig {
   years: number[];
   year: number | null;
   today: Date;
-  getDays: (year: number) => StreakrDay[];
+  // Plain-JS callers may return undefined despite the public typing.
+  getDays: (year: number) => StreakrDay[] | undefined;
   providers: StreakrProvider[];
   onYearChange: ((year: number) => void) | null;
   onProviderToggle: ((key: string, enabled: boolean, providers: StreakrProviders) => void) | null;
@@ -39,28 +40,30 @@ export interface ComponentCtx {
 export const sourceCount = (day: StreakrDay, key: string): number => day.sources?.[key] ?? 0;
 
 export const resolveConfig = (options: StreakrOptions): ResolvedConfig => {
-  const cfg: ResolvedConfig = {
-    target: options.target,
-    theme: options.theme ?? "dark",
-    accent: options.accent ?? "#39d353",
-    tintHeatmap: options.tintHeatmap ?? true,
-    showProviders: options.showProviders ?? true,
-    showStats: options.showStats ?? true,
-    state: options.state ?? "ready",
-    years: options.years ?? [],
-    year: options.year ?? null,
-    today: options.today ?? new Date(),
-    getDays: options.getDays ?? (() => []),
-    providers: options.providers ?? DEFAULT_PROVIDERS,
-    onYearChange: options.onYearChange ?? null,
-    onProviderToggle: options.onProviderToggle ?? null,
-  };
-
-  if (!cfg.target) {
+  // Widened so runtime validation still guards plain-JS callers the types can't.
+  const opts: Partial<StreakrOptions> = options;
+  if (!opts.target) {
     throw new Error("streakr: `target` is required");
   }
+
+  const cfg: ResolvedConfig = {
+    target: opts.target,
+    theme: opts.theme ?? "dark",
+    accent: opts.accent ?? "#39d353",
+    tintHeatmap: opts.tintHeatmap ?? true,
+    showProviders: opts.showProviders ?? true,
+    showStats: opts.showStats ?? true,
+    state: opts.state ?? "ready",
+    years: opts.years ?? [],
+    year: opts.year ?? null,
+    today: opts.today ?? new Date(),
+    getDays: opts.getDays ?? (() => []),
+    providers: opts.providers ?? DEFAULT_PROVIDERS,
+    onYearChange: opts.onYearChange ?? null,
+    onProviderToggle: opts.onProviderToggle ?? null,
+  };
   if (cfg.year == null && cfg.years.length) {
-    cfg.year = cfg.years[cfg.years.length - 1];
+    cfg.year = cfg.years[cfg.years.length - 1] ?? null;
   }
   return cfg;
 };

@@ -30,7 +30,7 @@ const CO_AUTHOR_RE = /^(.*?)<([^<>]+)>\s*$/;
 
 export const parseCoAuthorValue = (value: string): CoAuthor | null => {
   const match = CO_AUTHOR_RE.exec(value.trim());
-  return match ? { name: match[1].trim(), email: match[2].trim() } : null;
+  return match ? { name: (match[1] ?? "").trim(), email: (match[2] ?? "").trim() } : null;
 };
 
 export const resolveAgentMatches = (
@@ -60,7 +60,7 @@ export const parseCoAuthors = (message: string): CoAuthor[] =>
   finalBlock(message)
     .map((line) => TRAILER_RE.exec(line))
     .filter((match): match is RegExpExecArray => match !== null)
-    .map((match) => parseCoAuthorValue(match[1]))
+    .map((match) => parseCoAuthorValue(match[1] ?? ""))
     .filter((coAuthor): coAuthor is CoAuthor => coAuthor !== null);
 
 export const testStateless = (pattern: RegExp, value: string): boolean => {

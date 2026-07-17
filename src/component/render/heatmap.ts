@@ -221,7 +221,7 @@ const SKELETON_PEAK_LEVELS = [0, 1, 1, 2, 2, 2, 3, 3, 4, 4] as const;
 
 const skeletonPeakLevel = (ci: number, ri: number): number => {
   const hash = Math.imul(ci * 7 + ri + 1, 2654435761) >>> 0;
-  return SKELETON_PEAK_LEVELS[hash % SKELETON_PEAK_LEVELS.length];
+  return SKELETON_PEAK_LEVELS[hash % SKELETON_PEAK_LEVELS.length] ?? 0;
 };
 
 const buildSkeletonHeatmapCell =

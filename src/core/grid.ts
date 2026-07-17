@@ -10,9 +10,15 @@ export const buildCalendarGrid = (days: ContributionDay[], options?: GridOptions
     return { weeks: [], totalContributions: 0 };
   }
 
+  const first = days[0];
+  const last = days[days.length - 1];
+  if (!first || !last) {
+    return { weeks: [], totalContributions: 0 };
+  }
+
   const weekStartsOn = options?.weekStartsOn ?? 0;
-  const startDate = options?.startDate ?? days[0].date;
-  const endDate = options?.endDate ?? days[days.length - 1].date;
+  const startDate = options?.startDate ?? first.date;
+  const endDate = options?.endDate ?? last.date;
   const inRange = days.filter((d) => d.date >= startDate && d.date <= endDate);
 
   const dayMap = new Map(inRange.map((d) => [d.date, d]));

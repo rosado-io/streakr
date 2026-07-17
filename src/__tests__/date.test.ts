@@ -32,7 +32,7 @@ describe("toCanonicalDays", () => {
   it("normalizes non-empty days", () => {
     const result = toCanonicalDays([{ date: "2025-06-15", count: 3 }], "2025-06-15", "2025-06-15");
     expect(result).toHaveLength(1);
-    expect(result[0].count).toBe(3);
+    expect(result[0]!.count).toBe(3);
   });
 
   it("fills missing requested boundary days for non-empty days", () => {
@@ -47,7 +47,7 @@ describe("toCanonicalDays", () => {
   it("returns zero-filled series for empty days with same start/end", () => {
     const result = toCanonicalDays([], "2025-06-15", "2025-06-15");
     expect(result).toHaveLength(1);
-    expect(result[0].count).toBe(0);
+    expect(result[0]!.count).toBe(0);
   });
 
   it("returns zero-filled range for empty days with different dates", () => {

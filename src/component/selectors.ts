@@ -71,7 +71,7 @@ export const computeProviderTotals = (ctx: ComponentCtx): Record<string, number>
   const raw = getCurrentDays(ctx);
   raw.forEach((d) => {
     cfg.providers.forEach((p) => {
-      totals[p.key] += sourceCount(d, p.key);
+      totals[p.key] = (totals[p.key] ?? 0) + sourceCount(d, p.key);
     });
   });
   return totals;

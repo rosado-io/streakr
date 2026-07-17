@@ -54,9 +54,9 @@ export const renderYearModal = (card: Element, options: YearModalOptions): void 
   const trapFocus = (e: KeyboardEvent): void => {
     if (e.key !== "Tab") return;
     const focusables = Array.from(modal.querySelectorAll<HTMLElement>("button:not([disabled])"));
-    if (focusables.length === 0) return;
     const first = focusables[0];
     const last = focusables[focusables.length - 1];
+    if (!first || !last) return;
     if (e.shiftKey) {
       if (document.activeElement === first) {
         e.preventDefault();

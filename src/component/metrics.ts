@@ -10,7 +10,7 @@ export interface StreakrStats {
 
 export const levelize = (days: StreakrDay[]): StreakrLeveledDay[] => {
   const levels = computeLevels(days.map((day) => day.total));
-  return days.map((day, i) => ({ ...day, level: levels[i] }));
+  return days.map((day, i) => ({ ...day, level: levels[i] ?? 0 }));
 };
 
 const nextStreakState = (

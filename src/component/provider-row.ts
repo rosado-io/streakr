@@ -14,7 +14,7 @@ export const renderProviderRow = (
   const totals = computeProviderTotals(ctx);
   ctx.cfg.providers.forEach((p) => {
     const active = !!ctx.state.providers[p.key];
-    const total = totals[p.key].toLocaleString();
+    const total = (totals[p.key] ?? 0).toLocaleString();
     const activeState = active ? "enabled" : "disabled";
     const ariaLabel = isLoading
       ? `${p.name}: loading contributions, ${activeState}`

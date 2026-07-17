@@ -12,11 +12,16 @@ interface CommitSearchItem {
 }
 
 export interface CommitSearchResponse {
-  total_count: number;
-  items: CommitSearchItem[];
+  total_count?: number;
+  items?: CommitSearchItem[];
 }
 
 export type CommitSearchRequest = (query: string, page: number) => Promise<CommitSearchResponse>;
+
+interface CommitSearchPage {
+  total_count: number;
+  items: CommitSearchItem[];
+}
 
 export const fetchCoAuthorDays = async (
   request: CommitSearchRequest,
@@ -81,7 +86,7 @@ const searchPage = async (
   start: string,
   end: string,
   page: number,
-): Promise<CommitSearchResponse> => {
+): Promise<CommitSearchPage> => {
   // The trailer is `Co-Authored-By: Claude <noreply@anthropic.com>`, so the display
   // name sits between the label and the email; searching the email (or name) as a
   // standalone quoted term is what matches, not a phrase glued to the label.

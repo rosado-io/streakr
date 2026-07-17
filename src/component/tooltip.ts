@@ -40,8 +40,8 @@ export const createTooltip = (ctx: ComponentCtx): Tooltip => {
           ]),
         );
       });
-    el.style.left = e.clientX + 14 + "px";
-    el.style.top = e.clientY + 14 + "px";
+    el.style.left = `${e.clientX + 14}px`;
+    el.style.top = `${e.clientY + 14}px`;
     el.classList.add("visible");
   };
 
@@ -60,8 +60,8 @@ export const createTooltip = (ctx: ComponentCtx): Tooltip => {
   };
 
   const move = (e: MouseEvent): void => {
-    el.style.left = e.clientX + 14 + "px";
-    el.style.top = e.clientY + 14 + "px";
+    el.style.left = `${e.clientX + 14}px`;
+    el.style.top = `${e.clientY + 14}px`;
   };
 
   const hide = (): void => {

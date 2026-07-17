@@ -32,9 +32,9 @@ export const withoutAuthEnvironment = (environment: NodeJS.ProcessEnv): NodeJS.P
     Object.entries(environment).filter(([key]) => !AUTH_ENVIRONMENT_KEYS.has(key)),
   );
 
-export const parseCliJson = <T>(provider: string, output: string): T => {
+export const parseCliJson = (provider: string, output: string): unknown => {
   try {
-    return JSON.parse(output) as T;
+    return JSON.parse(output);
   } catch {
     throw new Error(`${provider} CLI returned invalid JSON`);
   }

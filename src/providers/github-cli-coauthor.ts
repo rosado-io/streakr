@@ -45,7 +45,7 @@ export const githubCliCoAuthorProvider = (
         `page=${page}`,
       ],
     );
-    return parseCliJson<CommitSearchResponse>("GitHub", output);
+    return parseCliJson("GitHub", output) as CommitSearchResponse;
   };
 
   return {
