@@ -33,6 +33,12 @@ export const parseCoAuthorValue = (value: string): CoAuthor | null => {
   return match ? { name: (match[1] ?? "").trim(), email: (match[2] ?? "").trim() } : null;
 };
 
+const searchableMatch = (rule: AgentTrailerRule): string | null => {
+  if (typeof rule.email === "string") return rule.email;
+  if (typeof rule.name === "string") return rule.name;
+  return null;
+};
+
 export const resolveAgentMatches = (
   keys?: readonly string[],
   rules: readonly AgentTrailerRule[] = AGENT_TRAILER_RULES,
@@ -40,12 +46,7 @@ export const resolveAgentMatches = (
   (keys ?? rules.map((rule) => rule.key)).map((key) => {
     const rule = rules.find((candidate) => candidate.key === key);
     if (!rule) throw new Error(`Unknown agent key "${key}"`);
-    const match =
-      typeof rule.email === "string"
-        ? rule.email
-        : typeof rule.name === "string"
-          ? rule.name
-          : null;
+    const match = searchableMatch(rule);
     if (match === null) {
       throw new Error(`Agent "${key}" has no searchable co-author match`);
     }
