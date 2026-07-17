@@ -1,3 +1,6 @@
+## [1.0.1](https://github.com/rosado-io/streakr/compare/v1.0.0...v1.0.1) (2026-07-17)
+* fix: publish the v1 API as 1.0.1 (factory providers, decomposed component, hardened tooling) (#165) ([`0267695`](https://github.com/rosado-io/streakr/commit/0267695269da1357b66b22cae88d320e03173cde)) by ****
+
 ## [0.16.0](https://github.com/rosado-io/streakr/compare/v0.15.1...v0.16.0) (2026-07-16)
 * feat(agents): add secure local snapshots (#164) ([`8b140a9`](https://github.com/rosado-io/streakr/commit/8b140a9ca42398bb60f59cbd1063af2780f5debb)) by ****
 
