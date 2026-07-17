@@ -1,3 +1,6 @@
+## [1.0.2](https://github.com/rosado-io/streakr/compare/v1.0.1...v1.0.2) (2026-07-17)
+* fix(component): redraw on first real resize when initial observation never fires (#166) ([`ec6c498`](https://github.com/rosado-io/streakr/commit/ec6c4985d2c0132b32418b4c804bc8f35f4ae93d)) by ****
+
 ## [1.0.1](https://github.com/rosado-io/streakr/compare/v1.0.0...v1.0.1) (2026-07-17)
 * fix: publish the v1 API as 1.0.1 (factory providers, decomposed component, hardened tooling) (#165) ([`0267695`](https://github.com/rosado-io/streakr/commit/0267695269da1357b66b22cae88d320e03173cde)) by ****
 
