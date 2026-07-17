@@ -1,14 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { GitHubCliProvider } from "../providers/github-cli";
-import { GitHubCliCoAuthorProvider } from "../providers/github-cli-coauthor";
-import { GitLabCliProvider } from "../providers/gitlab-cli";
-import {
-  runAuthenticatedCli,
-  runLocalCli,
-  withoutAuthEnvironment,
-  type CliRunner,
-} from "../providers/local-cli";
+import { githubCliProvider } from "../providers/github-cli";
+import { githubCliCoAuthorProvider } from "../providers/github-cli-coauthor";
+import { gitlabCliProvider } from "../providers/gitlab-cli";
+import { runAuthenticatedCli, runLocalCli, withoutAuthEnvironment } from "../providers/local-cli";
+import type { CliRunner } from "../providers/types";
 
 const params = { user: "eros", start: "2026-01-01", end: "2026-01-03" };
 
@@ -56,7 +52,7 @@ describe("local CLI environment", () => {
   });
 });
 
-describe("GitHubCliProvider", () => {
+describe("githubCliProvider", () => {
   it("uses the authenticated CLI session without requesting a token", async () => {
     const runner = vi.fn<CliRunner>().mockResolvedValue(
       JSON.stringify({
@@ -78,7 +74,7 @@ describe("GitHubCliProvider", () => {
         },
       }),
     );
-    const provider = new GitHubCliProvider({ runner, host: "github.example.com" });
+    const provider = githubCliProvider({ runner, host: "github.example.com" });
 
     await expect(provider.fetchEvents(params)).resolves.toEqual([
       { date: "2026-01-01", count: 2 },
@@ -96,7 +92,7 @@ describe("GitHubCliProvider", () => {
   });
 
   it("fails closed when the CLI response is invalid", async () => {
-    const provider = new GitHubCliProvider({ runner: async () => "not-json" });
+    const provider = githubCliProvider({ runner: async () => "not-json" });
     await expect(provider.fetchEvents(params)).rejects.toThrow(/invalid JSON/i);
   });
 
@@ -119,7 +115,7 @@ describe("GitHubCliProvider", () => {
         },
       });
     });
-    const provider = new GitHubCliProvider({ runner });
+    const provider = githubCliProvider({ runner });
 
     await provider.fetchEvents({ user: "eros", start: "2025-12-30", end: "2026-12-31" });
 
@@ -129,7 +125,7 @@ describe("GitHubCliProvider", () => {
   });
 
   it("surfaces GraphQL errors returned by the CLI", async () => {
-    const provider = new GitHubCliProvider({
+    const provider = githubCliProvider({
       runner: async () =>
         JSON.stringify({ errors: [{ message: "rate limited" }, { message: "try later" }] }),
     });
@@ -140,7 +136,7 @@ describe("GitHubCliProvider", () => {
   });
 
   it("fails when the user does not exist", async () => {
-    const provider = new GitHubCliProvider({
+    const provider = githubCliProvider({
       runner: async () => JSON.stringify({ data: { user: null } }),
     });
 
@@ -148,7 +144,7 @@ describe("GitHubCliProvider", () => {
   });
 });
 
-describe("GitHubCliCoAuthorProvider", () => {
+describe("githubCliCoAuthorProvider", () => {
   it("searches agent commits through the authenticated CLI session", async () => {
     const runner = vi.fn<CliRunner>().mockImplementation(async (_executable, args) => {
       const query = args.find((arg) => arg.startsWith("q=")) ?? "";
@@ -159,7 +155,7 @@ describe("GitHubCliCoAuthorProvider", () => {
         items: [{ commit: { author: { date: `${date}T12:00:00Z` } } }],
       });
     });
-    const provider = new GitHubCliCoAuthorProvider({
+    const provider = githubCliCoAuthorProvider({
       agents: ["claude", "codex"],
       runner,
     });
@@ -179,7 +175,7 @@ describe("GitHubCliCoAuthorProvider", () => {
     const runner = vi
       .fn<CliRunner>()
       .mockResolvedValue(JSON.stringify({ total_count: 0, items: [] }));
-    const provider = new GitHubCliCoAuthorProvider({ runner });
+    const provider = githubCliCoAuthorProvider({ runner });
 
     await provider.fetchEvents(params);
 
@@ -192,7 +188,7 @@ describe("GitHubCliCoAuthorProvider", () => {
   });
 
   it("rejects unknown agent keys", () => {
-    expect(() => new GitHubCliCoAuthorProvider({ agents: ["skynet"] })).toThrow(
+    expect(() => githubCliCoAuthorProvider({ agents: ["skynet"] })).toThrow(
       /Unknown agent key "skynet"/,
     );
   });
@@ -207,7 +203,7 @@ describe("GitHubCliCoAuthorProvider", () => {
         ],
       }),
     );
-    const provider = new GitHubCliCoAuthorProvider({ agents: ["claude"], runner });
+    const provider = githubCliCoAuthorProvider({ agents: ["claude"], runner });
 
     await expect(provider.fetchEvents(params)).resolves.toEqual([
       { date: "2026-01-01", count: 0 },
@@ -225,7 +221,7 @@ describe("GitHubCliCoAuthorProvider", () => {
         items: [{ commit: { author: { date: `${date}T12:00:00Z` } } }],
       });
     });
-    const provider = new GitHubCliCoAuthorProvider({ agents: ["claude"], runner });
+    const provider = githubCliCoAuthorProvider({ agents: ["claude"], runner });
 
     await expect(provider.fetchEvents(params)).resolves.toEqual([
       { date: "2026-01-01", count: 1, sources: { claude: 1 } },
@@ -253,7 +249,7 @@ describe("GitHubCliCoAuthorProvider", () => {
         items: [{ commit: { author: { date: `${date}T12:00:00Z` } } }],
       });
     });
-    const provider = new GitHubCliCoAuthorProvider({ agents: ["claude"], runner });
+    const provider = githubCliCoAuthorProvider({ agents: ["claude"], runner });
 
     await expect(
       provider.fetchEvents({ user: "eros", start: "2026-01-01", end: "2026-01-04" }),
@@ -271,7 +267,7 @@ describe("GitHubCliCoAuthorProvider", () => {
   });
 });
 
-describe("GitLabCliProvider", () => {
+describe("gitlabCliProvider", () => {
   it("uses the authenticated CLI session and paginates events", async () => {
     const firstPage = Array.from({ length: 100 }, (_, index) => ({
       created_at: `2026-01-${String((index % 3) + 1).padStart(2, "0")}T12:00:00Z`,
@@ -282,7 +278,7 @@ describe("GitLabCliProvider", () => {
       if (endpoint.endsWith("&page=1")) return JSON.stringify(firstPage);
       return JSON.stringify([{ created_at: "2026-01-03T12:00:00Z" }]);
     });
-    const provider = new GitLabCliProvider({ runner, host: "gitlab.example.com" });
+    const provider = gitlabCliProvider({ runner, host: "gitlab.example.com" });
 
     const days = await provider.fetchEvents(params);
 
@@ -295,7 +291,7 @@ describe("GitLabCliProvider", () => {
   });
 
   it("does not silently continue when the account is unavailable", async () => {
-    const provider = new GitLabCliProvider({ runner: async () => "[]" });
+    const provider = gitlabCliProvider({ runner: async () => "[]" });
     await expect(provider.fetchEvents(params)).rejects.toThrow(/not found/i);
   });
 });

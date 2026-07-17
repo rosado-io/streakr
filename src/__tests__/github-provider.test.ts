@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { GitHubProvider } from "../providers/github";
+import { githubProvider } from "../providers/github";
 import type { FetchParams } from "../types";
 
 const baseParams: FetchParams = {
@@ -8,7 +8,7 @@ const baseParams: FetchParams = {
   end: "2025-06-03",
 };
 
-describe("GitHubProvider", () => {
+describe("githubProvider", () => {
   it("maps contributionsCollection days to canonical daily counts", async () => {
     const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => {
       return new Response(
@@ -41,7 +41,7 @@ describe("GitHubProvider", () => {
       );
     });
 
-    const provider = new GitHubProvider({
+    const provider = githubProvider({
       token: "ghp_test",
       fetch: fetchMock,
     });
@@ -72,7 +72,7 @@ describe("GitHubProvider", () => {
       );
     });
 
-    const provider = new GitHubProvider({
+    const provider = githubProvider({
       token: "ghp_token",
       fetch: fetchMock,
     });
@@ -127,7 +127,7 @@ describe("GitHubProvider", () => {
       );
     });
 
-    const provider = new GitHubProvider({
+    const provider = githubProvider({
       token: "ghp_token",
       fetch: fetchMock,
     });
@@ -149,7 +149,7 @@ describe("GitHubProvider", () => {
       );
     });
 
-    const provider = new GitHubProvider({
+    const provider = githubProvider({
       token: "ghp_token",
       fetch: fetchMock,
     });
@@ -167,7 +167,7 @@ describe("GitHubProvider", () => {
       });
     });
 
-    const provider = new GitHubProvider({
+    const provider = githubProvider({
       token: "ghp_token",
       fetch: fetchMock,
     });
@@ -182,7 +182,7 @@ describe("GitHubProvider", () => {
       return new Response("{}", { status: 200 });
     });
 
-    const provider = new GitHubProvider({
+    const provider = githubProvider({
       token: "ghp_token",
       fetch: fetchMock,
     });
@@ -224,7 +224,7 @@ describe("GitHubProvider", () => {
       );
     });
 
-    const provider = new GitHubProvider({
+    const provider = githubProvider({
       token: "ghp_token",
       fetch: fetchMock,
     });

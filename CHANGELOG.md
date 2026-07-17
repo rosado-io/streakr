@@ -1,8 +1,8 @@
 ## [0.16.0](https://github.com/rosado-io/streakr/compare/v0.15.1...v0.16.0) (2026-07-16)
-* feat(agents): Agrega snapshots locales seguros (#164) ([`8b140a9`](https://github.com/rosado-io/streakr/commit/8b140a9ca42398bb60f59cbd1063af2780f5debb)) by ****
+* feat(agents): add secure local snapshots (#164) ([`8b140a9`](https://github.com/rosado-io/streakr/commit/8b140a9ca42398bb60f59cbd1063af2780f5debb)) by ****
 
 ## [0.15.1](https://github.com/rosado-io/streakr/compare/v0.15.0...v0.15.1) (2026-07-16)
-* fix(agents): Corrige detección y filtros de proveedores (#163) ([`27bea75`](https://github.com/rosado-io/streakr/commit/27bea750c7e745ae67b7ded3a35a2e94555a3445)) by ****
+* fix(agents): correct provider detection and filters (#163) ([`27bea75`](https://github.com/rosado-io/streakr/commit/27bea750c7e745ae67b7ded3a35a2e94555a3445)) by ****
 
 ## [0.15.0](https://github.com/rosado-io/streakr/compare/v0.14.0...v0.15.0) (2026-07-15)
 * feat(demo): showcase AI agent providers and animate the heatmap reveal (#159) ([`cc0560d`](https://github.com/rosado-io/streakr/commit/cc0560dd9440bba7d171ed7750d3cd15593c5a18)) by ****
@@ -32,7 +32,7 @@
 * fix(mobile): contain contribution strokes within ring guides (#142) ([`74cdeac`](https://github.com/rosado-io/streakr/commit/74cdeac6ff8afad8cd55e8a7c4c4d7ee1d30ec9a)) by ****
 
 ## [0.8.2](https://github.com/rosado-io/streakr/compare/v0.8.1...v0.8.2) (2026-07-13)
-* fix(deps): Actualiza esbuild para corregir GHSA-g7r4-m6w7-qqqr (#137) ([`ae05bf4`](https://github.com/rosado-io/streakr/commit/ae05bf4cfa8380acebe92b7c4567fb5aa29fcecc)) by ****
+* fix(deps): update esbuild to fix GHSA-g7r4-m6w7-qqqr (#137) ([`ae05bf4`](https://github.com/rosado-io/streakr/commit/ae05bf4cfa8380acebe92b7c4567fb5aa29fcecc)) by ****
 
 ## [0.8.1](https://github.com/rosado-io/streakr/compare/v0.8.0...v0.8.1) (2026-07-13)
 * fix(component): make tooltip, ring, and year modal keyboard/screen-reader accessible (#135) ([`a0eb883`](https://github.com/rosado-io/streakr/commit/a0eb883aa71704a0abbace3faa46e160a1674015)) by ****

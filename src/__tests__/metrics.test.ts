@@ -72,7 +72,7 @@ describe("levelize", () => {
     counts.forEach((_, i) => {
       const dateStr = `2025-06-${16 + i}`;
       const gridLevel = gridCells.find((c) => c.date === dateStr)?.level;
-      expect(gridLevel).toBe(leveled[i].level);
+      expect(gridLevel).toBe(leveled[i]!.level);
     });
   });
 });

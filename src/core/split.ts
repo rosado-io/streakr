@@ -21,7 +21,7 @@ export const splitCoAuthored = (
   );
 
   const agentsByDate = agentKeys.reduce((acc, key) => {
-    normalizeEventsToDaily(agentDays[key]).forEach((day) => {
+    normalizeEventsToDaily(agentDays[key] ?? []).forEach((day) => {
       acc.set(day.date, { ...acc.get(day.date), [key]: day.count });
     });
     return acc;

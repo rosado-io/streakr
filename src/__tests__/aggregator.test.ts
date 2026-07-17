@@ -50,8 +50,8 @@ describe("aggregate", () => {
 
     const result = await aggregate([github, gitlab], params);
     expect(result).toHaveLength(2);
-    expect(result[0].sources).toEqual({ github: 3 });
-    expect(result[1].sources).toEqual({ gitlab: 2 });
+    expect(result[0]!.sources).toEqual({ github: 3 });
+    expect(result[1]!.sources).toEqual({ gitlab: 2 });
   });
 
   it("silently skips failed providers", async () => {
@@ -60,7 +60,7 @@ describe("aggregate", () => {
 
     const result = await aggregate([github, broken], params);
     expect(result).toHaveLength(1);
-    expect(result[0].sources).toEqual({ github: 5 });
+    expect(result[0]!.sources).toEqual({ github: 5 });
   });
 
   it("returns empty array when all providers fail", async () => {
@@ -84,7 +84,7 @@ describe("aggregate", () => {
     ]);
 
     const result = await aggregate([github], params);
-    expect(result[0].sources).toEqual({
+    expect(result[0]!.sources).toEqual({
       commits: 2,
       prs: 1,
       github: 3,
@@ -123,6 +123,6 @@ describe("aggregate", () => {
 
     const result = await aggregate([empty, github], params);
     expect(result).toHaveLength(1);
-    expect(result[0].sources).toEqual({ github: 1 });
+    expect(result[0]!.sources).toEqual({ github: 1 });
   });
 });

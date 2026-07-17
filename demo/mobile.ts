@@ -61,8 +61,7 @@ function update(options: Partial<DemoState>): void {
     showProviders: options.showProviders,
     showStats: options.showStats,
     state: options.componentState,
-    providers:
-      options.showAgents === undefined ? undefined : providersFor(options.showAgents),
+    providers: options.showAgents === undefined ? undefined : providersFor(options.showAgents),
   });
 }
 
@@ -76,8 +75,15 @@ const g = globalThis as unknown as DemoGlobal;
 
 g.addEventListener("message", (event: MessageEvent) => {
   if (event.origin !== g.location.origin) return;
-  if (event.data?.type !== "streakr-demo-state") return;
-  update(event.data.payload ?? {});
+  const data: unknown = event.data;
+  if (
+    !data ||
+    typeof data !== "object" ||
+    (data as { type?: unknown }).type !== "streakr-demo-state"
+  ) {
+    return;
+  }
+  update((data as { payload?: Partial<DemoState> }).payload ?? {});
 });
 
 mount();

@@ -83,8 +83,8 @@ describe("normalizeEventsToDaily", () => {
     ];
     const result = normalizeEventsToDaily(input);
     expect(result).toHaveLength(1);
-    expect(result[0].count).toBe(5);
-    expect(result[0].sources).toEqual({ github: 3 });
+    expect(result[0]!.count).toBe(5);
+    expect(result[0]!.sources).toEqual({ github: 3 });
   });
 
   it("does not add sources property to gap-filled days", () => {
@@ -94,7 +94,7 @@ describe("normalizeEventsToDaily", () => {
     ];
     const result = normalizeEventsToDaily(input);
     expect(result[1]).toEqual({ date: "2025-06-11", count: 0 });
-    expect(result[1].sources).toBeUndefined();
+    expect(result[1]!.sources).toBeUndefined();
   });
 
   it("handles a full realistic scenario", () => {

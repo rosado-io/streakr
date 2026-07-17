@@ -3,7 +3,7 @@
   "version": "0.16.0",
   "description": "The universal Git contribution calendar. Aggregate activity from GitHub, GitLab, and more into one beautiful, framework-agnostic heatmap.",
   "type": "module",
-  "main": "./dist/streakr.cjs.js",
+  "main": "./dist/streakr.cjs",
   "module": "./dist/streakr.es.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -14,36 +14,40 @@
       },
       "require": {
         "types": "./dist/index.d.ts",
-        "default": "./dist/streakr.cjs.js"
+        "default": "./dist/streakr.cjs"
       }
     },
     "./agents": {
-      "import": {
-        "types": "./dist/agents.d.ts",
-        "default": "./dist/agents.es.js"
-      },
-      "require": {
-        "types": "./dist/agents.d.ts",
-        "default": "./dist/agents.cjs.js"
+      "node": {
+        "import": {
+          "types": "./dist/agents.d.ts",
+          "default": "./dist/agents.es.js"
+        },
+        "require": {
+          "types": "./dist/agents.d.ts",
+          "default": "./dist/agents.cjs"
+        }
       }
     },
-    "./styles.css": "./dist/streakr.css",
-    "./dist/streakr.css": "./dist/streakr.css"
+    "./styles.css": "./dist/streakr.css"
+  },
+  "engines": {
+    "node": ">=20.19.0"
   },
   "files": [
     "dist"
   ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build && node -e \"require('fs').copyFileSync('src/component/streakr.css','dist/streakr.css')\"",
+    "build": "tsc --noEmit && vite build",
     "build:demo": "vite build --config vite.demo.config.ts",
     "test": "vitest",
     "test:ci": "vitest run --coverage",
-    "lint": "eslint src/",
-    "lint:fix": "eslint src/ --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "audit:dead-code": "knip",
-    "format": "prettier --write 'src/**/*.ts'",
-    "format:check": "prettier --check 'src/**/*.ts'",
+    "format": "prettier --write 'src/**/*.ts' 'demo/**/*.ts' '*.config.ts' 'eslint.config.js'",
+    "format:check": "prettier --check 'src/**/*.ts' 'demo/**/*.ts' '*.config.ts' 'eslint.config.js'",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [

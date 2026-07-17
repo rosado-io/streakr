@@ -1,9 +1,5 @@
-import { randomUUID } from "node:crypto";
-import { mkdir, rename, rm, writeFile } from "node:fs/promises";
-import { basename, dirname, join } from "node:path";
-
-import type { ContributionDay } from "./types";
-import { validateInputDates } from "./providers/validation";
+import type { ContributionDay } from "../types";
+import { isValidDateString, validateDateRange } from "../core/date";
 
 export const STREAKR_SNAPSHOT_SCHEMA_VERSION = 1 as const;
 
@@ -36,7 +32,7 @@ const SOURCE_KEY = /^[a-z0-9][a-z0-9._-]*$/i;
 export const createPublicSnapshot = (
   options: CreatePublicSnapshotOptions,
 ): PublicStreakrSnapshot => {
-  validateInputDates(options.range.start, options.range.end);
+  validateDateRange(options.range.start, options.range.end);
   const generatedAt = options.generatedAt ?? new Date().toISOString();
   if (Number.isNaN(Date.parse(generatedAt))) throw new Error("Invalid snapshot generation date");
 
@@ -55,24 +51,6 @@ export const createPublicSnapshot = (
     activity,
     agents,
   };
-};
-
-export const writePublicSnapshot = async (
-  outputPath: string,
-  snapshot: PublicStreakrSnapshot,
-): Promise<void> => {
-  const directory = dirname(outputPath);
-  await mkdir(directory, { recursive: true });
-  const temporary = join(directory, `.${basename(outputPath)}.${randomUUID()}.tmp`);
-  try {
-    await writeFile(temporary, `${JSON.stringify(snapshot, null, 2)}\n`, {
-      encoding: "utf8",
-      mode: 0o600,
-    });
-    await rename(temporary, outputPath);
-  } finally {
-    await rm(temporary, { force: true });
-  }
 };
 
 const sanitizeDays = (
@@ -113,7 +91,7 @@ const validateDay = (
   count: number,
   range: CreatePublicSnapshotOptions["range"],
 ): void => {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error(`Invalid contribution date: ${date}`);
+  if (!isValidDateString(date)) throw new Error(`Invalid contribution date: ${date}`);
   if (date < range.start || date > range.end) {
     throw new Error(`Contribution date ${date} is outside snapshot range`);
   }

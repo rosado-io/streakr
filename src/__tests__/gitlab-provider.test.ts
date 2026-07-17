@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { GitLabProvider } from "../providers/gitlab";
+import { gitlabProvider } from "../providers/gitlab";
 import type { FetchParams } from "../types";
 
 const baseParams: FetchParams = {
@@ -24,7 +24,7 @@ function buildFetchMock(
 
 const USER_RESPONSE = [{ id: 42, username: "johndoe" }];
 
-describe("GitLabProvider", () => {
+describe("gitlabProvider", () => {
   it("maps events to canonical daily counts", async () => {
     const fetchMock = buildFetchMock([
       { match: "/api/v4/users?username=", body: USER_RESPONSE },
@@ -39,7 +39,7 @@ describe("GitLabProvider", () => {
       },
     ]);
 
-    const provider = new GitLabProvider({ token: "glpat_test", fetch: fetchMock });
+    const provider = gitlabProvider({ token: "glpat_test", fetch: fetchMock });
     const result = await provider.fetchEvents(baseParams);
 
     expect(result).toEqual([
@@ -55,7 +55,7 @@ describe("GitLabProvider", () => {
       { match: "/api/v4/users/42/events", body: [{ created_at: "2025-06-01T10:00:00.000Z" }] },
     ]);
 
-    const provider = new GitLabProvider({ token: "glpat_abc123", fetch: fetchMock });
+    const provider = gitlabProvider({ token: "glpat_abc123", fetch: fetchMock });
     await provider.fetchEvents({ user: "johndoe", start: "2025-06-01", end: "2025-06-01" });
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -76,7 +76,7 @@ describe("GitLabProvider", () => {
       { match: "/api/v4/users/42/events", body: [] },
     ]);
 
-    const provider = new GitLabProvider({
+    const provider = gitlabProvider({
       token: "glpat_test",
       baseUrl: "https://gitlab.mycompany.com",
       fetch: fetchMock,
@@ -88,9 +88,10 @@ describe("GitLabProvider", () => {
     expect(userUrl).toContain("https://gitlab.mycompany.com/api/v4/users");
   });
 
-  it("follows Link header pagination to collect all events", async () => {
-    const page2Url = "https://gitlab.com/api/v4/users/42/events?page=2&per_page=100";
-    const previousUrl = "https://gitlab.com/api/v4/users/42/events?page=0&per_page=100";
+  it("paginates with page parameters to collect all events", async () => {
+    const fullPage = Array.from({ length: 100 }, () => ({
+      created_at: "2025-06-01T10:00:00.000Z",
+    }));
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
       const url = String(input);
@@ -99,23 +100,20 @@ describe("GitLabProvider", () => {
         return new Response(JSON.stringify(USER_RESPONSE), { status: 200 });
       }
 
-      if (url === page2Url) {
+      if (url.includes("page=2")) {
         return new Response(JSON.stringify([{ created_at: "2025-06-03T08:00:00.000Z" }]), {
           status: 200,
         });
       }
 
-      return new Response(JSON.stringify([{ created_at: "2025-06-01T10:00:00.000Z" }]), {
-        status: 200,
-        headers: { link: `<${previousUrl}>; rel="prev", <${page2Url}>; rel="next"` },
-      });
+      return new Response(JSON.stringify(fullPage), { status: 200 });
     });
 
-    const provider = new GitLabProvider({ token: "glpat_test", fetch: fetchMock });
+    const provider = gitlabProvider({ token: "glpat_test", fetch: fetchMock });
     const result = await provider.fetchEvents(baseParams);
 
     expect(result).toEqual([
-      { date: "2025-06-01", count: 1 },
+      { date: "2025-06-01", count: 100 },
       { date: "2025-06-02", count: 0 },
       { date: "2025-06-03", count: 1 },
     ]);
@@ -125,7 +123,7 @@ describe("GitLabProvider", () => {
   it("throws when GitLab user is not found", async () => {
     const fetchMock = buildFetchMock([{ match: "/api/v4/users?username=", body: [] }]);
 
-    const provider = new GitLabProvider({ token: "glpat_test", fetch: fetchMock });
+    const provider = gitlabProvider({ token: "glpat_test", fetch: fetchMock });
     await expect(provider.fetchEvents(baseParams)).rejects.toThrow(
       'GitLab user "johndoe" not found',
     );
@@ -136,7 +134,7 @@ describe("GitLabProvider", () => {
       return new Response("Unauthorized", { status: 401, statusText: "Unauthorized" });
     });
 
-    const provider = new GitLabProvider({ token: "glpat_test", fetch: fetchMock });
+    const provider = gitlabProvider({ token: "glpat_test", fetch: fetchMock });
     await expect(provider.fetchEvents(baseParams)).rejects.toThrow(
       "GitLab API request failed (401 Unauthorized): Unauthorized",
     );
@@ -147,7 +145,7 @@ describe("GitLabProvider", () => {
       return new Response("{}", { status: 200 });
     });
 
-    const provider = new GitLabProvider({ token: "glpat_test", fetch: fetchMock });
+    const provider = gitlabProvider({ token: "glpat_test", fetch: fetchMock });
 
     await expect(
       provider.fetchEvents({ user: "johndoe", start: "2025-06-10", end: "2025-06-01" }),
@@ -166,7 +164,7 @@ describe("GitLabProvider", () => {
       { match: "/api/v4/users/42/events", body: [] },
     ]);
 
-    const provider = new GitLabProvider({ token: "glpat_test", fetch: fetchMock });
+    const provider = gitlabProvider({ token: "glpat_test", fetch: fetchMock });
     const result = await provider.fetchEvents(baseParams);
 
     expect(result).toEqual([
@@ -177,8 +175,8 @@ describe("GitLabProvider", () => {
   });
 
   it("throws when token is empty", () => {
-    expect(() => new GitLabProvider({ token: "   " })).toThrow(
-      "GitLabProvider requires a non-empty token",
+    expect(() => gitlabProvider({ token: "   " })).toThrow(
+      "gitlabProvider requires a non-empty token",
     );
   });
 });

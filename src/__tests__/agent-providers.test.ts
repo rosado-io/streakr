@@ -60,7 +60,7 @@ describe("AGENT_PROVIDERS", () => {
       originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
       HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
         const original = originalGetBoundingClientRect.call(this);
-        return { ...original, width: 1024 } as DOMRect;
+        return { ...original, width: 1024 };
       };
       target = document.createElement("div");
       document.body.appendChild(target);
@@ -142,8 +142,8 @@ describe("AGENT_PROVIDERS", () => {
         getDays: () => [
           {
             date: new Date(2026, 0, 5),
-            total: splitDay.count,
-            sources: splitDay.sources ?? {},
+            total: splitDay!.count,
+            sources: splitDay!.sources ?? {},
           },
         ],
       });
