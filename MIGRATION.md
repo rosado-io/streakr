@@ -1,11 +1,15 @@
-# Migrating from 0.x to 1.0.0
+# Migrating from 0.x to 1.0.1
+
+> **Why 1.0.1 and not 1.0.0?** A `1.0.0` was accidentally published to npm in
+> April 2026 and npm cannot unpublish it. The first real release of the v1 API
+> is therefore `1.0.1`; do not use the orphaned `1.0.0`.
 
 ## Provider classes are now factory functions
 
 Every provider class became a factory function. Drop the `new`, lowercase the
 first letter, and keep the same options object:
 
-| 0.x                                  | 1.0.0                            | Import from                 |
+| 0.x                                  | 1.0.1                            | Import from                 |
 | ------------------------------------ | -------------------------------- | --------------------------- |
 | `new GitHubProvider(opts)`           | `githubProvider(opts)`           | `@rosado-io/streakr`        |
 | `new GitLabProvider(opts)`           | `gitlabProvider(opts)`           | `@rosado-io/streakr`        |
