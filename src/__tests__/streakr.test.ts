@@ -114,6 +114,20 @@ describe("createStreakr", () => {
       window.matchMedia = originalMatchMedia;
     });
 
+    it("falls back to light for theme: 'system' when matchMedia is unavailable", () => {
+      const originalMatchMedia = window.matchMedia;
+      // @ts-expect-error simulate a DOM shim without matchMedia
+      delete window.matchMedia;
+
+      try {
+        instance = createStreakr({ target, theme: "system", years, getDays });
+        const root = target.querySelector<HTMLElement>(".sk-root");
+        expect(root?.dataset.theme).toBe("light");
+      } finally {
+        window.matchMedia = originalMatchMedia;
+      }
+    });
+
     it("applies accent CSS variables on the root", () => {
       instance = createStreakr({ target, accent: "#ff00aa", years, getDays });
       const root = target.querySelector<HTMLElement>(".sk-root");

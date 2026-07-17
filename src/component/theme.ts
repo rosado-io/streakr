@@ -1,7 +1,14 @@
 import type { ResolvedConfig } from "./config";
 
-// Widened so the SSR guard survives type-checking against DOM lib globals.
+// Widened so the SSR/shim guards survive type-checking against DOM lib globals,
+// where window and matchMedia are typed as always present.
 const getWin = (): Window | undefined => globalThis.window;
+
+const getMatchMedia = (): ((query: string) => MediaQueryList) | undefined => {
+  const win = getWin();
+  if (!win || typeof win.matchMedia !== "function") return undefined;
+  return win.matchMedia.bind(win);
+};
 
 export interface ThemeController {
   getActiveTheme: () => "dark" | "light";
@@ -14,26 +21,24 @@ export const createThemeController = (cfg: ResolvedConfig, root: HTMLElement): T
 
   const getActiveTheme = (): "dark" | "light" => {
     if (cfg.theme !== "system") return cfg.theme;
-    const isDark = getWin()?.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = getMatchMedia()?.("(prefers-color-scheme: dark)").matches;
     return isDark ? "dark" : "light";
   };
 
   const cleanup = (): void => {
-    const win = getWin();
-    if (mediaQueryListener && win) {
-      win
-        .matchMedia("(prefers-color-scheme: dark)")
-        .removeEventListener("change", mediaQueryListener);
+    const matchMedia = getMatchMedia();
+    if (mediaQueryListener && matchMedia) {
+      matchMedia("(prefers-color-scheme: dark)").removeEventListener("change", mediaQueryListener);
     }
     mediaQueryListener = null;
   };
 
   const setup = (): void => {
-    const win = getWin();
-    if (!win) return;
+    const matchMedia = getMatchMedia();
+    if (!matchMedia) return;
     cleanup();
     if (cfg.theme === "system") {
-      const mediaQuery = win.matchMedia("(prefers-color-scheme: dark)");
+      const mediaQuery = matchMedia("(prefers-color-scheme: dark)");
       mediaQueryListener = (e: MediaQueryListEvent) => {
         root.dataset.theme = e.matches ? "dark" : "light";
       };
