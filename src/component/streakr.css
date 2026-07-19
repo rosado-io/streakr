@@ -378,6 +378,20 @@
   color: var(--sk-text-subtle);
   margin-top: 2px;
 }
+.sk-ring-center--loading {
+  pointer-events: none;
+  cursor: default;
+}
+/* Higher specificity than .sk-skeleton so the transparent background wins:
+   the slot shows the exact center-circle background and only the shimmer
+   sweep marks the pending number. */
+.sk-ring-center .sk-ring-count-skeleton {
+  display: block;
+  width: 34px;
+  height: 30px;
+  border-radius: 6px;
+  background: transparent;
+}
 
 /* Stats */
 .sk-stats {
@@ -491,10 +505,6 @@
   opacity: 0.7;
 }
 
-.sk-ring-svg--skeleton {
-  opacity: 0.7;
-}
-
 .sk-ring-skeleton-line {
   animation: sk-ring-sweep 2000ms linear infinite;
 }
@@ -504,7 +514,17 @@
   3% { stroke: var(--sk-heat-3); }
   6% { stroke: var(--sk-heat-2); }
   9% { stroke: var(--sk-heat-1); }
-  12%, 100% { stroke: var(--sk-heat-0); }
+  12%, 100% { stroke: transparent; }
+}
+
+.sk-ring-hand--skeleton {
+  transform-box: view-box;
+  transform-origin: center;
+  animation: sk-ring-hand-spin 2000ms linear infinite;
+}
+
+@keyframes sk-ring-hand-spin {
+  to { transform: rotate(360deg); }
 }
 .sk-heatmap-skeleton-cell {
   animation: sk-heatmap-sweep 2860ms linear infinite;
@@ -596,7 +616,8 @@
   .sk-skeleton::after,
   .sk-modal-overlay,
   .sk-modal,
-  .sk-ring-skeleton-line {
+  .sk-ring-skeleton-line,
+  .sk-ring-hand--skeleton {
     animation: none;
   }
 }

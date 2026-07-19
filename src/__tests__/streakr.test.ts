@@ -1461,8 +1461,81 @@ describe("createStreakr", () => {
         expect(line.hasAttribute("data-date")).toBe(false);
         expect(line.onclick).toBeNull();
       });
-      expect(target.querySelector(".sk-ring-center")).toBeNull();
-      expect(target.querySelector(".sk-ring-hand")).toBeNull();
+      const center = target.querySelector<HTMLElement>(".sk-ring-center--loading");
+      expect(center).toBeTruthy();
+      expect(center?.tagName).toBe("DIV");
+      expect(center?.hasAttribute("tabindex")).toBe(false);
+      expect(center?.onclick).toBeNull();
+      const hand = target.querySelector<SVGGElement>(".sk-ring-hand--skeleton");
+      expect(hand).toBeTruthy();
+      expect(hand?.hasAttribute("tabindex")).toBe(false);
+      expect(hand?.hasAttribute("role")).toBe(false);
+    });
+
+    it("spins the same hand the ready ring uses, starting between the center and the inner guide", () => {
+      setContainerWidth(375);
+      instance = createStreakr({ target, years, state: "loading", getDays });
+      const hand = target.querySelector<SVGGElement>(".sk-ring-hand--skeleton");
+      expect(hand).toBeTruthy();
+      expect(hand?.hasAttribute("transform")).toBe(false);
+      const line = hand?.querySelector<SVGLineElement>(":scope > line");
+      expect(line?.classList.contains("sk-ring-hand-line")).toBe(true);
+      // Pointing up at rest: from r=70 (between the center circle and the inner
+      // guide) to r=154 (just past the outer guide), same as the ready hand.
+      expect(Number(line?.getAttribute("x1"))).toBeCloseTo(180);
+      expect(Number(line?.getAttribute("y1"))).toBeCloseTo(110);
+      expect(Number(line?.getAttribute("x2"))).toBeCloseTo(180);
+      expect(Number(line?.getAttribute("y2"))).toBeCloseTo(26);
+    });
+
+    it("renders the ring center while loading with a skeleton count and today's date", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        state: "loading",
+        today: new Date(2026, 0, 17),
+        getDays,
+      });
+      const center = target.querySelector(".sk-ring-center--loading");
+      expect(center).toBeTruthy();
+      expect(center?.querySelector(".sk-ring-count .sk-skeleton")).toBeTruthy();
+      expect(center?.querySelector(".sk-ring-date")?.textContent).toBe("Jan 17");
+      expect(center?.querySelector(".sk-ring-reset")?.textContent).toBe("RESET");
+    });
+
+    it("shows the first day of the year in the loading center for past years", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2025],
+        year: 2025,
+        state: "loading",
+        today: new Date(2026, 0, 17),
+        getDays,
+      });
+      const center = target.querySelector(".sk-ring-center--loading");
+      expect(center?.querySelector(".sk-ring-date")?.textContent).toBe("Jan 1");
+    });
+
+    it("keeps every skeleton line transparent so only the comet and hand are visible", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        state: "loading",
+        today: new Date(2026, 0, 17),
+        getDays,
+      });
+      const lines = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-skeleton-line"));
+      expect(lines).toHaveLength(365);
+      lines.forEach((line) => {
+        expect(line.classList.contains("sk-ring-skeleton-line--future")).toBe(false);
+        expect(line.getAttribute("stroke")).toBe("transparent");
+        expect(line.style.animationDelay).not.toBe("");
+      });
     });
 
     it("removes skeleton animation classes and inline delays once state becomes ready", () => {
@@ -1480,6 +1553,7 @@ describe("createStreakr", () => {
 
       expect(target.querySelector(".sk-ring-skeleton-line")).toBeNull();
       expect(target.querySelector(".sk-ring-svg--skeleton")).toBeNull();
+      expect(target.querySelector(".sk-ring-hand--skeleton")).toBeNull();
 
       const readyLines = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line"));
       expect(readyLines.length).toBeGreaterThan(0);
@@ -1487,6 +1561,11 @@ describe("createStreakr", () => {
         expect(line.classList.contains("sk-ring-skeleton-line")).toBe(false);
         expect(line.style.animationDelay).toBe("");
       });
+
+      const readyHand = target.querySelector<SVGGElement>(".sk-ring-hand");
+      expect(readyHand).toBeTruthy();
+      expect(readyHand?.classList.contains("sk-ring-hand--skeleton")).toBe(false);
+      expect(readyHand?.getAttribute("transform")).toMatch(/^rotate\(/);
     });
 
     it("still selects the desktop heatmap skeleton (not the ring skeleton) above the mobile breakpoint", () => {
