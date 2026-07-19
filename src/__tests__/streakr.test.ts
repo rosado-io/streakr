@@ -633,7 +633,7 @@ describe("createStreakr", () => {
       });
     });
 
-    it("reveals ready cells with a staggered sweep on the loading→ready transition", () => {
+    it("sweeps the grid up to the current day on the loading→ready transition, settling each cell into its real color", () => {
       instance = createStreakr({ target, years, state: "loading", getDays });
       expect(target.querySelector("rect.sk-heatmap-skeleton-cell")).toBeTruthy();
 
@@ -641,25 +641,41 @@ describe("createStreakr", () => {
 
       expect(target.querySelector("rect.sk-heatmap-skeleton-cell")).toBeNull();
       const cells = Array.from(target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell"));
-      expect(cells.length).toBeGreaterThan(0);
+      // The grid spans the full year, so future-day cells must be present.
+      expect(cells.length).toBeGreaterThan(300);
 
       const revealCells = cells.filter((cell) =>
         cell.getAttribute("class")?.includes("sk-heatmap-cell--reveal"),
       );
-      expect(revealCells).toHaveLength(cells.length);
+      // Only days up to today join the sweep; future days stay fixed.
+      expect(revealCells.length).toBeGreaterThan(0);
+      expect(revealCells.length).toBeLessThan(cells.length);
 
       const delays = new Set(revealCells.map((cell) => cell.style.animationDelay));
-      expect(delays.size).toBeGreaterThan(40);
+      expect(delays.size).toBeGreaterThan(20);
 
       revealCells.forEach((cell) => {
         expect(cell.getAttribute("fill")).toBe("var(--sk-heat-0)");
         expect(cell.style.getPropertyValue("--sk-cell-final")).toMatch(/^var\(--sk-heat-[0-4]\)$/);
+        expect(cell.style.getPropertyValue("--sk-cell-peak")).toMatch(/^var\(--sk-heat-[0-4]\)$/);
       });
 
       const finals = new Set(
         revealCells.map((cell) => cell.style.getPropertyValue("--sk-cell-final")),
       );
       expect(finals.size).toBeGreaterThan(1);
+
+      const peaks = new Set(revealCells.map((cell) => cell.style.getPropertyValue("--sk-cell-peak")));
+      expect(peaks.size).toBeGreaterThanOrEqual(4);
+
+      const futureCells = cells.filter(
+        (cell) => !cell.getAttribute("class")?.includes("sk-heatmap-cell--reveal"),
+      );
+      expect(futureCells.length).toBeGreaterThan(0);
+      futureCells.forEach((cell) => {
+        expect(cell.style.animationDelay).toBe("");
+        expect(cell.getAttribute("fill")).toBe("var(--sk-heat-0)");
+      });
     });
 
     it("does not replay the reveal sweep on a later render once already ready", () => {
@@ -674,6 +690,7 @@ describe("createStreakr", () => {
         expect(cell.style.animationDelay).toBe("");
       });
     });
+
   });
 
   describe("lifecycle states", () => {

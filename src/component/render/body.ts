@@ -160,7 +160,7 @@ export const createBodyRenderer = (ctx: ComponentCtx, deps: BodyRendererDeps): B
             Math.max(200, w),
             ariaLabel,
             tooltip.bindCellEvents,
-            pendingReveal,
+            pendingReveal ? ctx.cfg.today : undefined,
           );
         }
         pendingReveal = false;

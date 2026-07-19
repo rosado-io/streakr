@@ -32,17 +32,31 @@ type HeatmapCellBuilder = (
 ) => SVGElement;
 
 const buildHeatmapCell =
-  (bindCellEvents: BindCellEvents): HeatmapCellBuilder =>
-  (day, ri, sq, colStep) => {
+  (bindCellEvents: BindCellEvents, totalCols: number, revealUntil?: Date): HeatmapCellBuilder =>
+  (day, ri, sq, colStep, ci) => {
+    // The reveal mirrors the loading skeleton: cells rest at the base color
+    // while the wave sweeps the grid, then each one settles into its real level
+    // color (--sk-cell-final) as the wave passes. The wave stops at the current
+    // day — future cells stay fixed at the base color and never flash. The
+    // skeleton sweep timing is reused so both waves travel at the same speed.
+    const reveal =
+      revealUntil !== undefined && day !== null && day.date.getTime() <= revealUntil.getTime();
     const rect = svg("rect", {
-      class: day ? "sk-heatmap-cell" : null,
+      class: reveal ? "sk-heatmap-cell sk-heatmap-cell--reveal" : day ? "sk-heatmap-cell" : null,
       y: ri * colStep,
       width: sq,
       height: sq,
       rx: Math.max(2, sq * 0.22),
-      fill: day ? `var(--sk-heat-${day.level})` : "transparent",
+      fill: reveal ? "var(--sk-heat-0)" : day ? `var(--sk-heat-${day.level})` : "transparent",
       style: {
         cursor: day ? "pointer" : "default",
+        ...(reveal
+          ? {
+              "--sk-cell-peak": `var(--sk-heat-${wavePeakLevel(ci, ri)})`,
+              "--sk-cell-final": `var(--sk-heat-${day.level})`,
+              animationDelay: `${((ci * HEATMAP_SKELETON_SWEEP_MS) / totalCols).toFixed(2)}ms`,
+            }
+          : {}),
       },
     });
     if (day) {
@@ -171,37 +185,13 @@ const createHeatmapSvg = (
   return svgEl;
 };
 
-const buildRevealHeatmapCell =
-  (bindCellEvents: BindCellEvents, totalCols: number): HeatmapCellBuilder =>
-  (day, ri, sq, colStep, ci) => {
-    const rect = svg("rect", {
-      class: day ? "sk-heatmap-cell sk-heatmap-cell--reveal" : null,
-      y: ri * colStep,
-      width: sq,
-      height: sq,
-      rx: Math.max(2, sq * 0.22),
-      fill: day ? "var(--sk-heat-0)" : "transparent",
-      style: day
-        ? {
-            cursor: "pointer",
-            "--sk-cell-final": `var(--sk-heat-${day.level})`,
-            animationDelay: `${((ci * HEATMAP_SKELETON_SWEEP_MS) / totalCols).toFixed(2)}ms`,
-          }
-        : { cursor: "default" },
-    });
-    if (day) {
-      bindCellEvents(rect, day);
-    }
-    return rect;
-  };
-
 export const renderHeatmap = (
   wrap: HTMLElement,
   days: StreakrLeveledDay[],
   containerW: number,
   ariaLabel: string,
   bindCellEvents: BindCellEvents,
-  isRevealing = false,
+  revealUntil?: Date,
 ): void => {
   const cols = gridFromDays(days);
   const svgEl = createHeatmapSvg(cols, {
@@ -209,19 +199,20 @@ export const renderHeatmap = (
     ariaLabel,
     containerW,
     wrap,
-    buildCell: isRevealing
-      ? buildRevealHeatmapCell(bindCellEvents, cols.length)
-      : buildHeatmapCell(bindCellEvents),
+    buildCell: buildHeatmapCell(bindCellEvents, cols.length, revealUntil),
   });
 
   wrap.replaceChildren(h("div", { class: "sk-heatmap-svg-wrap" }, [svgEl]));
 };
 
-const SKELETON_PEAK_LEVELS = [0, 1, 1, 2, 2, 2, 3, 3, 4, 4] as const;
+const WAVE_PEAK_LEVELS = [0, 1, 1, 2, 2, 2, 3, 3, 4, 4] as const;
 
-const skeletonPeakLevel = (ci: number, ri: number): number => {
+// Deterministic per-cell peak tone for the sweep waves (skeleton and reveal),
+// so the passing wave reads as a varied rainbow of greens instead of a flat
+// single-tone flash.
+const wavePeakLevel = (ci: number, ri: number): number => {
   const hash = Math.imul(ci * 7 + ri + 1, 2654435761) >>> 0;
-  return SKELETON_PEAK_LEVELS[hash % SKELETON_PEAK_LEVELS.length] ?? 0;
+  return WAVE_PEAK_LEVELS[hash % WAVE_PEAK_LEVELS.length] ?? 0;
 };
 
 const buildSkeletonHeatmapCell =
@@ -236,7 +227,7 @@ const buildSkeletonHeatmapCell =
       fill: day ? "var(--sk-heat-0)" : "transparent",
       style: day
         ? {
-            "--sk-cell-peak": `var(--sk-heat-${skeletonPeakLevel(ci, ri)})`,
+            "--sk-cell-peak": `var(--sk-heat-${wavePeakLevel(ci, ri)})`,
             animationDelay: `${((ci * HEATMAP_SKELETON_SWEEP_MS) / totalCols).toFixed(2)}ms`,
           }
         : {},

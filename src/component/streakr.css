@@ -521,8 +521,8 @@
 }
 
 @keyframes sk-heatmap-reveal {
-  0% { fill: var(--sk-heat-4); }
-  8% { fill: color-mix(in oklab, var(--sk-heat-4) 50%, var(--sk-cell-final, var(--sk-heat-0))); }
+  0% { fill: var(--sk-cell-peak, var(--sk-heat-4)); }
+  8% { fill: color-mix(in oklab, var(--sk-cell-peak, var(--sk-heat-4)) 50%, var(--sk-cell-final, var(--sk-heat-0))); }
   52%, 100% { fill: var(--sk-cell-final, var(--sk-heat-0)); }
 }
 
