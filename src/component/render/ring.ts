@@ -181,19 +181,15 @@ export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): R
   const createHandGroup = (skeleton = false): SVGGElement => {
     const handStart = polarToCartesian(RING_CX, RING_CY, RING_HAND_START_R, -Math.PI / 2);
     const handEnd = polarToCartesian(RING_CX, RING_CY, RING_HAND_END_R, -Math.PI / 2);
-    return svg(
-      "g",
-      { class: skeleton ? "sk-ring-hand sk-ring-hand--skeleton" : "sk-ring-hand" },
-      [
-        svg("line", {
-          class: "sk-ring-hand-line",
-          x1: handStart.x,
-          y1: handStart.y,
-          x2: handEnd.x,
-          y2: handEnd.y,
-        }),
-      ],
-    ) as SVGGElement;
+    return svg("g", { class: skeleton ? "sk-ring-hand sk-ring-hand--skeleton" : "sk-ring-hand" }, [
+      svg("line", {
+        class: "sk-ring-hand-line",
+        x1: handStart.x,
+        y1: handStart.y,
+        x2: handEnd.x,
+        y2: handEnd.y,
+      }),
+    ]) as SVGGElement;
   };
 
   const renderRingSvg = (days: StreakrLeveledDay[], selectedDay: Date): SVGElement => {

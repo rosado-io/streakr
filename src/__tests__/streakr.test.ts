@@ -665,7 +665,9 @@ describe("createStreakr", () => {
       );
       expect(finals.size).toBeGreaterThan(1);
 
-      const peaks = new Set(revealCells.map((cell) => cell.style.getPropertyValue("--sk-cell-peak")));
+      const peaks = new Set(
+        revealCells.map((cell) => cell.style.getPropertyValue("--sk-cell-peak")),
+      );
       expect(peaks.size).toBeGreaterThanOrEqual(4);
 
       const futureCells = cells.filter(
@@ -690,7 +692,6 @@ describe("createStreakr", () => {
         expect(cell.style.animationDelay).toBe("");
       });
     });
-
   });
 
   describe("lifecycle states", () => {
