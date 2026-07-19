@@ -41,13 +41,22 @@ const buildHeatmapCell =
     // skeleton sweep timing is reused so both waves travel at the same speed.
     const reveal =
       revealUntil !== undefined && day !== null && day.date.getTime() <= revealUntil.getTime();
+    let cellClass: string | null = null;
+    let cellFill = "transparent";
+    if (reveal) {
+      cellClass = "sk-heatmap-cell sk-heatmap-cell--reveal";
+      cellFill = "var(--sk-heat-0)";
+    } else if (day) {
+      cellClass = "sk-heatmap-cell";
+      cellFill = `var(--sk-heat-${day.level})`;
+    }
     const rect = svg("rect", {
-      class: reveal ? "sk-heatmap-cell sk-heatmap-cell--reveal" : day ? "sk-heatmap-cell" : null,
+      class: cellClass,
       y: ri * colStep,
       width: sq,
       height: sq,
       rx: Math.max(2, sq * 0.22),
-      fill: reveal ? "var(--sk-heat-0)" : day ? `var(--sk-heat-${day.level})` : "transparent",
+      fill: cellFill,
       style: {
         cursor: day ? "pointer" : "default",
         ...(reveal
