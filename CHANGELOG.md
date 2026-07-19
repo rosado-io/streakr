@@ -1,3 +1,6 @@
+## [1.1.0](https://github.com/rosado-io/streakr/compare/v1.0.2...v1.1.0) (2026-07-19)
+* feat: align loading states with ready states (heatmap reveal + mobile ring) (#167) ([`1f24f04`](https://github.com/rosado-io/streakr/commit/1f24f04faa12b2cae8f402f33a03d4444e310c9b)) by ****
+
 ## [1.0.2](https://github.com/rosado-io/streakr/compare/v1.0.1...v1.0.2) (2026-07-17)
 * fix(component): redraw on first real resize when initial observation never fires (#166) ([`ec6c498`](https://github.com/rosado-io/streakr/commit/ec6c4985d2c0132b32418b4c804bc8f35f4ae93d)) by ****
 
