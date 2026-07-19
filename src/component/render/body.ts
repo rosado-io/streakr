@@ -67,7 +67,9 @@ export const createBodyRenderer = (ctx: ComponentCtx, deps: BodyRendererDeps): B
       if (isMobile) {
         const svgEl = ring.renderSkeletonRing();
         heatmapInner.replaceChildren(
-          h("div", { class: "sk-ring" }, [h("div", { class: "sk-ring-svg-wrap" }, [svgEl])]),
+          h("div", { class: "sk-ring" }, [
+            h("div", { class: "sk-ring-svg-wrap" }, [svgEl, ring.renderSkeletonRingCenter()]),
+          ]),
         );
       } else {
         const w = heatmapWrap.clientWidth - 32;
@@ -160,7 +162,7 @@ export const createBodyRenderer = (ctx: ComponentCtx, deps: BodyRendererDeps): B
             Math.max(200, w),
             ariaLabel,
             tooltip.bindCellEvents,
-            pendingReveal,
+            pendingReveal ? ctx.cfg.today : undefined,
           );
         }
         pendingReveal = false;

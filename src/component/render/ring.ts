@@ -72,6 +72,7 @@ type RingDayLineAttrs = {
 export interface RingRenderer {
   renderRing: (wrap: HTMLElement, days: StreakrLeveledDay[]) => void;
   renderSkeletonRing: () => SVGElement;
+  renderSkeletonRingCenter: () => HTMLElement;
 }
 
 export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): RingRenderer => {
@@ -177,6 +178,20 @@ export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): R
     return svgEl;
   };
 
+  const createHandGroup = (skeleton = false): SVGGElement => {
+    const handStart = polarToCartesian(RING_CX, RING_CY, RING_HAND_START_R, -Math.PI / 2);
+    const handEnd = polarToCartesian(RING_CX, RING_CY, RING_HAND_END_R, -Math.PI / 2);
+    return svg("g", { class: skeleton ? "sk-ring-hand sk-ring-hand--skeleton" : "sk-ring-hand" }, [
+      svg("line", {
+        class: "sk-ring-hand-line",
+        x1: handStart.x,
+        y1: handStart.y,
+        x2: handEnd.x,
+        y2: handEnd.y,
+      }),
+    ]) as SVGGElement;
+  };
+
   const renderRingSvg = (days: StreakrLeveledDay[], selectedDay: Date): SVGElement => {
     const totalDays = days.length;
     const svgEl = createRingSvgBase(
@@ -199,21 +214,10 @@ export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): R
       },
     );
 
-    const handStart = polarToCartesian(RING_CX, RING_CY, RING_HAND_START_R, -Math.PI / 2);
-    const handEnd = polarToCartesian(RING_CX, RING_CY, RING_HAND_END_R, -Math.PI / 2);
-    const hand = svg("g", { class: "sk-ring-hand" });
+    const hand = createHandGroup();
     hand.setAttribute(
       "transform",
       `rotate(${(dayToHandRotation(selectedDay, totalDays) * 180) / Math.PI}, ${RING_CX}, ${RING_CY})`,
-    );
-    hand.appendChild(
-      svg("line", {
-        class: "sk-ring-hand-line",
-        x1: handStart.x,
-        y1: handStart.y,
-        x2: handEnd.x,
-        y2: handEnd.y,
-      }),
     );
     svgEl.appendChild(hand);
     return svgEl;
@@ -254,20 +258,44 @@ export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): R
     const skeletonYear = ctx.state.year ?? ctx.cfg.today.getFullYear();
     const skeletonDays = padDaysToYear([], skeletonYear);
     const totalDays = skeletonDays.length;
-    return createRingSvgBase(
+    const svgEl = createRingSvgBase(
       skeletonDays,
       "sk-ring-svg sk-ring-svg--skeleton",
       "Loading contribution ring",
       (_day, i) => ({
+        // Lines stay transparent: while loading the ring shows only the green
+        // comet sweeping through (sk-ring-sweep) and the spinning hand.
         class: "sk-ring-skeleton-line",
-        stroke: ringLineColor(0),
+        stroke: "transparent",
         "stroke-linecap": "round",
         style: {
           animationDelay: `${((i * RING_SKELETON_REVOLUTION_MS) / totalDays).toFixed(2)}ms`,
         },
       }),
     );
+    // Same hand the ready ring uses to mark the selected day; here it spins
+    // clockwise (via CSS) as the loading indicator.
+    svgEl.appendChild(createHandGroup(true));
+    return svgEl;
   };
 
-  return { renderRing, renderSkeletonRing };
+  // Mirrors the day renderRing restores once ready: the current selection when
+  // it belongs to the displayed year, otherwise the first day of the year.
+  const skeletonCenterDate = (): Date => {
+    const year = ctx.state.year ?? ctx.cfg.today.getFullYear();
+    return ctx.state.selectedDay.getFullYear() === year
+      ? ctx.state.selectedDay
+      : new Date(year, 0, 1);
+  };
+
+  const renderSkeletonRingCenter = (): HTMLElement =>
+    h("div", { class: "sk-ring-center sk-ring-center--loading" }, [
+      h("div", { class: "sk-ring-count" }, [
+        h("span", { class: "sk-skeleton sk-ring-count-skeleton", "aria-hidden": true }),
+      ]),
+      h("div", { class: "sk-ring-date", text: fmtDateShort(skeletonCenterDate()) }),
+      h("div", { class: "sk-ring-reset", text: "RESET" }),
+    ]);
+
+  return { renderRing, renderSkeletonRing, renderSkeletonRingCenter };
 };

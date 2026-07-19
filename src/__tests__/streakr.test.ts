@@ -633,7 +633,7 @@ describe("createStreakr", () => {
       });
     });
 
-    it("reveals ready cells with a staggered sweep on the loading→ready transition", () => {
+    it("sweeps the grid up to the current day on the loading→ready transition, settling each cell into its real color", () => {
       instance = createStreakr({ target, years, state: "loading", getDays });
       expect(target.querySelector("rect.sk-heatmap-skeleton-cell")).toBeTruthy();
 
@@ -641,25 +641,43 @@ describe("createStreakr", () => {
 
       expect(target.querySelector("rect.sk-heatmap-skeleton-cell")).toBeNull();
       const cells = Array.from(target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell"));
-      expect(cells.length).toBeGreaterThan(0);
+      // The grid spans the full year, so future-day cells must be present.
+      expect(cells.length).toBeGreaterThan(300);
 
       const revealCells = cells.filter((cell) =>
         cell.getAttribute("class")?.includes("sk-heatmap-cell--reveal"),
       );
-      expect(revealCells).toHaveLength(cells.length);
+      // Only days up to today join the sweep; future days stay fixed.
+      expect(revealCells.length).toBeGreaterThan(0);
+      expect(revealCells.length).toBeLessThan(cells.length);
 
       const delays = new Set(revealCells.map((cell) => cell.style.animationDelay));
-      expect(delays.size).toBeGreaterThan(40);
+      expect(delays.size).toBeGreaterThan(20);
 
       revealCells.forEach((cell) => {
         expect(cell.getAttribute("fill")).toBe("var(--sk-heat-0)");
         expect(cell.style.getPropertyValue("--sk-cell-final")).toMatch(/^var\(--sk-heat-[0-4]\)$/);
+        expect(cell.style.getPropertyValue("--sk-cell-peak")).toMatch(/^var\(--sk-heat-[0-4]\)$/);
       });
 
       const finals = new Set(
         revealCells.map((cell) => cell.style.getPropertyValue("--sk-cell-final")),
       );
       expect(finals.size).toBeGreaterThan(1);
+
+      const peaks = new Set(
+        revealCells.map((cell) => cell.style.getPropertyValue("--sk-cell-peak")),
+      );
+      expect(peaks.size).toBeGreaterThanOrEqual(4);
+
+      const futureCells = cells.filter(
+        (cell) => !cell.getAttribute("class")?.includes("sk-heatmap-cell--reveal"),
+      );
+      expect(futureCells.length).toBeGreaterThan(0);
+      futureCells.forEach((cell) => {
+        expect(cell.style.animationDelay).toBe("");
+        expect(cell.getAttribute("fill")).toBe("var(--sk-heat-0)");
+      });
     });
 
     it("does not replay the reveal sweep on a later render once already ready", () => {
@@ -1444,8 +1462,105 @@ describe("createStreakr", () => {
         expect(line.hasAttribute("data-date")).toBe(false);
         expect(line.onclick).toBeNull();
       });
-      expect(target.querySelector(".sk-ring-center")).toBeNull();
-      expect(target.querySelector(".sk-ring-hand")).toBeNull();
+      const center = target.querySelector<HTMLElement>(".sk-ring-center--loading");
+      expect(center).toBeTruthy();
+      expect(center?.tagName).toBe("DIV");
+      expect(center?.hasAttribute("tabindex")).toBe(false);
+      expect(center?.onclick).toBeNull();
+      const hand = target.querySelector<SVGGElement>(".sk-ring-hand--skeleton");
+      expect(hand).toBeTruthy();
+      expect(hand?.hasAttribute("tabindex")).toBe(false);
+      expect(hand?.hasAttribute("role")).toBe(false);
+    });
+
+    it("spins the same hand the ready ring uses, starting between the center and the inner guide", () => {
+      setContainerWidth(375);
+      instance = createStreakr({ target, years, state: "loading", getDays });
+      const hand = target.querySelector<SVGGElement>(".sk-ring-hand--skeleton");
+      expect(hand).toBeTruthy();
+      expect(hand?.hasAttribute("transform")).toBe(false);
+      const line = hand?.querySelector<SVGLineElement>(":scope > line");
+      expect(line?.classList.contains("sk-ring-hand-line")).toBe(true);
+      // Pointing up at rest: from r=70 (between the center circle and the inner
+      // guide) to r=154 (just past the outer guide), same as the ready hand.
+      expect(Number(line?.getAttribute("x1"))).toBeCloseTo(180);
+      expect(Number(line?.getAttribute("y1"))).toBeCloseTo(110);
+      expect(Number(line?.getAttribute("x2"))).toBeCloseTo(180);
+      expect(Number(line?.getAttribute("y2"))).toBeCloseTo(26);
+    });
+
+    it("renders the ring center while loading with a skeleton count and today's date", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        state: "loading",
+        today: new Date(2026, 0, 17),
+        getDays,
+      });
+      const center = target.querySelector(".sk-ring-center--loading");
+      expect(center).toBeTruthy();
+      expect(center?.querySelector(".sk-ring-count .sk-skeleton")).toBeTruthy();
+      expect(center?.querySelector(".sk-ring-date")?.textContent).toBe("Jan 17");
+      expect(center?.querySelector(".sk-ring-reset")?.textContent).toBe("RESET");
+    });
+
+    it("shows the first day of the year in the loading center for past years", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2025],
+        year: 2025,
+        state: "loading",
+        today: new Date(2026, 0, 17),
+        getDays,
+      });
+      const center = target.querySelector(".sk-ring-center--loading");
+      expect(center?.querySelector(".sk-ring-date")?.textContent).toBe("Jan 1");
+    });
+
+    it("preserves the selected day in the loading center", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        state: "ready",
+        today: new Date(2026, 0, 17),
+        getDays,
+      });
+
+      const jan2Line = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line")).find(
+        (line) => line.dataset.date?.startsWith("2026-01-02"),
+      );
+      expect(jan2Line).toBeTruthy();
+      jan2Line?.dispatchEvent(new Event("click", { bubbles: true }));
+      expect(target.querySelector(".sk-ring-date")?.textContent).toBe("Jan 2");
+
+      instance.update({ state: "loading" });
+      expect(target.querySelector(".sk-ring-center--loading .sk-ring-date")?.textContent).toBe(
+        "Jan 2",
+      );
+    });
+
+    it("keeps every skeleton line transparent so only the comet and hand are visible", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        state: "loading",
+        today: new Date(2026, 0, 17),
+        getDays,
+      });
+      const lines = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-skeleton-line"));
+      expect(lines).toHaveLength(365);
+      lines.forEach((line) => {
+        expect(line.classList.contains("sk-ring-skeleton-line--future")).toBe(false);
+        expect(line.getAttribute("stroke")).toBe("transparent");
+        expect(line.style.animationDelay).not.toBe("");
+      });
     });
 
     it("removes skeleton animation classes and inline delays once state becomes ready", () => {
@@ -1463,6 +1578,7 @@ describe("createStreakr", () => {
 
       expect(target.querySelector(".sk-ring-skeleton-line")).toBeNull();
       expect(target.querySelector(".sk-ring-svg--skeleton")).toBeNull();
+      expect(target.querySelector(".sk-ring-hand--skeleton")).toBeNull();
 
       const readyLines = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line"));
       expect(readyLines.length).toBeGreaterThan(0);
@@ -1470,6 +1586,11 @@ describe("createStreakr", () => {
         expect(line.classList.contains("sk-ring-skeleton-line")).toBe(false);
         expect(line.style.animationDelay).toBe("");
       });
+
+      const readyHand = target.querySelector<SVGGElement>(".sk-ring-hand");
+      expect(readyHand).toBeTruthy();
+      expect(readyHand?.classList.contains("sk-ring-hand--skeleton")).toBe(false);
+      expect(readyHand?.getAttribute("transform")).toMatch(/^rotate\(/);
     });
 
     it("still selects the desktop heatmap skeleton (not the ring skeleton) above the mobile breakpoint", () => {
