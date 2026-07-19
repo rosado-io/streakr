@@ -1520,6 +1520,30 @@ describe("createStreakr", () => {
       expect(center?.querySelector(".sk-ring-date")?.textContent).toBe("Jan 1");
     });
 
+    it("preserves the selected day in the loading center", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        state: "ready",
+        today: new Date(2026, 0, 17),
+        getDays,
+      });
+
+      const jan2Line = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line")).find(
+        (line) => line.dataset.date?.startsWith("2026-01-02"),
+      );
+      expect(jan2Line).toBeTruthy();
+      jan2Line?.dispatchEvent(new Event("click", { bubbles: true }));
+      expect(target.querySelector(".sk-ring-date")?.textContent).toBe("Jan 2");
+
+      instance.update({ state: "loading" });
+      expect(target.querySelector(".sk-ring-center--loading .sk-ring-date")?.textContent).toBe(
+        "Jan 2",
+      );
+    });
+
     it("keeps every skeleton line transparent so only the comet and hand are visible", () => {
       setContainerWidth(375);
       instance = createStreakr({

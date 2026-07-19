@@ -279,11 +279,13 @@ export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): R
     return svgEl;
   };
 
-  // Mirrors the day renderRing selects initially: today for the current year,
-  // otherwise the first day of the (padded) year.
+  // Mirrors the day renderRing restores once ready: the current selection when
+  // it belongs to the displayed year, otherwise the first day of the year.
   const skeletonCenterDate = (): Date => {
     const year = ctx.state.year ?? ctx.cfg.today.getFullYear();
-    return ctx.cfg.today.getFullYear() === year ? ctx.cfg.today : new Date(year, 0, 1);
+    return ctx.state.selectedDay.getFullYear() === year
+      ? ctx.state.selectedDay
+      : new Date(year, 0, 1);
   };
 
   const renderSkeletonRingCenter = (): HTMLElement =>

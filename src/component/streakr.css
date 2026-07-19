@@ -332,6 +332,11 @@
 .sk-ring-center {
   position: absolute;
   inset: 0;
+  /* Normalize the box model across embeds: the ready center is a <button> and
+     the loading one a <div>, and UA styles treat their sizing/padding
+     differently when the host page has no global border-box reset. */
+  box-sizing: border-box;
+  padding: 0;
   width: 96px;
   height: 96px;
   margin: auto;
