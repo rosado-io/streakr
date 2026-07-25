@@ -1,8 +1,25 @@
 @import "../src/component/streakr.css";
 
-* { box-sizing: border-box; }
+/* ============================================================
+   streakr — demo landing
+   Editorial dark layout. Everything is namespaced under .lv2-*
+   so it can never collide with the component's own .sk-* rules.
+   ============================================================ */
 
-html, body {
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-color: #262626 #0a0a0a;
+  scrollbar-width: thin;
+}
+
+html,
+body {
   margin: 0;
   background: #000;
   overflow-x: hidden;
@@ -10,400 +27,1034 @@ html, body {
 
 body {
   color: #ededed;
-  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-wrap: pretty;
 }
 
-/* Dark, slim scrollbar */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: #0a0a0a; }
-::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
-html { scrollbar-color: #2a2a2a #0a0a0a; scrollbar-width: thin; }
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #262626;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #383838;
+}
 
-/* ============================================================
-   Landing — Vercel-style: monochrome, big type, dark
-   Lifted from the redesign source and namespaced under .lv1-*
-   ============================================================ */
-.lv1 {
+a {
+  color: #ededed;
+  text-decoration: none;
+}
+a:hover {
+  color: var(--lv2-accent, #39d353);
+}
+
+.lv2 {
+  --lv2-accent: #39d353;
+  --lv2-hair: rgba(255, 255, 255, 0.08);
+  --lv2-hair-soft: rgba(255, 255, 255, 0.07);
+  --lv2-muted: rgba(255, 255, 255, 0.56);
+  --lv2-subtle: rgba(255, 255, 255, 0.42);
+  --lv2-faint: rgba(255, 255, 255, 0.34);
+  --lv2-panel: #080808;
+  --lv2-panel-2: #050505;
+  --lv2-gutter: clamp(18px, 4vw, 56px);
+  --lv2-shell: min(1280px, 100%);
   background: #000;
   color: #ededed;
-  font-family: 'Geist', sans-serif;
-  min-height: 100vh;
 }
 
-.lv1-nav {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 18px 56px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  position: sticky; top: 0; z-index: 10;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  background: rgba(0,0,0,0.7);
+.lv2-logo-on {
+  fill: var(--lv2-accent, #39d353);
 }
-.lv1-brand {
-  display: flex; align-items: center; gap: 11px;
-  font-size: 19px; font-weight: 600; letter-spacing: -0.015em;
-}
-.lv1-nav .lv1-brand svg { width: 28px; height: 28px; }
-.lv1-nav-links { display: flex; gap: 28px; font-size: 14px; }
-.lv1-nav-links a {
-  color: rgba(255,255,255,0.6); text-decoration: none;
-  transition: color 120ms;
-}
-.lv1-nav-links a:hover { color: #fff; }
-.lv1-star {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 7px 12px;
-  background: #fff; color: #000;
-  border-radius: 6px;
-  font-size: 13px; font-weight: 500;
-  text-decoration: none;
-  transition: opacity 120ms;
-}
-.lv1-star:hover { opacity: 0.9; }
-.lv1-star-count {
-  padding-left: 8px;
-  border-left: 1px solid rgba(0,0,0,0.15);
-  margin-left: 2px;
-  color: rgba(0,0,0,0.6);
+.lv2-logo-off {
+  fill: #0e4429;
 }
 
-.lv1-hero {
-  padding: 80px 56px 40px;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-}
-.lv1-hero::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: radial-gradient(ellipse 800px 400px at 50% 0%, rgba(57,211,83,0.08) 0%, transparent 60%);
-  pointer-events: none;
-}
-.lv1-eyebrow {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 5px 12px;
-  /* Opaque equivalent of rgba(255,255,255,0.04) over #000 — kept hex so
-     contrast tools (and Sonar) can compute the foreground contrast. */
-  background: #0a0a0a;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 999px;
-  font-size: 12px; color: #b3b3b3;
-  position: relative;
-}
-.lv1-eyebrow-dot {
-  width: 6px; height: 6px;
-  background: #39d353; border-radius: 50%;
-  box-shadow: 0 0 8px #39d353;
-}
-.lv1-h1 {
-  font-size: 84px; font-weight: 600;
-  letter-spacing: -0.04em;
-  line-height: 0.98;
-  margin: 0 0 28px;
-  position: relative;
-}
-.lv1-h1-accent {
-  background: linear-gradient(135deg, #39d353 0%, #86efac 50%, #4ade80 100%);
-  -webkit-background-clip: text; background-clip: text;
-  color: transparent;
-}
-.lv1-sub {
-  max-width: 600px; margin: 0 auto 36px;
-  font-size: 17px; line-height: 1.5;
-  color: rgba(255,255,255,0.6);
-  position: relative;
-}
-.lv1-cta {
-  display: flex; gap: 12px; justify-content: center;
-  position: relative;
-}
-.lv1-btn {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 14px; font-weight: 500;
-  text-decoration: none;
-  transition: all 120ms;
-}
-.lv1-btn-primary { background: #fff; color: #000; }
-.lv1-btn-primary:hover { background: rgba(255,255,255,0.9); }
-.lv1-btn-ghost {
-  /* Opaque equivalent of rgba(255,255,255,0.04) over #000. */
-  background: #0a0a0a;
-  color: #ededed;
-  border: 1px solid rgba(255,255,255,0.1);
-}
-.lv1-btn-ghost code {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-}
-.lv1-btn-ghost:hover {
-  background: rgba(255,255,255,0.08);
-  border-color: rgba(255,255,255,0.2);
-}
+/* ── Nav ─────────────────────────────────────────────────── */
 
-/* Playground section */
-.lv1-pg-section {
-  padding: 40px 56px 72px;
-  text-align: center;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+.lv2-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--lv2-hair);
 }
-.lv1-pg-section .lv1-eyebrow { margin-bottom: 28px; }
-.lv1-component-slot {
-  max-width: 1080px;
+.lv2-nav-inner {
+  width: var(--lv2-shell);
   margin: 0 auto;
-  position: relative;
-  text-align: left;
-  border-radius: 16px;
-  transition: background 200ms;
-}
-.lv1-component-slot[data-theme="light"] { background: #f0f2f5; }
-.lv1-component-slot.mobile-preview {
-  max-width: 390px;
-  height: 760px;
-  background: #0a0a0a;
-  border: 1px solid rgba(255,255,255,0.08);
-  padding: 8px;
+  padding: 0 var(--lv2-gutter);
+  height: 60px;
   display: flex;
-  justify-content: center;
+  align-items: center;
+  gap: clamp(14px, 3vw, 34px);
 }
-.lv1-component-slot.mobile-preview iframe {
-  width: 100%;
-  height: 100%;
-  border: 0;
-  border-radius: 12px;
-  background: #000;
+.lv2-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 0 0 auto;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
-
-/* Playground view toggle */
-.lv1-pg-view {
-  display: inline-flex;
-  gap: 4px;
-  padding: 4px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 999px;
-  margin-bottom: 20px;
+.lv2-brand span[data-logo] {
+  display: flex;
 }
-.lv1-pg-view button {
-  background: transparent;
-  border: 0;
-  color: #aaa;
-  font-family: inherit;
-  font-size: 12px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: all 120ms;
-}
-.lv1-pg-view button:hover { color: #fff; }
-.lv1-pg-view button.active {
-  background: #2a2a2a;
+.lv2-brand:hover {
   color: #fff;
 }
-
-/* Playground bar */
-.lv1-pg-bar {
-  margin: 28px auto 0;
+.lv2-nav-links {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  gap: clamp(12px, 2.2vw, 26px);
+  overflow-x: auto;
+  scrollbar-width: none;
+  font-size: 13.5px;
+  color: var(--lv2-muted);
 }
-.lv1-pg-controls {
-  display: flex; align-items: center; gap: 6px;
-  padding: 6px 12px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 999px;
+.lv2-nav-links::-webkit-scrollbar {
+  display: none;
 }
-.lv1-fc-btn {
-  width: 26px; height: 26px;
-  display: flex; align-items: center; justify-content: center;
-  /* Opaque equivalent of rgba(255,255,255,0.06) over the parent
-     .lv1-pg-controls (~rgba(255,255,255,0.03) on #000). */
-  background: #171717;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 50%;
-  color: #e6e6ea;
-  font-family: inherit;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 150ms;
+.lv2-nav-links a {
+  flex: 0 0 auto;
+  color: inherit;
+  transition: color 120ms;
 }
-.lv1-fc-btn:hover { background: rgba(255,255,255,0.12); }
-.lv1-fc-off { opacity: 0.4; }
-.lv1-fc-off:hover { opacity: 0.7; }
-.lv1-fc-sep {
-  width: 1px; height: 18px;
-  background: rgba(255,255,255,0.1);
+.lv2-nav-links a:hover {
+  color: #fff;
 }
-.lv1-fc-swatch {
-  width: 16px; height: 16px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  cursor: pointer;
-  padding: 0;
-  transition: all 120ms;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
-}
-.lv1-fc-swatch:hover { transform: scale(1.2); }
-.lv1-fc-swatch.active {
-  border-color: #fff;
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.25);
-  transform: scale(1.1);
-}
-.lv1-fc-custom { display: inline-flex; align-items: center; cursor: pointer; }
-.lv1-fc-custom input[type="color"] {
-  width: 16px; height: 16px;
-  border: 0; padding: 0;
-  background: transparent;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-/* Playground tooltips */
-.lv1-tip {
-  position: relative;
+.lv2-star {
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-}
-.lv1-tip::after {
-  content: attr(data-tip);
-  position: absolute;
-  bottom: calc(100% + 10px);
-  left: 50%;
-  transform: translateX(-50%) translateY(4px);
-  background: #161616;
-  color: #ededed;
-  font-family: 'Geist', sans-serif;
-  font-size: 11px;
+  gap: 7px;
+  padding: 7px 11px;
+  background: #fff;
+  color: #000;
+  border-radius: 7px;
+  font-size: 12.5px;
   font-weight: 500;
-  letter-spacing: -0.005em;
-  padding: 5px 9px;
-  border-radius: 6px;
-  border: 1px solid rgba(255,255,255,0.1);
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 120ms ease, transform 120ms ease;
-  z-index: 20;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  transition: opacity 120ms;
 }
-.lv1-tip::before {
-  content: '';
-  position: absolute;
-  bottom: calc(100% + 5px);
-  left: 50%;
-  transform: translateX(-50%) translateY(4px);
-  width: 0; height: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-top: 5px solid #161616;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 120ms ease, transform 120ms ease;
-  z-index: 20;
+.lv2-star:hover {
+  opacity: 0.88;
+  color: #000;
 }
-.lv1-tip:hover::after,
-.lv1-tip:hover::before {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
+.lv2-star-count {
+  padding-left: 8px;
+  border-left: 1px solid rgba(0, 0, 0, 0.15);
+  color: rgba(0, 0, 0, 0.6);
 }
 
-/* Install */
-.lv1-install {
-  padding: 72px 56px 96px;
-  text-align: center;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+/* ── Shared type + eyebrow ───────────────────────────────── */
+
+.lv2-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.44);
+  margin-bottom: 14px;
 }
-.lv1-install .lv1-eyebrow { margin-bottom: 36px; }
-.lv1-section-sub {
-  max-width: 560px; margin: -16px auto 36px;
-  font-size: 15px; line-height: 1.6;
-  color: rgba(255,255,255,0.6);
+.lv2-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  background: var(--lv2-accent);
+  box-shadow: 0 0 9px var(--lv2-accent);
 }
-.lv1-section-sub code {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
+.lv2-h1 {
+  margin: 0 0 clamp(20px, 2.6vw, 26px);
+  font-size: clamp(40px, 7.4vw, 86px);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+}
+.lv2-h1-accent {
+  color: var(--lv2-accent);
+}
+.lv2-h2 {
+  margin: 0;
+  font-size: clamp(26px, 3.4vw, 40px);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+.lv2-h2-block {
+  margin: 0 0 clamp(28px, 3.4vw, 40px);
+  max-width: 24ch;
+}
+.lv2-sub {
+  max-width: 52ch;
+  margin: 0 0 clamp(26px, 3.4vw, 36px);
+  font-size: clamp(15px, 1.4vw, 18px);
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.58);
+}
+.lv2-sub-sm {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.52);
+}
+.lv2-inline {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12.5px;
   color: #ededed;
-  /* Opaque equivalent of rgba(255,255,255,0.06) over #000 — kept hex so
-     contrast tools (and Sonar) can compute the foreground contrast. */
-  background: #0f0f0f;
+  background: #111;
   padding: 1px 5px;
   border-radius: 4px;
 }
-.lv1-install-card {
-  max-width: 720px; margin: 0 auto;
+
+/* ── Buttons ─────────────────────────────────────────────── */
+
+.lv2-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.lv2-cta-center {
+  justify-content: center;
+  position: relative;
+}
+.lv2-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 17px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 140ms;
+}
+.lv2-btn-primary {
+  background: #fff;
+  color: #000;
+  border: 1px solid #fff;
+}
+.lv2-btn-primary:hover {
+  background: rgba(255, 255, 255, 0.88);
+  color: #000;
+}
+.lv2-btn-ghost {
   background: #0a0a0a;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  overflow: hidden;
-  text-align: left;
-}
-.lv1-install-tabs {
-  display: flex; gap: 0;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  padding: 0 8px;
-}
-.lv1-tab {
-  padding: 12px 16px;
-  background: transparent; border: 0;
-  color: rgba(255,255,255,0.5);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px; cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-}
-.lv1-tab.active {
-  color: #fff;
-  border-bottom-color: #39d353;
-}
-.lv1-code {
-  margin: 0; padding: 24px 28px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px; line-height: 1.7;
   color: #ededed;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.lv2-btn-ghost:hover {
+  background: #111;
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #ededed;
+}
+.lv2-btn-ghost code {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+}
+.lv2-copy-flag {
+  color: var(--lv2-accent);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+.lv2-copy {
+  padding: 5px 10px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 140ms;
+}
+.lv2-copy:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+.lv2-copy.copied {
+  color: var(--lv2-accent);
+  border-color: var(--lv2-accent);
+}
+
+/* ── Hero ────────────────────────────────────────────────── */
+
+.lv2-hero {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--lv2-hair);
+}
+.lv2-hero-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 900px 420px at 12% -10%,
+    rgba(57, 211, 83, 0.1) 0%,
+    transparent 62%
+  );
+  pointer-events: none;
+}
+.lv2-hero-inner {
+  position: relative;
+  width: var(--lv2-shell);
+  margin: 0 auto;
+  padding: clamp(56px, 9vw, 116px) var(--lv2-gutter) clamp(44px, 6vw, 72px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(28px, 5vw, 64px);
+  align-items: flex-end;
+}
+.lv2-hero-copy {
+  flex: 1 1 480px;
+  min-width: 0;
+}
+.lv2-facts {
+  flex: 0 1 300px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid rgba(255, 255, 255, 0.09);
+  padding-left: clamp(18px, 2.4vw, 28px);
+}
+.lv2-fact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 0;
+  border-bottom: 1px dashed var(--lv2-hair-soft);
+}
+.lv2-fact-k {
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.48);
+}
+.lv2-fact-v {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: right;
+}
+
+/* ── Sections ────────────────────────────────────────────── */
+
+.lv2-section {
+  width: var(--lv2-shell);
+  margin: 0 auto;
+  padding: clamp(48px, 6vw, 84px) var(--lv2-gutter);
+  border-bottom: 1px solid var(--lv2-hair);
+}
+.lv2-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: clamp(24px, 3vw, 36px);
+}
+.lv2-section-sub {
+  flex: 1 1 340px;
+  max-width: 46ch;
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.52);
+}
+
+/* ── Live stage: real desktop + real phone, side by side ─── */
+
+/* The stage runs wider than the reading shell: the desktop instance only draws
+   a heatmap once its .sk-heatmap-wrap clears 520px, and the wrap sits beside a
+   280px stats panel inside ~150px of card padding. Under the standard 1280px
+   shell the pane tops out around 836px, which renders a second ring. */
+#live {
+  --lv2-shell: min(1460px, 100%);
+}
+
+.lv2-stage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(16px, 2vw, 24px);
+  align-items: flex-start;
+}
+.lv2-stage-desktop {
+  /* Below this basis the pane wraps to its own row and takes the full stage
+     width — either way the wrap stays above the component's 520px threshold. */
+  flex: 1 1 980px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.lv2-stage-mobile {
+  flex: 0 1 316px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.lv2-stage-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lv2-faint);
+}
+.lv2-slot-frame {
+  border-radius: 18px;
+  padding: 1px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
+}
+.lv2-slot-frame > .lv2-slot {
+  border-radius: 17px;
+  padding: clamp(6px, 1vw, 12px);
+}
+.lv2-slot {
+  position: relative;
+  background: #050505;
+  transition: background 220ms ease;
+}
+.lv2-slot[data-theme="light"] {
+  background: #eef0f3;
+}
+
+.lv2-phone {
+  border-radius: 34px;
+  padding: 9px;
+  background: linear-gradient(180deg, #1c1c1c, #0d0d0d);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 40px 80px -40px rgba(0, 0, 0, 0.9);
+}
+.lv2-phone-screen {
+  border-radius: 26px;
+  overflow: hidden;
+  background: #050505;
+  transition: background 220ms ease;
+}
+.lv2-phone-screen[data-theme="light"] {
+  background: #eef0f3;
+}
+.lv2-phone-status {
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.5);
+}
+.lv2-phone-screen[data-theme="light"] .lv2-phone-status {
+  color: rgba(31, 35, 40, 0.55);
+}
+
+/* The component's own responsive rules are viewport media queries, but this
+   phone preview is a narrow CONTAINER on a wide viewport. Mirror the library's
+   (max-width: 760px) block here so the embedded instance lays out like it does
+   on a real phone. Long term this belongs in streakr.css as @container rules. */
+.lv2-phone .sk-root {
+  padding: 14px;
+}
+.lv2-phone .sk-card {
+  padding: 16px;
+  border-radius: 14px;
+}
+.lv2-phone .sk-title {
+  font-size: 15px;
+}
+.lv2-phone .sk-body {
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.lv2-phone .sk-stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: auto;
+  min-width: 0;
+  gap: 8px;
+}
+.lv2-phone .sk-stat {
+  padding: 10px 12px;
+}
+.lv2-phone .sk-stat-value {
+  height: auto;
+  font-size: 20px;
+  line-height: 26px;
+}
+.lv2-phone .sk-years {
+  gap: 10px;
+}
+.lv2-phone .sk-years-list {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.lv2-phone .sk-years-list::-webkit-scrollbar {
+  display: none;
+}
+.lv2-phone .sk-year-tab {
+  flex-shrink: 0;
+}
+
+/* ── Playground: controls + live code ────────────────────── */
+
+.lv2-pg {
+  margin-top: clamp(20px, 2.6vw, 28px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(16px, 2vw, 24px);
+  align-items: stretch;
+}
+.lv2-panel {
+  background: var(--lv2-panel);
+  border: 1px solid var(--lv2-hair);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.lv2-controls {
+  flex: 1 1 320px;
+  min-width: 0;
+  padding: clamp(16px, 2vw, 22px);
+}
+.lv2-codepanel {
+  flex: 1 1 480px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.lv2-panel-title {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lv2-faint);
+}
+.lv2-controls .lv2-panel-title {
+  margin-bottom: 16px;
+}
+.lv2-panel-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--lv2-hair);
+}
+.lv2-control-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.lv2-group-label {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.46);
+  margin-bottom: 8px;
+}
+.lv2-seg {
+  display: flex;
+  gap: 6px;
+}
+.lv2-seg-btn {
+  flex: 1 1 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.55);
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+.lv2-seg-btn.mono {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11.5px;
+}
+.lv2-seg-btn:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.lv2-seg-btn.active {
+  background: #1c1c1c;
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+.lv2-swatches {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.lv2-swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  padding: 0;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+.lv2-swatch:hover {
+  transform: scale(1.08);
+}
+.lv2-swatch.active {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+.lv2-swatch-custom {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+.lv2-swatch-custom input[type="color"] {
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.lv2-switches {
+  display: flex;
+  flex-direction: column;
+}
+.lv2-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px dashed var(--lv2-hair-soft);
+  color: rgba(255, 255, 255, 0.78);
+  font-family: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.lv2-switch-row:hover {
+  color: #fff;
+}
+.lv2-switch {
+  flex: 0 0 auto;
+  position: relative;
+  width: 34px;
+  height: 19px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  transition: all 160ms ease;
+}
+.lv2-switch span {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  transition: all 160ms ease;
+}
+.lv2-switch.on {
+  background: var(--lv2-accent);
+  border-color: var(--lv2-accent);
+}
+.lv2-switch.on span {
+  left: 18px;
+  background: #0a0a0c;
+}
+
+/* ── Code blocks ─────────────────────────────────────────── */
+
+.lv2-tabs {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.lv2-tabs::-webkit-scrollbar {
+  display: none;
+}
+.lv2-tab {
+  flex: 0 0 auto;
+  padding: 13px 17px;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  cursor: pointer;
+  margin-bottom: -1px;
+  transition: all 150ms ease;
+}
+.lv2-tab:hover {
+  color: #fff;
+}
+.lv2-tab.active {
+  color: #fff;
+  border-bottom-color: var(--lv2-accent);
+}
+.lv2-panel > .lv2-panel-bar {
+  padding: 0 12px 0 0;
+}
+.lv2-panel > .lv2-panel-bar .lv2-panel-title {
+  padding-left: 16px;
+}
+.lv2-code {
+  margin: 0;
+  padding: 20px clamp(16px, 2.4vw, 28px);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: #e6e6ea;
   overflow-x: auto;
   white-space: pre;
+  flex: 1 1 auto;
 }
-.c-c { color: rgba(255,255,255,0.4); }
-.c-k { color: #c084fc; }
-.c-s { color: #86efac; }
-.c-fn { color: #93c5fd; }
+.c-c {
+  color: rgba(255, 255, 255, 0.38);
+}
+.c-k {
+  color: #c084fc;
+}
+.c-s {
+  color: #86efac;
+}
+.c-fn {
+  color: #93c5fd;
+}
 
-/* Footer */
-.lv1-footer { padding: 48px 56px; }
-.lv1-footer-inner {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 32px;
+/* ── Sources + pillars ───────────────────────────────────── */
+
+.lv2-sources {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 1px;
+  background: var(--lv2-hair);
+  border: 1px solid var(--lv2-hair);
+  border-radius: 14px;
+  overflow: hidden;
 }
-.lv1-footer-links {
-  display: flex; gap: 24px;
+.lv2-source {
+  background: var(--lv2-panel-2);
+  padding: 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: background 200ms ease;
+}
+.lv2-source:hover {
+  background: #0c0c0c;
+}
+.lv2-source-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.lv2-source-icon {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+}
+.lv2-source-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+.lv2-source-kind {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.36);
+}
+.lv2-source-note {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.5);
+}
+.lv2-pillars {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: clamp(16px, 2vw, 22px);
+  margin-top: clamp(16px, 2vw, 22px);
+}
+.lv2-pillar {
+  border: 1px solid var(--lv2-hair);
+  border-radius: 14px;
+  padding: 22px;
+  background: var(--lv2-panel-2);
+}
+.lv2-pillar-n {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--lv2-accent);
+  margin-bottom: 10px;
+}
+.lv2-pillar-t {
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 7px;
+}
+.lv2-pillar-d {
   font-size: 13px;
-}
-.lv1-footer-links a {
-  color: rgba(255,255,255,0.5);
-  text-decoration: none;
-}
-.lv1-footer-links a:hover { color: #fff; }
-.lv1-footer-bot {
-  display: flex; justify-content: space-between;
-  font-size: 12px; color: rgba(255,255,255,0.4);
-  padding-top: 24px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.5);
 }
 
-@media (max-width: 760px) {
-  .lv1-nav { padding: 14px 20px; }
-  .lv1-hero { padding: 56px 20px 40px; }
-  .lv1-h1 { font-size: 48px; }
-  .lv1-pg-section { padding: 40px 16px 56px; }
-  .lv1-install { padding: 48px 20px 72px; }
-  .lv1-footer { padding: 32px 20px; }
-  .lv1-footer-inner { flex-direction: column; gap: 16px; align-items: flex-start; }
-  .lv1-footer-bot { flex-direction: column; gap: 8px; }
+/* ── Records ─────────────────────────────────────────────── */
+
+.lv2-split {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(24px, 4vw, 56px);
+}
+.lv2-split-copy {
+  flex: 1 1 300px;
+  min-width: 0;
+}
+.lv2-split-copy .lv2-h2 {
+  margin-bottom: 18px;
+}
+.lv2-records {
+  flex: 1 1 460px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.lv2-record {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: clamp(16px, 2vw, 22px) 0;
+  border-top: 1px solid var(--lv2-hair);
+}
+.lv2-record:last-child {
+  border-bottom: 1px solid var(--lv2-hair);
+}
+.lv2-record-main {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.lv2-record-label {
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+.lv2-record-note {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.46);
+}
+
+/* ── Agents ──────────────────────────────────────────────── */
+
+.lv2-agents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(16px, 2vw, 24px);
+  align-items: stretch;
+}
+.lv2-agents-copy {
+  flex: 1 1 300px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.lv2-agents .lv2-panel {
+  flex: 1 1 460px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.lv2-trailer {
+  background: var(--lv2-panel-2);
+  border: 1px solid var(--lv2-hair);
+  border-radius: 12px;
+  padding: 16px 18px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.85;
+}
+.lv2-trailer-line {
+  color: rgba(255, 255, 255, 0.34);
+}
+.lv2-trailer-gap {
+  height: 10px;
+}
+.lv2-trailer-out {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.lv2-trailer-arrow {
+  color: var(--lv2-accent);
+}
+.lv2-pill {
+  padding: 2px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+}
+.lv2-pill-claude {
+  border-color: rgba(217, 119, 87, 0.4);
+  color: #d97757;
+}
+.lv2-pill-codex {
+  border-color: rgba(16, 163, 127, 0.4);
+  color: #10a37f;
+}
+
+/* ── Outro + footer ──────────────────────────────────────── */
+
+.lv2-outro {
+  position: relative;
+  overflow: hidden;
+  width: var(--lv2-shell);
+  margin: 0 auto;
+  padding: clamp(56px, 7vw, 96px) var(--lv2-gutter);
+  text-align: center;
+  border-bottom: 1px solid var(--lv2-hair);
+}
+.lv2-outro-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 700px 300px at 50% 100%,
+    rgba(57, 211, 83, 0.09) 0%,
+    transparent 65%
+  );
+  pointer-events: none;
+}
+.lv2-outro-h {
+  position: relative;
+  margin: 0 auto 18px;
+  max-width: 20ch;
+  font-size: clamp(28px, 4.4vw, 52px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.03;
+}
+.lv2-outro-p {
+  position: relative;
+  margin: 0 auto clamp(26px, 3vw, 34px);
+  max-width: 46ch;
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.55);
+}
+.lv2-footer {
+  width: var(--lv2-shell);
+  margin: 0 auto;
+  padding: clamp(34px, 4vw, 52px) var(--lv2-gutter);
+}
+.lv2-footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+.lv2-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(14px, 2vw, 24px);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+}
+.lv2-footer-links a {
+  color: inherit;
+}
+.lv2-footer-links a:hover {
+  color: #fff;
+}
+.lv2-footer-bot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  padding-top: 22px;
+  border-top: 1px solid var(--lv2-hair-soft);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--lv2-faint);
+}
+
+/* ── Narrow viewports ────────────────────────────────────── */
+
+/* Once the pane can no longer spare 520px for the wrap alongside the stats
+   column, stack the card body the way streakr.css itself does under 760px —
+   that hands the wrap the full width and keeps the heatmap in the frame. */
+@media (max-width: 1032px) {
+  .lv2-stage-desktop .sk-body {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .lv2-stage-desktop .sk-stats {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .lv2-facts {
+    flex: 1 1 100%;
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--lv2-hair);
+    padding-top: 8px;
+  }
+  .lv2-stage-mobile {
+    flex: 1 1 100%;
+    align-items: center;
+  }
+  .lv2-phone {
+    width: min(340px, 100%);
+    margin: 0 auto;
+  }
+  .lv2-stage-mobile .lv2-stage-label {
+    width: min(340px, 100%);
+    margin: 0 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .lv2-swatch:hover {
+    transform: none;
+  }
 }
