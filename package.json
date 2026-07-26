@@ -1,6 +1,6 @@
 {
   "name": "@rosado-io/streakr",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "The universal Git contribution calendar. Aggregate activity from GitHub, GitLab, and more into one beautiful, framework-agnostic heatmap.",
   "type": "module",
   "main": "./dist/streakr.cjs",

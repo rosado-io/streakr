@@ -1,3 +1,6 @@
+## [1.1.1](https://github.com/rosado-io/streakr/compare/v1.1.0...v1.1.1) (2026-07-26)
+* fix(component): drive the responsive layout from the container, not the viewport (#173) ([`de873b9`](https://github.com/rosado-io/streakr/commit/de873b99703ce7f1f401bc9075a5935c7d8c9844)) by ****
+
 ## [1.1.0](https://github.com/rosado-io/streakr/compare/v1.0.2...v1.1.0) (2026-07-19)
 * feat: align loading states with ready states (heatmap reveal + mobile ring) (#167) ([`1f24f04`](https://github.com/rosado-io/streakr/commit/1f24f04faa12b2cae8f402f33a03d4444e310c9b)) by ****
 
