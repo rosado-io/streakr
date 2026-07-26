@@ -288,6 +288,7 @@
   max-width: 320px;
   max-height: 320px;
   overflow: visible;
+  touch-action: none;
 }
 .sk-ring-inner,
 .sk-ring-outer {
@@ -307,6 +308,8 @@
   stroke-linecap: round;
   transition: stroke 120ms ease, stroke-width 120ms ease;
   cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .sk-ring-line--future {
   pointer-events: none;
@@ -318,7 +321,6 @@
 .sk-ring-line:focus-visible {
   stroke-width: 4px;
   filter: drop-shadow(0 0 5px var(--sk-accent-glow));
-  outline: none;
 }
 .sk-ring-months text {
   font-weight: 500;
