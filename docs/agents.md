@@ -278,6 +278,7 @@ import {
   gitlabCliProvider,
   createPublicSnapshot,
   writePublicSnapshot,
+  STREAKR_SNAPSHOT_SCHEMA_VERSION,
 } from "@rosado-io/streakr/agents";
 
 const params = { user: "octocat", start: "2026-01-01", end: "2026-12-31" };
@@ -296,10 +297,67 @@ const snapshot = createPublicSnapshot({
 await writePublicSnapshot("public/contributions.json", snapshot);
 ```
 
+`createPublicSnapshot` accepts `range`, `activity`, and `agents`. `activity` is a
+record of provider name to `ContributionDay[]` (for example `{ github, gitlab }`),
+and `agents` is a `ContributionDay[]` keyed per agent in `sources`. `generatedAt`
+is optional and defaults to the current ISO timestamp; the resulting snapshot
+also carries `schemaVersion`, which is exported as `STREAKR_SNAPSHOT_SCHEMA_VERSION`.
+
 Authenticate once with `gh auth login` and `glab auth login --use-keyring`. The
 providers execute those CLIs and parse their JSON; they never request a token or
 place one in arguments, files, snapshots, or CI. The GitLab session only needs
 the read-only `read_user` scope for the Events API.
+
+## CLI providers
+
+`githubCliProvider`, `gitlabCliProvider`, and `githubCliCoAuthorProvider` live
+in the Node-only `./agents` subpath. They reuse authenticated local CLI sessions
+instead of accepting tokens, so they fit CI jobs or local scripts where writing a
+PAT to config is undesirable.
+
+All three factories accept these options:
+
+```ts
+githubCliProvider({
+  host: "github.com", // GitHub CLI hostname
+  cli: "gh",          // executable name
+  runner: runLocalCli,
+  name: "github",
+});
+
+gitlabCliProvider({
+  host: "gitlab.com", // GitLab CLI hostname
+  cli: "glab",        // executable name
+  runner: runLocalCli,
+  name: "gitlab",
+});
+
+githubCliCoAuthorProvider({
+  agents: ["claude", "codex", "opencode", "copilot"],
+  host: "github.com",
+  cli: "gh",
+  runner: runLocalCli,
+  name: "github-agents",
+});
+```
+
+- `host` is optional and defaults to the public host (`github.com` or
+  `gitlab.com`). Point it at an Enterprise host to reuse an existing `gh`/`glab`
+  login there.
+- `cli` is optional and defaults to `gh` or `glab`. Use it when the executable is
+  not on `PATH` under its default name.
+- `runner` is optional and defaults to the built-in runner. Swap it in tests or
+  sandboxed environments.
+- `name` is optional and defaults to `"github"`, `"gitlab"`, or
+  `"github-agents"`. Override it when aggregating multiple hosts side by side.
+- `agents` (co-author provider only) is optional and defaults to every key in
+  `AGENT_TRAILER_RULES`.
+
+`githubCliProvider` returns the same contribution calendar as
+`githubProvider`, and `gitlabCliProvider` returns the same events as
+`gitlabProvider`. `githubCliCoAuthorProvider` returns the same co-author counts
+as `githubCoAuthorProvider`. All three throw a clear error if the CLI is not
+installed or not authenticated.
 
 ## Deployment patterns for the local route
 
