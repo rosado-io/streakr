@@ -343,6 +343,10 @@ createStreakr({
 });
 ```
 
+If you already know the exact range you want to display, `toCanonicalDays(days,
+start, end)` anchors the sparse provider output to that inclusive window and
+returns a continuous daily series including zero-count days.
+
 ## Custom Providers
 
 Implement the `Provider` interface to connect another source:
@@ -363,7 +367,8 @@ const myProvider: Provider = {
 ```
 
 Provider output can contain gaps and duplicate dates. Call
-`normalizeEventsToDaily()` before computing streaks or building a grid.
+`normalizeEventsToDaily()` before computing streaks or building a grid, or use
+`toCanonicalDays(days, start, end)` to pin the series to a fixed range.
 
 For coding-agent activity from `Co-authored-by:` trailers, see
 [docs/agents.md](./agents.md), which documents `githubCoAuthorProvider` and
