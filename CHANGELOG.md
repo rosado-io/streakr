@@ -1,3 +1,6 @@
+## [1.1.2](https://github.com/rosado-io/streakr/compare/v1.1.1...v1.1.2) (2026-07-26)
+* fix(component): Corrige el arrastre móvil del anillo ([`782ade3`](https://github.com/rosado-io/streakr/commit/782ade3614572d2e77c4c2bdf3dbf40b5f56388e)) by ****
+
 ## [1.1.1](https://github.com/rosado-io/streakr/compare/v1.1.0...v1.1.1) (2026-07-26)
 * fix(component): drive the responsive layout from the container, not the viewport (#173) ([`de873b9`](https://github.com/rosado-io/streakr/commit/de873b99703ce7f1f401bc9075a5935c7d8c9844)) by ****
 
