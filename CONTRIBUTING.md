@@ -4,16 +4,19 @@ Thanks for your interest in contributing!
 
 ## Development setup
 
-Requires Node.js >= 20.19 and [pnpm](https://pnpm.io).
+Requires Node.js >= 20.19.0 and [pnpm](https://pnpm.io) (the repo pins
+`packageManager` to pnpm 10.12.2).
 
 ```bash
 pnpm install
-pnpm dev          # demo playground at http://localhost:5173
-pnpm test         # vitest in watch mode
-pnpm test:ci      # single run with coverage
-pnpm lint         # eslint
-pnpm typecheck    # tsc --noEmit
-pnpm build        # library build
+pnpm dev             # demo playground at http://localhost:5173
+pnpm test            # vitest in watch mode
+pnpm test:ci         # single run with coverage
+pnpm lint            # eslint
+pnpm typecheck       # tsc --noEmit
+pnpm format:check    # prettier
+pnpm audit:dead-code # knip
+pnpm build           # library build
 ```
 
 ## Commit convention
