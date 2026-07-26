@@ -76,9 +76,6 @@ export interface RingRenderer {
 }
 
 export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): RingRenderer => {
-  // Day strokes scale with the viewBox while the guide circles use a fixed non-scaling
-  // stroke, so an endpoint inset alone can't contain the rounded caps at every size/state.
-  // Clipping to the exact annulus between the guide radii contains them regardless.
   let ringClipIdSeq = 0;
 
   const isFutureRingDay = (day: Date): boolean =>
@@ -263,8 +260,6 @@ export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): R
       "sk-ring-svg sk-ring-svg--skeleton",
       "Loading contribution ring",
       (_day, i) => ({
-        // Lines stay transparent: while loading the ring shows only the green
-        // comet sweeping through (sk-ring-sweep) and the spinning hand.
         class: "sk-ring-skeleton-line",
         stroke: "transparent",
         "stroke-linecap": "round",
@@ -273,14 +268,10 @@ export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): R
         },
       }),
     );
-    // Same hand the ready ring uses to mark the selected day; here it spins
-    // clockwise (via CSS) as the loading indicator.
     svgEl.appendChild(createHandGroup(true));
     return svgEl;
   };
 
-  // Mirrors the day renderRing restores once ready: the current selection when
-  // it belongs to the displayed year, otherwise the first day of the year.
   const skeletonCenterDate = (): Date => {
     const year = ctx.state.year ?? ctx.cfg.today.getFullYear();
     return ctx.state.selectedDay.getFullYear() === year

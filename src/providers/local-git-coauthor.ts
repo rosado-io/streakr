@@ -81,8 +81,6 @@ export const localGitCoAuthorProvider = (options: LocalGitCoAuthorProviderOption
   };
 };
 
-// Local authorship is resolved from the configured Git identities. `params.user`
-// remains unused because one person can have different logins on different hosts.
 const fetchEvents = async (
   config: ResolvedLocalGitConfig,
   params: FetchParams,

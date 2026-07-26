@@ -87,9 +87,6 @@ const searchPage = async (
   end: string,
   page: number,
 ): Promise<CommitSearchPage> => {
-  // The trailer is `Co-Authored-By: Claude <noreply@anthropic.com>`, so the display
-  // name sits between the label and the email; searching the email (or name) as a
-  // standalone quoted term is what matches, not a phrase glued to the label.
   const query = `author:${user} "${match}" author-date:${start}..${end}`;
   const payload = await request(query, page);
   return { total_count: payload.total_count ?? 0, items: payload.items ?? [] };

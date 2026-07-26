@@ -25,7 +25,6 @@ export interface ResolvedConfig {
   years: number[];
   year: number | null;
   today: Date;
-  // Plain-JS callers may return undefined despite the public typing.
   getDays: (year: number) => StreakrDay[] | undefined;
   providers: StreakrProvider[];
   onYearChange: ((year: number) => void) | null;
@@ -40,7 +39,6 @@ export interface ComponentCtx {
 export const sourceCount = (day: StreakrDay, key: string): number => day.sources?.[key] ?? 0;
 
 export const resolveConfig = (options: StreakrOptions): ResolvedConfig => {
-  // Widened so runtime validation still guards plain-JS callers the types can't.
   const opts: Partial<StreakrOptions> = options;
   if (!opts.target) {
     throw new Error("streakr: `target` is required");
