@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 
+import "./fonts.css";
 import "./styles.css";
 import {
   AGENT_PROVIDERS,
@@ -10,6 +11,14 @@ import {
   type StreakrTheme,
 } from "../src/index";
 import { StreakrSampleData } from "./sample-data";
+import {
+  AGENT_SNIPPETS,
+  INSTALL_CMD,
+  INSTALL_SNIPPETS,
+  highlight,
+  logoSvg,
+  shellHtml,
+} from "./shell";
 
 const ACCENT_PRESETS: { label: string; value: string }[] = [
   { label: "Green", value: "#39d353" },
@@ -24,357 +33,92 @@ const DEMO_PROVIDERS: StreakrProvider[] = [
   { key: "gitlab", name: "GitLab", color: "#fc6d26" },
 ];
 
-const AGENT_SNIPPETS: Record<string, string> = {
-  github: `<span class="c-c">// count commits co-authored by agents via the GitHub search API (server-side)</span>
-<span class="c-k">import</span> { githubCoAuthorProvider, AGENT_PROVIDERS } <span class="c-k">from</span> <span class="c-s">'@rosado-io/streakr'</span>
-
-<span class="c-k">const</span> agents = <span class="c-fn">githubCoAuthorProvider</span>({ token: process.env.GITHUB_TOKEN })
-
-<span class="c-k">const</span> days = <span class="c-k">await</span> agents.<span class="c-fn">fetchEvents</span>({
-  user: <span class="c-s">'octocat'</span>,
-  start: <span class="c-s">'2026-01-01'</span>,
-  end: <span class="c-s">'2026-12-31'</span>,
-})
-<span class="c-c">// [{ date: '2026-07-14', count: 4, sources: { claude: 3, codex: 1 } }, ...]</span>
-
-<span class="c-c">// add the agent chips to the component</span>
-<span class="c-fn">createStreakr</span>({
-  <span class="c-c">/* ... */</span>
-  providers: [...DEFAULT_PROVIDERS, ...AGENT_PROVIDERS],
-})`,
-  local: `<span class="c-c">// scan local clones — every branch, every host, no token needed (Node)</span>
-<span class="c-k">import</span> { localGitCoAuthorProvider } <span class="c-k">from</span> <span class="c-s">'@rosado-io/streakr/agents'</span>
-
-<span class="c-k">const</span> local = <span class="c-fn">localGitCoAuthorProvider</span>({ roots: [<span class="c-s">'/Users/me/code'</span>] })
-
-<span class="c-k">const</span> days = <span class="c-k">await</span> local.<span class="c-fn">fetchEvents</span>({
-  user: <span class="c-s">'ignored'</span>, <span class="c-c">// local scan only uses the date range</span>
-  start: <span class="c-s">'2026-01-01'</span>,
-  end: <span class="c-s">'2026-12-31'</span>,
-})
-<span class="c-c">// parses Co-authored-by trailers: claude · codex · opencode · copilot</span>`,
-};
-
-const INSTALL_SNIPPETS: Record<string, string> = {
-  npm: `<span class="c-c"># install</span>
-<span class="c-k">npm</span> install @rosado-io/streakr
-
-<span class="c-c">// mount</span>
-<span class="c-k">import</span> { createStreakr } <span class="c-k">from</span> <span class="c-s">'@rosado-io/streakr'</span>
-<span class="c-k">import</span> <span class="c-s">'@rosado-io/streakr/styles.css'</span>
-
-<span class="c-fn">createStreakr</span>({
-  target: <span class="c-fn">document</span>.querySelector(<span class="c-s">'#streakr'</span>),
-  theme: <span class="c-s">'dark'</span>,
-  years: [2024, 2025, 2026],
-  getDays: (year) =&gt; <span class="c-fn">fetchActivity</span>(year),
-})`,
-  pnpm: `<span class="c-c"># install</span>
-<span class="c-k">pnpm</span> add @rosado-io/streakr
-
-<span class="c-c">// mount</span>
-<span class="c-k">import</span> { createStreakr } <span class="c-k">from</span> <span class="c-s">'@rosado-io/streakr'</span>
-<span class="c-k">import</span> <span class="c-s">'@rosado-io/streakr/styles.css'</span>
-
-<span class="c-fn">createStreakr</span>({
-  target: <span class="c-fn">document</span>.querySelector(<span class="c-s">'#streakr'</span>),
-  theme: <span class="c-s">'dark'</span>,
-  years: [2024, 2025, 2026],
-  getDays: (year) =&gt; <span class="c-fn">fetchActivity</span>(year),
-})`,
-  yarn: `<span class="c-c"># install</span>
-<span class="c-k">yarn</span> add @rosado-io/streakr
-
-<span class="c-c">// mount</span>
-<span class="c-k">import</span> { createStreakr } <span class="c-k">from</span> <span class="c-s">'@rosado-io/streakr'</span>
-<span class="c-k">import</span> <span class="c-s">'@rosado-io/streakr/styles.css'</span>
-
-<span class="c-fn">createStreakr</span>({
-  target: <span class="c-fn">document</span>.querySelector(<span class="c-s">'#streakr'</span>),
-  theme: <span class="c-s">'dark'</span>,
-  years: [2024, 2025, 2026],
-  getDays: (year) =&gt; <span class="c-fn">fetchActivity</span>(year),
-})`,
-  cdn: `<span class="c-c">&lt;!-- CSS --&gt;</span>
-&lt;<span class="c-k">link</span> rel=<span class="c-s">"stylesheet"</span> href=<span class="c-s">"https://cdn.jsdelivr.net/npm/@rosado-io/streakr@latest/dist/streakr.css"</span>&gt;
-
-<span class="c-c">&lt;!-- Module --&gt;</span>
-&lt;<span class="c-k">script</span> type=<span class="c-s">"module"</span>&gt;
-  <span class="c-k">import</span> { createStreakr } <span class="c-k">from</span> <span class="c-s">'https://cdn.jsdelivr.net/npm/@rosado-io/streakr@latest/dist/streakr.es.js'</span>
-
-  <span class="c-fn">createStreakr</span>({
-    target: <span class="c-fn">document</span>.querySelector(<span class="c-s">'#streakr'</span>),
-    theme: <span class="c-s">'dark'</span>,
-    years: [2024, 2025, 2026],
-    getDays: (year) =&gt; <span class="c-fn">fetchActivity</span>(year),
-  })
-&lt;/<span class="c-k">script</span>&gt;`,
-};
-
 const root = document.getElementById("root");
 if (!root) throw new Error("Landing root not found");
 
-root.innerHTML = `
-  <div class="lv1">
-    <header class="lv1-nav">
-      <div class="lv1-brand">
-        <span data-logo></span>
-        <span>streakr</span>
-      </div>
-      <nav class="lv1-nav-links">
-        <a href="#playground">Playground</a>
-        <a href="#install">Install</a>
-        <a href="#agents">Agents</a>
-      </nav>
-      <a href="https://github.com/rosado-io/streakr" class="lv1-star" target="_blank" rel="noreferrer">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-        <span>Star</span>
-        <span class="lv1-star-count" data-real-stars>—</span>
-      </a>
-    </header>
-
-    <section class="lv1-hero">
-      <h1 class="lv1-h1">
-        Your contributions.<br />
-        <span class="lv1-h1-accent">Every platform.</span>
-      </h1>
-      <p class="lv1-sub">
-        A drop-in heatmap component that unifies GitHub, GitLab, and commits
-        co-authored by Claude, Codex, Opencode, and Copilot.
-        Themed, themable, and tiny. No build step.
-      </p>
-      <div class="lv1-cta">
-        <a href="https://github.com/rosado-io/streakr" target="_blank" rel="noreferrer" class="lv1-btn lv1-btn-primary">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-          Star on GitHub
-          <span class="lv1-star-count" data-real-stars></span>
-        </a>
-        <a href="#install" class="lv1-btn lv1-btn-ghost">
-          <code>npm i @rosado-io/streakr</code>
-        </a>
-      </div>
-    </section>
-
-    <section class="lv1-pg-section" id="playground">
-      <div class="lv1-eyebrow">
-        <span class="lv1-eyebrow-dot"></span>
-        Playground
-      </div>
-      <div class="lv1-pg-view" id="pg-view"></div>
-      <div class="lv1-component-slot" id="component-slot" data-theme="dark"></div>
-      <div class="lv1-pg-bar">
-        <div class="lv1-pg-controls" id="pg-controls"></div>
-      </div>
-    </section>
-
-    <section class="lv1-install" id="install">
-      <div class="lv1-eyebrow">
-        <span class="lv1-eyebrow-dot"></span>
-        Install
-      </div>
-      <div class="lv1-install-card">
-        <div class="lv1-install-tabs" id="install-tabs">
-          <button class="lv1-tab active" data-tab="npm">npm</button>
-          <button class="lv1-tab" data-tab="pnpm">pnpm</button>
-          <button class="lv1-tab" data-tab="yarn">yarn</button>
-          <button class="lv1-tab" data-tab="cdn">CDN</button>
-        </div>
-        <pre class="lv1-code" id="install-code"><code></code></pre>
-      </div>
-    </section>
-
-    <section class="lv1-install" id="agents">
-      <div class="lv1-eyebrow">
-        <span class="lv1-eyebrow-dot"></span>
-        AI agents
-      </div>
-      <p class="lv1-section-sub">
-        Streakr detects commits co-authored by Claude, Codex, Opencode, and Copilot
-        from their <code>Co-authored-by:</code> trailers, and renders each agent as
-        its own provider chip. Toggle the robot icon in the playground to see it live.
-      </p>
-      <div class="lv1-install-card">
-        <div class="lv1-install-tabs" id="agents-tabs">
-          <button class="lv1-tab active" data-tab="github">GitHub API</button>
-          <button class="lv1-tab" data-tab="local">Local git</button>
-        </div>
-        <pre class="lv1-code" id="agents-code"><code></code></pre>
-      </div>
-    </section>
-
-    <footer class="lv1-footer">
-      <div class="lv1-footer-inner">
-        <div class="lv1-brand">
-          <span data-logo></span>
-          <span>streakr</span>
-        </div>
-        <div class="lv1-footer-links">
-          <a href="https://github.com/rosado-io/streakr#readme">Docs</a>
-          <a href="https://github.com/rosado-io/streakr">GitHub</a>
-          <a href="https://www.npmjs.com/package/@rosado-io/streakr">npm</a>
-          <a href="https://github.com/rosado-io/streakr/blob/main/CHANGELOG.md">Changelog</a>
-          <a href="https://github.com/rosado-io/streakr/blob/main/LICENSE">License (MIT)</a>
-        </div>
-      </div>
-      <div class="lv1-footer-bot">
-        <span>© 2026 streakr</span>
-        <span>Open source · MIT</span>
-      </div>
-    </footer>
-  </div>
-`;
-
-function logoSvg(): string {
-  return `
-    <svg width="22" height="22" viewBox="0 0 18 18" fill="none">
-      <rect x="1" y="1" width="4" height="4" rx="1" fill="#39d353"/>
-      <rect x="7" y="1" width="4" height="4" rx="1" fill="#39d353"/>
-      <rect x="13" y="1" width="4" height="4" rx="1" fill="#39d353"/>
-      <rect x="1" y="7" width="4" height="4" rx="1" fill="#39d353"/>
-      <rect x="7" y="7" width="4" height="4" rx="1" fill="#39d353"/>
-      <rect x="13" y="7" width="4" height="4" rx="1" fill="#0e4429"/>
-      <rect x="1" y="13" width="4" height="4" rx="1" fill="#39d353"/>
-      <rect x="7" y="13" width="4" height="4" rx="1" fill="#0e4429"/>
-      <rect x="13" y="13" width="4" height="4" rx="1" fill="#39d353"/>
-    </svg>
-  `;
-}
-
-async function fetchGitHubStars(): Promise<number | null> {
-  try {
-    const res = await fetch("https://api.github.com/repos/rosado-io/streakr");
-    if (!res.ok) return null;
-    const data = (await res.json()) as { stargazers_count?: unknown };
-    return typeof data.stargazers_count === "number" ? data.stargazers_count : null;
-  } catch {
-    return null;
-  }
-}
-
-function formatStars(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k`;
-  return String(n);
-}
-
-const count = await fetchGitHubStars();
-if (count != null) {
-  document.querySelectorAll<HTMLElement>("[data-real-stars]").forEach((el) => {
-    el.textContent = formatStars(count);
-  });
-}
+// Idempotent: the build already baked this exact string into index.html, so on
+// a prerendered page this rewrites the shell with identical markup.
+root.innerHTML = shellHtml();
 
 document.querySelectorAll<HTMLElement>("[data-logo]").forEach((el) => {
-  el.innerHTML = logoSvg();
+  el.innerHTML = logoSvg(el.closest(".lv2-nav") ? 26 : 20);
 });
 
-const slot = document.getElementById("component-slot") as HTMLElement;
-const controls = document.getElementById("pg-controls") as HTMLElement;
+/* ────────────────────────────────────────────────────────────
+   Demo state + the two live instances
+   ──────────────────────────────────────────────────────────── */
 
-const state = {
-  theme: "dark" as StreakrTheme,
+interface DemoState {
+  theme: StreakrTheme;
+  accent: string;
+  showProviders: boolean;
+  showStats: boolean;
+  showAgents: boolean;
+  componentState: StreakrState;
+  year: number;
+}
+
+const state: DemoState = {
+  theme: "dark",
   accent: "#39d353",
   showProviders: true,
   showStats: true,
   showAgents: true,
-  componentState: "ready" as StreakrState,
-  view: "desktop" as "desktop" | "mobile",
+  componentState: "ready",
+  year: 2026,
 };
 
 function activeProviders(): StreakrProvider[] {
   return state.showAgents ? [...DEMO_PROVIDERS, ...AGENT_PROVIDERS] : DEMO_PROVIDERS;
 }
 
-let instance: StreakrInstance | null = null;
-let mobileIframe: HTMLIFrameElement | null = null;
-let mobileReady = false;
+const slots: { el: HTMLElement; instance: StreakrInstance | null }[] = [];
 
-interface DemoGlobal extends EventTarget {
-  location: Location;
-  parent: DemoGlobal;
-  postMessage(message: unknown, targetOrigin: string): void;
+function registerSlot(id: string): void {
+  const el = document.getElementById(id);
+  if (el) slots.push({ el, instance: null });
 }
 
-const g = globalThis as unknown as DemoGlobal;
+registerSlot("slot-desktop");
+registerSlot("slot-mobile");
 
-function getMobileUrl(): string {
-  const base = import.meta.env.BASE_URL.endsWith("/")
-    ? import.meta.env.BASE_URL
-    : `${import.meta.env.BASE_URL}/`;
-  return new URL("demo/mobile.html", g.location.origin + base).href;
-}
-
-function syncMobileState(): void {
-  if (!mobileReady || !mobileIframe?.contentWindow) return;
-  mobileIframe.contentWindow.postMessage(
-    { type: "streakr-demo-state", payload: state },
-    g.location.origin,
-  );
-}
-
-function mountComponent(): void {
-  if (instance) instance.destroy();
-  instance = null;
-  if (mobileIframe) {
-    mobileIframe.remove();
-    mobileIframe = null;
-  }
-  mobileReady = false;
-  slot.innerHTML = "";
-  slot.classList.remove("mobile-preview");
-  instance = createStreakr({
-    target: slot,
-    theme: state.theme,
-    accent: state.accent,
-    tintHeatmap: true,
-    showProviders: state.showProviders,
-    showStats: state.showStats,
-    state: state.componentState,
-    providers: activeProviders(),
-    years: StreakrSampleData.availableYears,
-    year: 2026,
-    today: StreakrSampleData.today,
-    getDays: StreakrSampleData.getDays,
+function mountAll(): void {
+  slots.forEach((slot) => {
+    slot.instance?.destroy();
+    slot.el.innerHTML = "";
+    slot.instance = createStreakr({
+      target: slot.el,
+      theme: state.theme,
+      accent: state.accent,
+      tintHeatmap: true,
+      showProviders: state.showProviders,
+      showStats: state.showStats,
+      state: state.componentState,
+      providers: activeProviders(),
+      years: StreakrSampleData.availableYears,
+      year: state.year,
+      today: StreakrSampleData.today,
+      getDays: StreakrSampleData.getDays,
+      onYearChange: (year) => {
+        state.year = year;
+        syncThemedContainers();
+        renderLiveCode();
+        slots
+          .filter((other) => other.el !== slot.el)
+          .forEach((other) => other.instance?.setYear(year));
+      },
+    });
   });
-  slot.dataset.theme = state.theme;
+  syncThemedContainers();
 }
 
-function mountMobilePreview(): void {
-  if (instance) {
-    instance.destroy();
-    instance = null;
+function updateAll(): void {
+  if (slots.some((slot) => !slot.instance)) {
+    mountAll();
+    return;
   }
-  if (mobileIframe) {
-    mobileIframe.remove();
-    mobileIframe = null;
-  }
-  mobileReady = false;
-  slot.innerHTML = "";
-  slot.classList.add("mobile-preview");
-  slot.dataset.theme = state.theme;
-
-  const iframe = document.createElement("iframe");
-  iframe.src = getMobileUrl();
-  iframe.title = "streakr mobile preview";
-  iframe.setAttribute("aria-label", "Mobile preview of the streakr component");
-  iframe.addEventListener("load", () => {
-    if (!mobileReady) syncMobileState();
-  });
-  slot.appendChild(iframe);
-  mobileIframe = iframe;
-}
-
-function renderComponent(): void {
-  if (state.view === "desktop") mountComponent();
-  else mountMobilePreview();
-}
-
-function updateComponent(): void {
-  if (state.view === "desktop") {
-    if (!instance) {
-      mountComponent();
-      return;
-    }
-    instance.update({
+  slots.forEach((slot) => {
+    slot.instance?.update({
       theme: state.theme,
       accent: state.accent,
       tintHeatmap: true,
@@ -383,215 +127,299 @@ function updateComponent(): void {
       state: state.componentState,
       providers: activeProviders(),
     });
-  } else {
-    syncMobileState();
-  }
-  slot.dataset.theme = state.theme;
+  });
+  syncThemedContainers();
 }
 
-function renderViewToggle(): void {
-  const viewWrap = document.getElementById("pg-view") as HTMLElement;
-  viewWrap.innerHTML = "";
-
-  const desktopBtn = document.createElement("button");
-  desktopBtn.textContent = "Desktop";
-  desktopBtn.className = state.view === "desktop" ? "active" : "";
-  desktopBtn.addEventListener("click", () => {
-    if (state.view === "desktop") return;
-    state.view = "desktop";
-    renderViewToggle();
-    renderComponent();
-    renderControls();
+function syncThemedContainers(): void {
+  // Scoped on purpose: a bare [data-theme] query would also hit the component's
+  // own .sk-root, which createStreakr owns and rewrites on every render.
+  document.querySelectorAll<HTMLElement>("#slot-desktop, .lv2-phone-screen").forEach((el) => {
+    el.dataset.theme = state.theme;
   });
-
-  const mobileBtn = document.createElement("button");
-  mobileBtn.textContent = "Mobile";
-  mobileBtn.className = state.view === "mobile" ? "active" : "";
-  mobileBtn.addEventListener("click", () => {
-    if (state.view === "mobile") return;
-    state.view = "mobile";
-    renderViewToggle();
-    renderComponent();
-    renderControls();
-  });
-
-  viewWrap.appendChild(desktopBtn);
-  viewWrap.appendChild(mobileBtn);
+  const shell = document.querySelector<HTMLElement>(".lv2");
+  if (shell) shell.style.setProperty("--lv2-accent", state.accent);
+  const badge = document.querySelector<HTMLElement>("[data-device-badge]");
+  if (badge) badge.textContent = `${state.year} · ring`;
 }
 
-function renderControls(): void {
-  controls.innerHTML = "";
+/* ────────────────────────────────────────────────────────────
+   Controls — labelled, touch-friendly, no hover-only tooltips
+   ──────────────────────────────────────────────────────────── */
 
-  const themeWrap = document.createElement("span");
-  themeWrap.className = "lv1-tip";
-  themeWrap.dataset.tip = state.theme === "dark" ? "Light theme" : "Dark theme";
-  const themeBtn = document.createElement("button");
-  themeBtn.className = "lv1-fc-btn";
-  themeBtn.textContent = state.theme === "dark" ? "☾" : "☀";
-  themeBtn.addEventListener("click", () => {
-    state.theme = state.theme === "dark" ? "light" : "dark";
-    updateComponent();
-    renderControls();
-  });
-  themeWrap.appendChild(themeBtn);
-  controls.appendChild(themeWrap);
-
-  controls.appendChild(makeSep());
-
-  ACCENT_PRESETS.forEach((a) => {
-    const wrap = document.createElement("span");
-    wrap.className = "lv1-tip";
-    wrap.dataset.tip = a.label;
-    const sw = document.createElement("button");
-    sw.className = "lv1-fc-swatch" + (state.accent === a.value ? " active" : "");
-    sw.style.background = a.value;
-    sw.addEventListener("click", () => {
-      state.accent = a.value;
-      updateComponent();
-      renderControls();
-    });
-    wrap.appendChild(sw);
-    controls.appendChild(wrap);
-  });
-
-  const customWrap = document.createElement("span");
-  customWrap.className = "lv1-tip";
-  customWrap.dataset.tip = "Custom color";
-  const customLabel = document.createElement("label");
-  customLabel.className = "lv1-fc-custom";
-  const customInput = document.createElement("input");
-  customInput.type = "color";
-  customInput.value = state.accent;
-  customInput.addEventListener("input", (e) => {
-    state.accent = (e.target as HTMLInputElement).value;
-    updateComponent();
-  });
-  customInput.addEventListener("change", () => {
-    renderControls();
-  });
-  customLabel.appendChild(customInput);
-  customWrap.appendChild(customLabel);
-  controls.appendChild(customWrap);
-
-  controls.appendChild(makeSep());
-
-  controls.appendChild(
-    makeToggle({
-      tip: state.showProviders ? "Hide providers" : "Show providers",
-      active: state.showProviders,
-      svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18M3 12h18"/></svg>',
-      onClick: () => {
-        state.showProviders = !state.showProviders;
-        updateComponent();
-        renderControls();
-      },
-    }),
-  );
-
-  controls.appendChild(
-    makeToggle({
-      tip: state.showAgents ? "Hide AI agents" : "Show AI agents",
-      active: state.showAgents,
-      svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M12 9V5"/><circle cx="12" cy="4" r="1"/><path d="M9 14h.01M15 14h.01"/><path d="M9.5 17.5h5"/></svg>',
-      onClick: () => {
-        state.showAgents = !state.showAgents;
-        updateComponent();
-        renderControls();
-      },
-    }),
-  );
-
-  controls.appendChild(
-    makeToggle({
-      tip: state.showStats ? "Hide stats" : "Show stats",
-      active: state.showStats,
-      svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h18"/></svg>',
-      onClick: () => {
-        state.showStats = !state.showStats;
-        updateComponent();
-        renderControls();
-      },
-    }),
-  );
-
-  controls.appendChild(makeSep());
-
-  controls.appendChild(
-    makeToggle({
-      tip: state.componentState === "loading" ? "Show ready state" : "Show loading state",
-      active: state.componentState === "loading",
-      svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-6.2-8.56"/><path d="M21 3v6h-6"/></svg>',
-      onClick: () => {
-        state.componentState = state.componentState === "loading" ? "ready" : "loading";
-        updateComponent();
-        renderControls();
-      },
-    }),
-  );
+function controlGroup(label: string, body: HTMLElement): HTMLElement {
+  const group = document.createElement("div");
+  group.className = "lv2-group";
+  const title = document.createElement("div");
+  title.className = "lv2-group-label";
+  title.textContent = label;
+  group.appendChild(title);
+  group.appendChild(body);
+  return group;
 }
 
-function renderCodeTabs(
-  tabsId: string,
-  codeId: string,
-  snippets: Record<string, string>,
-  initial: string,
-): void {
-  const tabs = document.querySelectorAll<HTMLButtonElement>(`#${tabsId} .lv1-tab`);
-  const codeEl = document.querySelector<HTMLElement>(`#${codeId} code`);
-  if (!codeEl) return;
-
-  let active = initial;
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      active = tab.dataset.tab ?? initial;
-      tabs.forEach((t) => t.classList.toggle("active", t.dataset.tab === active));
-      codeEl.innerHTML = snippets[active] ?? "";
-    });
+function segmented<T extends string>(
+  options: { label: string; value: T }[],
+  current: T,
+  onPick: (value: T) => void,
+  mono = false,
+): HTMLElement {
+  const wrap = document.createElement("div");
+  wrap.className = "lv2-seg";
+  options.forEach((option) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className =
+      "lv2-seg-btn" + (option.value === current ? " active" : "") + (mono ? " mono" : "");
+    btn.textContent = option.label;
+    btn.addEventListener("click", () => onPick(option.value));
+    wrap.appendChild(btn);
   });
-  codeEl.innerHTML = snippets[active];
-}
-
-function makeSep(): HTMLElement {
-  const sep = document.createElement("div");
-  sep.className = "lv1-fc-sep";
-  return sep;
-}
-
-interface ToggleOpts {
-  tip: string;
-  active: boolean;
-  svg: string;
-  onClick: () => void;
-}
-
-function makeToggle({ tip, active, svg, onClick }: ToggleOpts): HTMLElement {
-  const wrap = document.createElement("span");
-  wrap.className = "lv1-tip";
-  wrap.dataset.tip = tip;
-  const btn = document.createElement("button");
-  btn.className = "lv1-fc-btn" + (active ? "" : " lv1-fc-off");
-  btn.innerHTML = svg;
-  btn.addEventListener("click", onClick);
-  wrap.appendChild(btn);
   return wrap;
 }
 
-g.addEventListener("message", (event) => {
-  if (event.origin !== g.location.origin) return;
-  const data: unknown = event.data;
-  if (
-    !data ||
-    typeof data !== "object" ||
-    (data as { type?: unknown }).type !== "streakr-mobile-ready"
-  ) {
-    return;
-  }
-  mobileReady = true;
-  syncMobileState();
+function switchRow(label: string, on: boolean, onToggle: () => void): HTMLElement {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "lv2-switch-row";
+  btn.setAttribute("aria-pressed", String(on));
+  const text = document.createElement("span");
+  text.textContent = label;
+  const track = document.createElement("span");
+  track.className = "lv2-switch" + (on ? " on" : "");
+  track.appendChild(document.createElement("span"));
+  btn.appendChild(text);
+  btn.appendChild(track);
+  btn.addEventListener("click", onToggle);
+  return btn;
+}
+
+function renderControls(): void {
+  const host = document.getElementById("pg-controls");
+  if (!host) return;
+  host.innerHTML = "";
+
+  host.appendChild(
+    controlGroup(
+      "Theme",
+      segmented(
+        [
+          { label: "Dark", value: "dark" },
+          { label: "Light", value: "light" },
+        ],
+        state.theme,
+        (value) => {
+          state.theme = value;
+          updateAll();
+          renderControls();
+          renderLiveCode();
+        },
+      ),
+    ),
+  );
+
+  const swatches = document.createElement("div");
+  swatches.className = "lv2-swatches";
+  ACCENT_PRESETS.forEach((preset) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "lv2-swatch" + (preset.value === state.accent ? " active" : "");
+    btn.style.background = preset.value;
+    btn.title = preset.label;
+    btn.setAttribute("aria-label", `Accent: ${preset.label}`);
+    btn.addEventListener("click", () => {
+      state.accent = preset.value;
+      updateAll();
+      renderControls();
+      renderLiveCode();
+    });
+    swatches.appendChild(btn);
+  });
+  const custom = document.createElement("label");
+  custom.className = "lv2-swatch-custom";
+  custom.title = "Custom color";
+  const input = document.createElement("input");
+  input.type = "color";
+  input.value = state.accent;
+  input.addEventListener("input", (event) => {
+    state.accent = (event.target as HTMLInputElement).value;
+    updateAll();
+    renderLiveCode();
+  });
+  custom.appendChild(input);
+  swatches.appendChild(custom);
+  host.appendChild(controlGroup("Accent", swatches));
+
+  const options = document.createElement("div");
+  options.className = "lv2-switches";
+  options.appendChild(
+    switchRow("Provider chips", state.showProviders, () => {
+      state.showProviders = !state.showProviders;
+      updateAll();
+      renderControls();
+      renderLiveCode();
+    }),
+  );
+  options.appendChild(
+    switchRow("Records panel", state.showStats, () => {
+      state.showStats = !state.showStats;
+      updateAll();
+      renderControls();
+      renderLiveCode();
+    }),
+  );
+  options.appendChild(
+    switchRow("AI agent sources", state.showAgents, () => {
+      state.showAgents = !state.showAgents;
+      updateAll();
+      renderControls();
+      renderLiveCode();
+    }),
+  );
+  host.appendChild(controlGroup("Options", options));
+
+  host.appendChild(
+    controlGroup(
+      "Component state",
+      segmented(
+        [
+          { label: "ready", value: "ready" },
+          { label: "loading", value: "loading" },
+        ],
+        state.componentState,
+        (value) => {
+          state.componentState = value;
+          updateAll();
+          renderControls();
+          renderLiveCode();
+        },
+        true,
+      ),
+    ),
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
+   Live code panel — the playground writes the snippet for you
+   ──────────────────────────────────────────────────────────── */
+
+function liveSource(): string {
+  const providerImport = state.showAgents
+    ? "createStreakr, DEFAULT_PROVIDERS, AGENT_PROVIDERS"
+    : "createStreakr, DEFAULT_PROVIDERS";
+  const providerLine = state.showAgents
+    ? "  providers: [...DEFAULT_PROVIDERS, ...AGENT_PROVIDERS],"
+    : "  providers: DEFAULT_PROVIDERS,";
+  return [
+    `import { ${providerImport} } from '@rosado-io/streakr'`,
+    "import '@rosado-io/streakr/styles.css'",
+    "",
+    "createStreakr({",
+    "  target: document.querySelector('#streakr'),",
+    `  theme: '${state.theme}',`,
+    `  accent: '${state.accent}',`,
+    "  tintHeatmap: true,",
+    `  showProviders: ${String(state.showProviders)},`,
+    `  showStats: ${String(state.showStats)},`,
+    `  state: '${state.componentState}',`,
+    providerLine,
+    `  years: [${StreakrSampleData.availableYears.join(", ")}],`,
+    `  year: ${String(state.year)},`,
+    "  getDays: (year) => fetchActivity(year),",
+    "})",
+  ].join("\n");
+}
+
+function renderLiveCode(): void {
+  const el = document.getElementById("live-code");
+  if (el) el.innerHTML = highlight(liveSource());
+}
+
+/* ────────────────────────────────────────────────────────────
+   Code tabs + copy buttons
+   ──────────────────────────────────────────────────────────── */
+
+const activeTab: Record<string, string> = { install: "npm", agents: "github" };
+
+function renderCodeTabs(name: "install" | "agents", snippets: Record<string, string>): void {
+  const tabs = document.querySelectorAll<HTMLButtonElement>(`#${name}-tabs .lv2-tab`);
+  const codeEl = document.getElementById(`${name}-code`);
+  if (!codeEl) return;
+
+  const paint = (): void => {
+    const current = activeTab[name] ?? "";
+    tabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.tab === current));
+    codeEl.innerHTML = highlight(snippets[current] ?? "");
+  };
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      activeTab[name] = tab.dataset.tab ?? activeTab[name] ?? "";
+      paint();
+    });
+  });
+  paint();
+}
+
+function copyTextFor(key: string): string {
+  if (key === "install") return INSTALL_CMD;
+  if (key === "live") return liveSource();
+  if (key === "install-tab") return INSTALL_SNIPPETS[activeTab.install ?? "npm"] ?? "";
+  if (key === "agents-tab") return AGENT_SNIPPETS[activeTab.agents ?? "github"] ?? "";
+  return "";
+}
+
+function flagCopied(btn: HTMLElement): void {
+  const flag = btn.querySelector<HTMLElement>(".lv2-copy-flag") ?? btn;
+  const original = flag.textContent;
+  flag.textContent = "copied";
+  btn.classList.add("copied");
+  setTimeout(() => {
+    flag.textContent = original;
+    btn.classList.remove("copied");
+  }, 1500);
+}
+
+document.querySelectorAll<HTMLElement>("[data-copy]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const text = copyTextFor(btn.dataset.copy ?? "");
+    if (!text) return;
+    void navigator.clipboard.writeText(text).catch(() => undefined);
+    flagCopied(btn);
+  });
 });
 
-renderComponent();
+/* ────────────────────────────────────────────────────────────
+   Star count — fetched after first paint, never blocking
+   ──────────────────────────────────────────────────────────── */
+
+function formatStars(count: number): string {
+  if (count >= 1000) return `${(count / 1000).toFixed(1).replace(/\.0$/, "")}k`;
+  return String(count);
+}
+
+function loadStars(): void {
+  void fetch(`https://api.github.com/repos/rosado-io/streakr`)
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data: { stargazers_count?: unknown } | null) => {
+      const count =
+        data && typeof data.stargazers_count === "number" ? data.stargazers_count : null;
+      if (count == null) return;
+      document.querySelectorAll<HTMLElement>("[data-real-stars]").forEach((el) => {
+        el.textContent = formatStars(count);
+        el.hidden = false;
+      });
+    })
+    .catch(() => undefined);
+}
+
+/* ────────────────────────────────────────────────────────────
+   Boot
+   ──────────────────────────────────────────────────────────── */
+
+mountAll();
 renderControls();
-renderViewToggle();
-renderCodeTabs("install-tabs", "install-code", INSTALL_SNIPPETS, "npm");
-renderCodeTabs("agents-tabs", "agents-code", AGENT_SNIPPETS, "github");
+renderLiveCode();
+renderCodeTabs("install", INSTALL_SNIPPETS);
+renderCodeTabs("agents", AGENT_SNIPPETS);
+loadStars();

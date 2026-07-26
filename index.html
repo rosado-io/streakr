@@ -3,13 +3,115 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>streakr — The universal Git contribution calendar</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
+    <meta
+      name="description"
+      content="A drop-in Git contribution calendar. Unify GitHub, GitLab and Bitbucket activity in one heatmap — and see which commits your AI agents co-authored."
     />
+    <link rel="canonical" href="https://streakr-js.web.app/" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="author" content="rosado.io" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="streakr" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content="https://streakr-js.web.app/" />
+    <meta property="og:title" content="streakr — The universal Git contribution calendar" />
+    <meta
+      property="og:description"
+      content="A drop-in Git contribution calendar. Unify GitHub, GitLab and Bitbucket activity in one heatmap — and see which commits your AI agents co-authored."
+    />
+    <meta property="og:image" content="https://streakr-js.web.app/og.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="streakr — your contributions, every platform. A dark contribution calendar with a green activity strip."
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="streakr — The universal Git contribution calendar" />
+    <meta
+      name="twitter:description"
+      content="A drop-in Git contribution calendar. Unify GitHub, GitLab and Bitbucket activity in one heatmap — and see which commits your AI agents co-authored."
+    />
+    <meta name="twitter:image" content="https://streakr-js.web.app/og.png" />
+    <meta
+      name="twitter:image:alt"
+      content="streakr — your contributions, every platform. A dark contribution calendar with a green activity strip."
+    />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-96x96.png" type="image/png" sizes="96x96" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Fonts are self-hosted (see demo/fonts.css): no render-critical
+         third-party request, and nothing to pin with subresource integrity.
+         Only the two faces above the fold are preloaded. -->
+    <link
+      rel="preload"
+      href="/fonts/geist-400-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/geist-700-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://streakr-js.web.app/#software",
+            "name": "streakr",
+            "alternateName": "@rosado-io/streakr",
+            "url": "https://streakr-js.web.app/",
+            "description": "A framework-agnostic Git contribution calendar for the web. It normalizes activity from GitHub, GitLab and Bitbucket into one daily series and splits out commits co-authored by AI agents such as Claude, Codex, opencode and Copilot.",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Any",
+            "softwareVersion": "__STREAKR_VERSION__",
+            "license": "https://github.com/rosado-io/streakr/blob/main/LICENSE",
+            "downloadUrl": "https://www.npmjs.com/package/@rosado-io/streakr",
+            "codeRepository": "https://github.com/rosado-io/streakr",
+            "programmingLanguage": "TypeScript",
+            "image": "https://streakr-js.web.app/og.png",
+            "keywords": "git contribution calendar, contribution heatmap, github heatmap, gitlab, bitbucket, streaks, ai agent commits",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "author": {
+              "@type": "Organization",
+              "name": "rosado.io",
+              "url": "https://github.com/rosado-io"
+            }
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://streakr-js.web.app/#website",
+            "url": "https://streakr-js.web.app/",
+            "name": "streakr",
+            "description": "The universal Git contribution calendar.",
+            "inLanguage": "en",
+            "about": { "@id": "https://streakr-js.web.app/#software" }
+          }
+        ]
+      }
+    </script>
+
     <script type="module" src="/demo/main.ts"></script>
   </head>
   <body>
