@@ -36,10 +36,10 @@ Or load the ESM build and CSS from a CDN. Pin the version in production:
 
 <link
   rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/@rosado-io/streakr@0.6.0/dist/streakr.css"
+  href="https://cdn.jsdelivr.net/npm/@rosado-io/streakr@1.1.2/dist/streakr.css"
 />
 <script type="module">
-  import { createStreakr } from "https://esm.sh/@rosado-io/streakr@0.6.0";
+  import { createStreakr } from "https://esm.sh/@rosado-io/streakr@1.1.2";
 
   createStreakr({
     target: document.getElementById("streakr"),
@@ -221,6 +221,43 @@ sk.update({ state: "ready" }); // normal render
 `"ready"` with a year that has zero contributions automatically falls back to
 the empty illustration.
 
+## Responsive layout and ring interaction
+
+The component renders a 53-week heatmap when the container is 520px or wider, and
+switches to a radial year ring below that breakpoint. Both layouts share the same
+year, provider, and state configuration.
+
+### Ring gestures
+
+The ring is interactive on pointer devices and touch screens:
+
+- **Tap a ray** to select that day. The center updates to show the date and
+total, and the hand rotates to point at the selection.
+- **Drag around the ring** to scrub through the year. The hand follows the
+pointer while it stays inside the ring, and the center updates for each day the
+pointer crosses.
+- **Release** to finish the gesture on the last day under the pointer.
+- **Tap the center** (or click it with a mouse) to reset the selection back to
+today.
+
+The ring distinguishes drags from clicks: a small drag suppresses the click
+handler for that gesture so tapping a single day still works reliably after a
+swipe.
+
+### Keyboard access
+
+Each day ray is focusable and behaves like a button:
+
+- `Tab` moves focus to the currently selected ray.
+- `Enter` or `Space` selects the focused ray and updates the center.
+- `ArrowRight` / `ArrowDown` move focus to the next day.
+- `ArrowLeft` / `ArrowUp` move focus to the previous day.
+- `Home` moves focus to the first day of the year.
+- `End` moves focus to the last day of the year.
+
+The year button, provider chips, and year-modal list are also keyboard
+operable.
+
 ## Framework snippets
 
 The component is vanilla DOM. These snippets show the lifecycle wrapper only.
@@ -383,6 +420,10 @@ when omitted, the first and last input dates are used. `options.weekStartsOn`
 defaults to `0` (Sunday) and also accepts `1` (Monday). Each rendered cell gets a
 `level` from `0` to `4` based on contribution intensity.
 
+`toCanonicalDays(days, start, end)` is like `normalizeEventsToDaily`, but it
+anchors the output to a fixed inclusive date range. It is useful when a provider
+returns sparse events and you want the series to cover the full requested window.
+
 These are independent helpers — useful if you want to plug custom data into
 `createStreakr` or build something different on top.
 
@@ -391,12 +432,17 @@ These are independent helpers — useful if you want to plug custom data into
 ```ts
 import {
   createStreakr,
+  DEFAULT_PROVIDERS,
+  AGENT_PROVIDERS,
   githubProvider,
   gitlabProvider,
+  githubCoAuthorProvider,
   aggregate,
   normalizeEventsToDaily,
+  toCanonicalDays,
   computeStreaks,
   buildCalendarGrid,
+  splitCoAuthored,
 } from "@rosado-io/streakr";
 ```
 
@@ -419,18 +465,28 @@ Treat tokens as secrets:
 
 ## Versioning
 
-Streakr follows [semver](https://semver.org/), with one caveat: while the
-package is pre-1.0, **minor releases (`0.x.0`) may include breaking changes**.
+Streakr follows [semver](https://semver.org/). Releases from 1.0 onward treat
+major versions as breaking, minors as backward-compatible features, and patches
+as backward-compatible fixes.
 
-If you want to pin against breakage, use a tilde range (`~0.6.0`) instead of a
-caret (`^0.6.0`) until 1.0.
+Pin to a version that matches your risk tolerance:
+
+```sh
+npm install @rosado-io/streakr@^1.1.2
+# or
+pnpm add @rosado-io/streakr@^1.1.2
+```
 
 ## Development
 
 ```sh
 pnpm install
-pnpm dev      # runs the demo / landing
-pnpm test
+pnpm dev             # runs the demo / landing
+pnpm test            # vitest in watch mode
+pnpm test:ci         # single run with coverage
+pnpm lint
+pnpm typecheck
+pnpm format:check
 pnpm audit:dead-code
 pnpm build
 ```
