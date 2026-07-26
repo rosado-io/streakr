@@ -70,7 +70,6 @@ export const createUpdateHandlers = (
     },
   } satisfies UpdateHandlers;
 
-  // Object.hasOwn() requires ES2022, while the published library targets ES2020.
   const isUpdateKey = (key: string): key is keyof typeof updateHandlers =>
     Object.getOwnPropertyDescriptor(updateHandlers, key) !== undefined;
 

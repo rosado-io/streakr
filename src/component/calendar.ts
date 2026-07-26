@@ -116,10 +116,6 @@ export const fmtDateLong = (date: Date): string =>
 export const fmtDateShort = (date: Date): string =>
   `${MONTH_LABELS_SHORT[date.getMonth()]} ${date.getDate()}`;
 
-/* ─────────────────────────────────────────
-   Ring geometry helpers
-   ───────────────────────────────────────── */
-
 export const dayAngle = (dayIndex: number, totalDays: number): number => {
   const anglePerDay = (2 * Math.PI) / totalDays;
   return -Math.PI / 2 + dayIndex * anglePerDay;

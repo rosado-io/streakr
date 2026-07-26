@@ -34,11 +34,6 @@ type HeatmapCellBuilder = (
 const buildHeatmapCell =
   (bindCellEvents: BindCellEvents, totalCols: number, revealUntil?: Date): HeatmapCellBuilder =>
   (day, ri, sq, colStep, ci) => {
-    // The reveal mirrors the loading skeleton: cells rest at the base color
-    // while the wave sweeps the grid, then each one settles into its real level
-    // color (--sk-cell-final) as the wave passes. The wave stops at the current
-    // day — future cells stay fixed at the base color and never flash. The
-    // skeleton sweep timing is reused so both waves travel at the same speed.
     const reveal =
       revealUntil !== undefined && day !== null && day.date.getTime() <= revealUntil.getTime();
     let cellClass: string | null = null;
@@ -216,9 +211,6 @@ export const renderHeatmap = (
 
 const WAVE_PEAK_LEVELS = [0, 1, 1, 2, 2, 2, 3, 3, 4, 4] as const;
 
-// Deterministic per-cell peak tone for the sweep waves (skeleton and reveal),
-// so the passing wave reads as a varied rainbow of greens instead of a flat
-// single-tone flash.
 const wavePeakLevel = (ci: number, ri: number): number => {
   const hash = Math.imul(ci * 7 + ri + 1, 2654435761) >>> 0;
   return WAVE_PEAK_LEVELS[hash % WAVE_PEAK_LEVELS.length] ?? 0;

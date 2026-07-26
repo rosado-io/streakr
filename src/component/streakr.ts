@@ -31,10 +31,6 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   let observedWrap: HTMLElement | null = null;
   let lastDrawWidth = 0;
   let wasLoading = false;
-  // Redraw only when the wrap width actually changed since the last draw. This
-  // makes the observer's initial callback a natural no-op without a skip flag,
-  // which would swallow the first real resize when that callback never fires
-  // (e.g. some embedded browsers, or elements without a box at observe time).
   const resizeObs = new ResizeObserver(() => {
     if (!observedWrap) {
       return;
