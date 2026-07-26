@@ -1,7 +1,5 @@
 import type { ResolvedConfig } from "./config";
 
-// Widened so the SSR/shim guards survive type-checking against DOM lib globals,
-// where window and matchMedia are typed as always present.
 const getWin = (): Window | undefined => globalThis.window;
 
 const getMatchMedia = (): ((query: string) => MediaQueryList) | undefined => {

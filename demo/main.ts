@@ -36,17 +36,11 @@ const DEMO_PROVIDERS: StreakrProvider[] = [
 const root = document.getElementById("root");
 if (!root) throw new Error("Landing root not found");
 
-// Idempotent: the build already baked this exact string into index.html, so on
-// a prerendered page this rewrites the shell with identical markup.
 root.innerHTML = shellHtml();
 
 document.querySelectorAll<HTMLElement>("[data-logo]").forEach((el) => {
   el.innerHTML = logoSvg(el.closest(".lv2-nav") ? 26 : 20);
 });
-
-/* ────────────────────────────────────────────────────────────
-   Demo state + the two live instances
-   ──────────────────────────────────────────────────────────── */
 
 interface DemoState {
   theme: StreakrTheme;
@@ -132,8 +126,6 @@ function updateAll(): void {
 }
 
 function syncThemedContainers(): void {
-  // Scoped on purpose: a bare [data-theme] query would also hit the component's
-  // own .sk-root, which createStreakr owns and rewrites on every render.
   document.querySelectorAll<HTMLElement>("#slot-desktop, .lv2-phone-screen").forEach((el) => {
     el.dataset.theme = state.theme;
   });
@@ -142,10 +134,6 @@ function syncThemedContainers(): void {
   const badge = document.querySelector<HTMLElement>("[data-device-badge]");
   if (badge) badge.textContent = `${state.year} · ring`;
 }
-
-/* ────────────────────────────────────────────────────────────
-   Controls — labelled, touch-friendly, no hover-only tooltips
-   ──────────────────────────────────────────────────────────── */
 
 function controlGroup(label: string, body: HTMLElement): HTMLElement {
   const group = document.createElement("div");
@@ -299,10 +287,6 @@ function renderControls(): void {
   );
 }
 
-/* ────────────────────────────────────────────────────────────
-   Live code panel — the playground writes the snippet for you
-   ──────────────────────────────────────────────────────────── */
-
 function liveSource(): string {
   const providerImport = state.showAgents
     ? "createStreakr, DEFAULT_PROVIDERS, AGENT_PROVIDERS"
@@ -334,10 +318,6 @@ function renderLiveCode(): void {
   const el = document.getElementById("live-code");
   if (el) el.innerHTML = highlight(liveSource());
 }
-
-/* ────────────────────────────────────────────────────────────
-   Code tabs + copy buttons
-   ──────────────────────────────────────────────────────────── */
 
 const activeTab: Record<string, string> = { install: "npm", agents: "github" };
 
@@ -389,10 +369,6 @@ document.querySelectorAll<HTMLElement>("[data-copy]").forEach((btn) => {
   });
 });
 
-/* ────────────────────────────────────────────────────────────
-   Star count — fetched after first paint, never blocking
-   ──────────────────────────────────────────────────────────── */
-
 function formatStars(count: number): string {
   if (count >= 1000) return `${(count / 1000).toFixed(1).replace(/\.0$/, "")}k`;
   return String(count);
@@ -412,10 +388,6 @@ function loadStars(): void {
     })
     .catch(() => undefined);
 }
-
-/* ────────────────────────────────────────────────────────────
-   Boot
-   ──────────────────────────────────────────────────────────── */
 
 mountAll();
 renderControls();
