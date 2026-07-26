@@ -1,0 +1,198 @@
+<!doctype html>
+<!--
+  Source for public/og.png (1200x630). Not part of the built site — nothing
+  imports it and it is outside publicDir, so vite ignores it.
+
+  Regenerate by loading this file at a 1200x630 viewport and screenshotting it,
+  e.g. with headless Chrome:
+    chrome --headless --window-size=1200,630 \
+           --screenshot=public/og.png demo/og-template.html
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>streakr — social preview source</title>
+    <style>
+      /* Same self-hosted files the site uses, by relative path so this renders
+         identically over file:// with no network access. */
+      @font-face {
+        font-family: "Geist";
+        font-weight: 400;
+        src: url("../public/fonts/geist-400-latin.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Geist";
+        font-weight: 600;
+        src: url("../public/fonts/geist-600-latin.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Geist";
+        font-weight: 700;
+        src: url("../public/fonts/geist-700-latin.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "JetBrains Mono";
+        font-weight: 400;
+        src: url("../public/fonts/jetbrains-mono-400-latin.woff2") format("woff2");
+      }
+    </style>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        width: 1200px;
+        height: 630px;
+        background: #000;
+        color: #ededed;
+        font-family: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
+        position: relative;
+        overflow: hidden;
+      }
+      .glow {
+        position: absolute;
+        top: -320px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 1100px;
+        height: 620px;
+        background: radial-gradient(ellipse at center, rgba(57, 211, 83, 0.18), transparent 68%);
+        filter: blur(8px);
+      }
+      .inner {
+        position: relative;
+        height: 100%;
+        padding: 72px 80px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+      .brand span {
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: 82px;
+        line-height: 1.02;
+        font-weight: 700;
+        letter-spacing: -0.035em;
+      }
+      h1 em {
+        font-style: normal;
+        color: #39d353;
+      }
+      p {
+        margin-top: 26px;
+        font-size: 26px;
+        line-height: 1.45;
+        color: rgba(255, 255, 255, 0.62);
+        max-width: 30ch;
+      }
+      .strip {
+        display: flex;
+        gap: 5px;
+        margin-top: 8px;
+      }
+      .strip i {
+        width: 15px;
+        height: 15px;
+        border-radius: 3px;
+        display: block;
+      }
+      .foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .chips {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .chip {
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 999px;
+        padding: 9px 18px;
+        font-size: 19px;
+        color: #d2d2d2;
+        background: #0b0b0b;
+      }
+      .meta {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 18px;
+        color: rgba(255, 255, 255, 0.42);
+        text-align: right;
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="glow"></div>
+    <div class="inner">
+      <div class="brand">
+        <svg width="40" height="40" viewBox="0 0 32 32">
+          <rect width="32" height="32" rx="7" fill="#0f0f0f" />
+          <g fill="#39d353">
+            <rect x="4" y="4" width="6" height="6" rx="1.6" />
+            <rect x="13" y="4" width="6" height="6" rx="1.6" />
+            <rect x="22" y="4" width="6" height="6" rx="1.6" />
+            <rect x="4" y="13" width="6" height="6" rx="1.6" />
+            <rect x="13" y="13" width="6" height="6" rx="1.6" />
+            <rect x="4" y="22" width="6" height="6" rx="1.6" />
+            <rect x="22" y="22" width="6" height="6" rx="1.6" />
+          </g>
+          <g fill="#0e4429">
+            <rect x="22" y="13" width="6" height="6" rx="1.6" />
+            <rect x="13" y="22" width="6" height="6" rx="1.6" />
+          </g>
+        </svg>
+        <span>streakr</span>
+      </div>
+
+      <div>
+        <h1>Your contributions.<br /><em>Every platform.</em></h1>
+        <p>One contribution calendar for GitHub, GitLab and Bitbucket — plus the commits your AI agents co-authored.</p>
+        <div class="strip" id="strip"></div>
+      </div>
+
+      <div class="foot">
+        <div class="chips">
+          <div class="chip">Vanilla JS</div>
+          <div class="chip">0 dependencies</div>
+          <div class="chip">heatmap + ring</div>
+          <div class="chip">MIT</div>
+        </div>
+        <div class="meta">
+          npm i @rosado-io/streakr<br />
+          github.com/rosado-io/streakr
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Deterministic pseudo-random strip so regenerating the image is stable.
+      const levels = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"];
+      const thresholds = [0.26, 0.46, 0.66, 0.82];
+      let s = 7;
+      const rand = () => {
+        s = (s * 9301 + 49297) % 233280;
+        return s / 233280;
+      };
+      const levelFor = (r) => thresholds.filter((t) => r > t).length;
+      const strip = document.getElementById("strip");
+      for (let i = 0; i < 58; i++) {
+        const el = document.createElement("i");
+        el.style.background = levels[levelFor(rand())];
+        strip.appendChild(el);
+      }
+    </script>
+  </body>
+</html>
