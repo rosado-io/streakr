@@ -116,6 +116,9 @@
   border-radius: 16px;
   padding: 28px;
   box-shadow: var(--sk-shadow-card);
+  /* Query container for the responsive block at the end of this file. */
+  container-type: inline-size;
+  container-name: sk-card;
 }
 
 /* Header */
@@ -613,12 +616,13 @@
    width — so the threshold is what the two-column body needs and carries no
    padding term: 520 wrap + 280 stats min-width + 20 gap = 820. Above it the
    wrap still clears the 520px the ring switch uses; below it, stacking hands
-   the wrap the full width instead of crushing it. */
-.sk-card {
-  container-type: inline-size;
-  container-name: sk-card;
-}
+   the wrap the full width instead of crushing it.
 
+   No @supports fallback: this file already paints every heat level with
+   color-mix(), which lands later than container queries in all three engines
+   (Chrome 111 vs 105, Safari 16.2 vs 16, Firefox 113 vs 110). A browser that
+   cannot match these queries cannot render the cells either, so the fallback
+   would be unreachable. */
 @container sk-card (max-width: 820px) {
   .sk-body { grid-template-columns: 1fr; gap: 14px; }
   .sk-stats { grid-template-columns: repeat(2, 1fr); grid-template-rows: auto; min-width: 0; }
@@ -640,26 +644,6 @@
 @media (max-width: 760px) {
   .sk-root { padding: 16px; }
   .sk-card { padding: 18px; border-radius: 14px; }
-}
-
-/* Container queries are Baseline since 2023, but a browser without them would
-   otherwise lose the compact layout entirely, which is worse than the bug this
-   replaces. Fall back to the previous viewport behaviour there. */
-@supports not (container-type: inline-size) {
-  @media (max-width: 760px) {
-    .sk-body { grid-template-columns: 1fr; gap: 14px; }
-    .sk-stats { grid-template-columns: repeat(2, 1fr); grid-template-rows: auto; min-width: 0; }
-    .sk-stat { padding: 12px 14px; }
-    .sk-stat-value { font-size: 22px; }
-    .sk-years { gap: 10px; }
-    .sk-years-list { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
-    .sk-years-list::-webkit-scrollbar { display: none; }
-    .sk-year-tab { flex-shrink: 0; }
-  }
-  @media (max-width: 480px) {
-    .sk-modal { min-width: 0; width: 100%; }
-    .sk-modal-grid { grid-template-columns: repeat(2, 1fr); }
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
