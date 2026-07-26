@@ -1,8 +1,9 @@
 # streakr
 
 > A drop-in, framework-agnostic Git contribution calendar for the web. It normalizes
-> activity from GitHub, GitLab and Bitbucket into one daily series, and splits out the
-> commits co-authored by AI agents (Claude, Codex, opencode, Copilot) as their own sources.
+> activity from GitHub and GitLab into one daily series, includes Bitbucket as a
+> visual provider chip, and splits out the commits co-authored by AI agents
+> (Claude, Codex, opencode, Copilot) as their own sources.
 
 streakr is an MIT-licensed vanilla JavaScript library published on npm as
 `@rosado-io/streakr`. It ships ESM plus a single stylesheet and has zero runtime
@@ -13,7 +14,9 @@ dependencies. It is not a React component and requires no build step.
 One component with two layouts, chosen by **container width, not user agent**:
 
 - **Heatmap** — a 53-week GitHub-style grid, drawn when the container is 520px or wider.
-- **Ring** — a radial year view, drawn below 520px.
+- **Ring** — a radial year view, drawn below 520px. Tap a ray to select a day, drag
+  to scrub around the year, and tap the center to reset to today. The ring is also
+  keyboard operable.
 
 It also computes four figures from the normalized series: Total Contributions, Best
 Streak, Current Streak (swapped for Active Rate on past years), and Active Days.
@@ -22,14 +25,16 @@ Streak, Current Streak (swapped for Active Rate on past years), and Active Days.
 
 | Source | Kind | Notes |
 | --- | --- | --- |
-| GitHub | REST / GraphQL | Public users need no token; a token adds private counts. |
-| GitLab | REST | gitlab.com or self-hosted via a custom base URL. |
-| Bitbucket | REST | Workspace commits folded into the same daily series. |
+| GitHub | GraphQL | Requires a Personal Access Token; adds private counts with `repo` scope. |
+| GitLab | REST | Requires a Personal Access Token; gitlab.com or self-hosted via a custom base URL. |
+| Bitbucket | visual chip only | No built-in fetcher; display-only provider for custom data. |
 | Claude, Codex, opencode, Copilot | `Co-authored-by:` trailers | Matched from commit messages, each counted as its own source. |
 
-Local clones can be scanned with `localGitCoAuthorProvider` across every branch and
-remote with no token — nothing leaves the machine. Providers can also be skipped
-entirely by passing your own array of dates and counts to `getDays`.
+Local clones can be scanned with `localGitCoAuthorProvider` from the Node-only
+`@rosado-io/streakr/agents` subpath. It uses published default branches by default
+and can opt into all remote or local refs; no token leaves the machine. Providers
+can also be skipped entirely by passing your own array of dates and counts to
+`getDays`.
 
 ## Install
 
