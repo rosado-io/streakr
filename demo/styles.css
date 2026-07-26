@@ -14,7 +14,7 @@
 
 html {
   scroll-behavior: smooth;
-  scrollbar-color: #262626 #0a0a0a;
+  scrollbar-color: #1c1c1c #050505;
   scrollbar-width: thin;
 }
 
@@ -38,14 +38,14 @@ body {
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #0a0a0a;
+  background: #050505;
 }
 ::-webkit-scrollbar-thumb {
-  background: #262626;
+  background: #1c1c1c;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #383838;
+  background: #2a2a2a;
 }
 
 a {
