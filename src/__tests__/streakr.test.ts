@@ -1191,14 +1191,32 @@ describe("createStreakr", () => {
       toJSON: () => "",
     });
 
-    const pointerAt = (type: string, clientX: number, clientY: number): PointerEvent => {
+    const pointerAt = (
+      type: string,
+      clientX: number,
+      clientY: number,
+      pointerId = 1,
+    ): PointerEvent => {
       const event = new MouseEvent(type, {
         bubbles: true,
         clientX,
         clientY,
       }) as PointerEvent;
-      Object.defineProperty(event, "pointerId", { value: 1 });
+      Object.defineProperty(event, "pointerId", { value: pointerId });
       return event;
+    };
+
+    const pointOnLine = (
+      line: SVGLineElement,
+      radius = 120,
+    ): { clientX: number; clientY: number } => {
+      const x = Number(line.getAttribute("x2"));
+      const y = Number(line.getAttribute("y2"));
+      const length = Math.hypot(x - 180, y - 180);
+      return {
+        clientX: 180 + ((x - 180) / length) * radius,
+        clientY: 180 + ((y - 180) / length) * radius,
+      };
     };
 
     const installSvgPointerMocks = (svgEl: SVGSVGElement): void => {
@@ -1209,6 +1227,10 @@ describe("createStreakr", () => {
       Object.defineProperty(svgEl, "setPointerCapture", {
         configurable: true,
         value: vi.fn(),
+      });
+      Object.defineProperty(svgEl, "hasPointerCapture", {
+        configurable: true,
+        value: vi.fn(() => true),
       });
       Object.defineProperty(svgEl, "releasePointerCapture", {
         configurable: true,
@@ -1675,16 +1697,17 @@ describe("createStreakr", () => {
       expect(target.querySelector(".sk-ring-hand")?.getAttribute("transform")).toBe(handBefore);
     });
 
-    it("keeps the selected day while dragging and suppresses the following click", () => {
+    it("tracks the day under the pointer, keeps the release position, and suppresses the ghost click", () => {
       setContainerWidth(375);
       instance = createStreakr({
         target,
-        years: [2026],
-        year: 2026,
-        today: new Date(2026, 0, 5),
+        years: [2025],
+        year: 2025,
+        today: new Date(2025, 11, 31),
         getDays: () => [
-          { date: new Date(2026, 0, 5), total: 2, sources: { github: 2 } },
-          { date: new Date(2026, 3, 6), total: 11, sources: { github: 11 } },
+          { date: new Date(2025, 0, 1), total: 2, sources: { github: 2 } },
+          { date: new Date(2025, 3, 2), total: 11, sources: { github: 11 } },
+          { date: new Date(2025, 6, 2), total: 22, sources: { github: 22 } },
         ],
       });
 
@@ -1692,21 +1715,163 @@ describe("createStreakr", () => {
       expect(svgEl).toBeTruthy();
       if (!svgEl) return;
       installSvgPointerMocks(svgEl);
-      const jan1Line = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line")).find(
-        (line) => line.dataset.date?.startsWith("2026-01-01"),
-      );
-      const countBefore = target.querySelector(".sk-ring-count")?.textContent;
-      const dateBefore = target.querySelector(".sk-ring-date")?.textContent;
-      const handBefore = target.querySelector(".sk-ring-hand")?.getAttribute("transform");
+      const lines = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line"));
+      const jan1Line = lines.find((line) => line.dataset.date?.startsWith("2025-01-01"))!;
+      const apr2Line = lines.find((line) => line.dataset.date?.startsWith("2025-04-02"))!;
+      const jul2Line = lines.find((line) => line.dataset.date?.startsWith("2025-07-02"))!;
+      const jan1 = pointOnLine(jan1Line);
+      const apr2 = pointOnLine(apr2Line);
+      const jul2 = pointOnLine(jul2Line);
 
-      svgEl.dispatchEvent(pointerAt("pointerdown", 180, 30));
-      svgEl.dispatchEvent(pointerAt("pointermove", 330, 180));
-      svgEl.dispatchEvent(pointerAt("pointerup", 330, 180));
+      svgEl.dispatchEvent(pointerAt("pointerdown", jan1.clientX, jan1.clientY));
+      svgEl.dispatchEvent(pointerAt("pointermove", apr2.clientX, apr2.clientY));
+      expect(target.querySelector(".sk-ring-count")?.textContent).toBe("11");
+      expect(target.querySelector(".sk-ring-date")?.textContent).toBe("Apr 2");
+
+      svgEl.dispatchEvent(pointerAt("pointerup", jul2.clientX, jul2.clientY));
+      expect(target.querySelector(".sk-ring-count")?.textContent).toBe("22");
+      expect(target.querySelector(".sk-ring-date")?.textContent).toBe("Jul 2");
+
       jan1Line?.dispatchEvent(new Event("click", { bubbles: true }));
+      svgEl.dispatchEvent(pointerAt("pointermove", apr2.clientX, apr2.clientY));
 
-      expect(target.querySelector(".sk-ring-count")?.textContent).toBe(countBefore);
-      expect(target.querySelector(".sk-ring-date")?.textContent).toBe(dateBefore);
-      expect(target.querySelector(".sk-ring-hand")?.getAttribute("transform")).toBe(handBefore);
+      expect(target.querySelector(".sk-ring-count")?.textContent).toBe("22");
+      expect(target.querySelector(".sk-ring-date")?.textContent).toBe("Jul 2");
+      expect(svgEl.setPointerCapture).toHaveBeenCalledWith(1);
+      expect(svgEl.releasePointerCapture).toHaveBeenCalledWith(1);
+    });
+
+    it("ends the gesture when the pointer leaves the ring annulus", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2025],
+        year: 2025,
+        today: new Date(2025, 11, 31),
+        getDays: () => [
+          { date: new Date(2025, 0, 1), total: 2, sources: { github: 2 } },
+          { date: new Date(2025, 3, 2), total: 11, sources: { github: 11 } },
+          { date: new Date(2025, 6, 2), total: 22, sources: { github: 22 } },
+        ],
+      });
+
+      const svgEl = target.querySelector<SVGSVGElement>(".sk-ring-svg")!;
+      installSvgPointerMocks(svgEl);
+      const lines = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line"));
+      const jan1 = pointOnLine(lines.find((line) => line.dataset.date?.startsWith("2025-01-01"))!);
+      const apr2 = pointOnLine(lines.find((line) => line.dataset.date?.startsWith("2025-04-02"))!);
+      const jul2 = pointOnLine(lines.find((line) => line.dataset.date?.startsWith("2025-07-02"))!);
+
+      svgEl.dispatchEvent(pointerAt("pointerdown", jan1.clientX, jan1.clientY));
+      svgEl.dispatchEvent(pointerAt("pointermove", apr2.clientX, apr2.clientY));
+      svgEl.dispatchEvent(pointerAt("pointermove", 180, 180));
+      svgEl.dispatchEvent(pointerAt("pointermove", jul2.clientX, jul2.clientY));
+      svgEl.dispatchEvent(pointerAt("pointerup", jul2.clientX, jul2.clientY));
+
+      expect(target.querySelector(".sk-ring-count")?.textContent).toBe("11");
+      expect(target.querySelector(".sk-ring-date")?.textContent).toBe("Apr 2");
+    });
+
+    it("stops tracking after pointer cancellation", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2025],
+        year: 2025,
+        today: new Date(2025, 11, 31),
+        getDays: () => [
+          { date: new Date(2025, 0, 1), total: 2, sources: { github: 2 } },
+          { date: new Date(2025, 3, 2), total: 11, sources: { github: 11 } },
+          { date: new Date(2025, 6, 2), total: 22, sources: { github: 22 } },
+        ],
+      });
+
+      const svgEl = target.querySelector<SVGSVGElement>(".sk-ring-svg")!;
+      installSvgPointerMocks(svgEl);
+      const lines = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line"));
+      const jan1 = pointOnLine(lines.find((line) => line.dataset.date?.startsWith("2025-01-01"))!);
+      const apr2 = pointOnLine(lines.find((line) => line.dataset.date?.startsWith("2025-04-02"))!);
+      const jul2 = pointOnLine(lines.find((line) => line.dataset.date?.startsWith("2025-07-02"))!);
+
+      svgEl.dispatchEvent(pointerAt("pointerdown", jan1.clientX, jan1.clientY));
+      svgEl.dispatchEvent(pointerAt("pointermove", apr2.clientX, apr2.clientY));
+      svgEl.dispatchEvent(pointerAt("pointercancel", apr2.clientX, apr2.clientY));
+      svgEl.dispatchEvent(pointerAt("pointermove", jul2.clientX, jul2.clientY));
+
+      expect(target.querySelector(".sk-ring-count")?.textContent).toBe("11");
+      expect(target.querySelector(".sk-ring-date")?.textContent).toBe("Apr 2");
+    });
+
+    it("ignores pointer events from pointers that did not start the gesture", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2025],
+        year: 2025,
+        today: new Date(2025, 11, 31),
+        getDays: () => [
+          { date: new Date(2025, 0, 1), total: 2, sources: { github: 2 } },
+          { date: new Date(2025, 3, 2), total: 11, sources: { github: 11 } },
+          { date: new Date(2025, 6, 2), total: 22, sources: { github: 22 } },
+        ],
+      });
+
+      const svgEl = target.querySelector<SVGSVGElement>(".sk-ring-svg")!;
+      installSvgPointerMocks(svgEl);
+      const lines = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line"));
+      const jan1 = pointOnLine(lines.find((line) => line.dataset.date?.startsWith("2025-01-01"))!);
+      const apr2 = pointOnLine(lines.find((line) => line.dataset.date?.startsWith("2025-04-02"))!);
+      const jul2 = pointOnLine(lines.find((line) => line.dataset.date?.startsWith("2025-07-02"))!);
+
+      svgEl.dispatchEvent(pointerAt("pointerdown", jan1.clientX, jan1.clientY, 1));
+      svgEl.dispatchEvent(pointerAt("pointermove", jul2.clientX, jul2.clientY, 2));
+      svgEl.dispatchEvent(pointerAt("pointercancel", jul2.clientX, jul2.clientY, 2));
+      expect(target.querySelector(".sk-ring-count")?.textContent).toBe("2");
+
+      svgEl.dispatchEvent(pointerAt("pointermove", apr2.clientX, apr2.clientY, 1));
+      svgEl.dispatchEvent(pointerAt("pointerup", apr2.clientX, apr2.clientY, 1));
+
+      expect(target.querySelector(".sk-ring-count")?.textContent).toBe("11");
+      expect(target.querySelector(".sk-ring-date")?.textContent).toBe("Apr 2");
+    });
+
+    it("does not select future days while dragging", () => {
+      setContainerWidth(375);
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        today: new Date(2026, 0, 5),
+        getDays: () => [
+          { date: new Date(2026, 0, 4), total: 4, sources: { github: 4 } },
+          { date: new Date(2026, 0, 10), total: 10, sources: { github: 10 } },
+        ],
+      });
+
+      const svgEl = target.querySelector<SVGSVGElement>(".sk-ring-svg")!;
+      installSvgPointerMocks(svgEl);
+      const lines = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line"));
+      const jan4 = pointOnLine(lines.find((line) => line.dataset.date?.startsWith("2026-01-04"))!);
+      const jan10 = pointOnLine(lines.find((line) => line.dataset.date?.startsWith("2026-01-10"))!);
+
+      svgEl.dispatchEvent(pointerAt("pointerdown", jan4.clientX, jan4.clientY));
+      svgEl.dispatchEvent(pointerAt("pointermove", jan10.clientX, jan10.clientY));
+      svgEl.dispatchEvent(pointerAt("pointerup", jan10.clientX, jan10.clientY));
+
+      expect(target.querySelector(".sk-ring-count")?.textContent).toBe("4");
+      expect(target.querySelector(".sk-ring-date")?.textContent).toBe("Jan 4");
+    });
+
+    it("removes the native touch outline while preserving a keyboard focus treatment", () => {
+      const svgRule = streakrCss.match(/\.sk-ring-svg\s*{[^}]*}/)?.[0];
+      const lineRule = streakrCss.match(/\.sk-ring-line\s*{[^}]*}/)?.[0];
+      const focusVisibleRule = streakrCss.match(/\.sk-ring-line:focus-visible\s*{[^}]*}/)?.[0];
+
+      expect(svgRule).toContain("touch-action: none");
+      expect(lineRule).toContain("outline: none");
+      expect(lineRule).toContain("-webkit-tap-highlight-color: transparent");
+      expect(focusVisibleRule).toContain("stroke-width: 4px");
+      expect(focusVisibleRule).toContain("drop-shadow");
     });
 
     it("keeps the ring compact and the shared legend below", () => {
