@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 
+import "./fonts.css";
 import "./styles.css";
 import {
   AGENT_PROVIDERS,

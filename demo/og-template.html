@@ -12,12 +12,30 @@
   <head>
     <meta charset="UTF-8" />
     <title>streakr — social preview source</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
+    <style>
+      /* Same self-hosted files the site uses, by relative path so this renders
+         identically over file:// with no network access. */
+      @font-face {
+        font-family: "Geist";
+        font-weight: 400;
+        src: url("../public/fonts/geist-400-latin.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Geist";
+        font-weight: 600;
+        src: url("../public/fonts/geist-600-latin.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Geist";
+        font-weight: 700;
+        src: url("../public/fonts/geist-700-latin.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "JetBrains Mono";
+        font-weight: 400;
+        src: url("../public/fonts/jetbrains-mono-400-latin.woff2") format("woff2");
+      }
+    </style>
     <style>
       * {
         box-sizing: border-box;
@@ -104,8 +122,8 @@
         border-radius: 999px;
         padding: 9px 18px;
         font-size: 19px;
-        color: rgba(255, 255, 255, 0.82);
-        background: rgba(255, 255, 255, 0.03);
+        color: #d2d2d2;
+        background: #0b0b0b;
       }
       .meta {
         font-family: "JetBrains Mono", ui-monospace, monospace;
@@ -162,13 +180,17 @@
     <script>
       // Deterministic pseudo-random strip so regenerating the image is stable.
       const levels = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"];
+      const thresholds = [0.26, 0.46, 0.66, 0.82];
       let s = 7;
-      const rand = () => ((s = (s * 9301 + 49297) % 233280), s / 233280);
+      const rand = () => {
+        s = (s * 9301 + 49297) % 233280;
+        return s / 233280;
+      };
+      const levelFor = (r) => thresholds.filter((t) => r > t).length;
       const strip = document.getElementById("strip");
       for (let i = 0; i < 58; i++) {
         const el = document.createElement("i");
-        const r = rand();
-        el.style.background = levels[r > 0.82 ? 4 : r > 0.66 ? 3 : r > 0.46 ? 2 : r > 0.26 ? 1 : 0];
+        el.style.background = levels[levelFor(rand())];
         strip.appendChild(el);
       }
     </script>

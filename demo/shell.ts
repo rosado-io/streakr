@@ -199,16 +199,19 @@ const KEYWORDS =
   "import|from|const|let|await|async|function|export|return|new|true|false|null|undefined|npm|pnpm|yarn|bun|add|install|link|rel|href|script|type|stylesheet";
 
 const HIGHLIGHT_RE = new RegExp(
-  `(//[^\\n]*|#[^\\n]*|'[^']*'|"[^"]*"|\\b(${KEYWORDS})\\b|\\b[A-Za-z_$][\\w$]*(?=\\())`,
+  String.raw`(//[^\n]*|#[^\n]*|'[^']*'|"[^"]*"|\b(${KEYWORDS})\b|\b[A-Za-z_$][\w$]*(?=\())`,
   "g",
 );
 
+const HTML_ESCAPES: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+};
+
 function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  return value.replace(/[&<>"]/g, (char) => HTML_ESCAPES[char] ?? char);
 }
 
 function tokenClass(token: string, isKeyword: boolean): string {
