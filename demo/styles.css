@@ -1013,21 +1013,6 @@ a:hover {
 
 /* ── Narrow viewports ────────────────────────────────────── */
 
-/* Once the pane can no longer spare 520px for the wrap alongside the stats
-   column, stack the card body the way streakr.css itself does under 760px —
-   that hands the wrap the full width and keeps the heatmap in the frame. */
-@media (max-width: 1032px) {
-  .lv2-stage-desktop .sk-body {
-    grid-template-columns: 1fr;
-    gap: 14px;
-  }
-  .lv2-stage-desktop .sk-stats {
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: auto;
-    min-width: 0;
-  }
-}
-
 @media (max-width: 720px) {
   .lv2-facts {
     flex: 1 1 100%;

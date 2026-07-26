@@ -597,10 +597,29 @@
 .sk-tooltip .tt-label .dot { width: 8px; height: 8px; border-radius: 2px; }
 .sk-tooltip .tt-val { font-family: 'JetBrains Mono', ui-monospace, monospace; color: var(--sk-text); }
 
-/* Responsive */
-@media (max-width: 760px) {
-  .sk-root { padding: 16px; }
-  .sk-card { padding: 18px; border-radius: 14px; }
+/* Responsive
+
+   The layout switch is decided by the container, not the viewport:
+   isMobileHeatmap() draws the ring once .sk-heatmap-wrap is under 520px. These
+   rules used to key off the viewport, so the two disagreed — a narrow container
+   in a wide window drew the ring while .sk-body stayed two-column and
+   .sk-stats kept its 280px minimum, overflowing the card.
+
+   The container is .sk-card, not .sk-root: it holds every element these rules
+   touch, and it does not hold the position: fixed tooltip, which containment
+   would re-anchor to the container instead of the viewport.
+
+   The query size is the card's *content* box, which is exactly .sk-body's
+   width — so the threshold is what the two-column body needs and carries no
+   padding term: 520 wrap + 280 stats min-width + 20 gap = 820. Above it the
+   wrap still clears the 520px the ring switch uses; below it, stacking hands
+   the wrap the full width instead of crushing it. */
+.sk-card {
+  container-type: inline-size;
+  container-name: sk-card;
+}
+
+@container sk-card (max-width: 820px) {
   .sk-body { grid-template-columns: 1fr; gap: 14px; }
   .sk-stats { grid-template-columns: repeat(2, 1fr); grid-template-rows: auto; min-width: 0; }
   .sk-stat { padding: 12px 14px; }
@@ -610,9 +629,37 @@
   .sk-years-list::-webkit-scrollbar { display: none; }
   .sk-year-tab { flex-shrink: 0; }
 }
-@media (max-width: 480px) {
+@container sk-card (max-width: 480px) {
   .sk-modal { min-width: 0; width: 100%; }
   .sk-modal-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* A container cannot restyle itself, and .sk-root is the container's parent, so
+   these two stay viewport-keyed. They are cosmetic — the #171 overflow came
+   from .sk-body and .sk-stats above, which are now container-driven. */
+@media (max-width: 760px) {
+  .sk-root { padding: 16px; }
+  .sk-card { padding: 18px; border-radius: 14px; }
+}
+
+/* Container queries are Baseline since 2023, but a browser without them would
+   otherwise lose the compact layout entirely, which is worse than the bug this
+   replaces. Fall back to the previous viewport behaviour there. */
+@supports not (container-type: inline-size) {
+  @media (max-width: 760px) {
+    .sk-body { grid-template-columns: 1fr; gap: 14px; }
+    .sk-stats { grid-template-columns: repeat(2, 1fr); grid-template-rows: auto; min-width: 0; }
+    .sk-stat { padding: 12px 14px; }
+    .sk-stat-value { font-size: 22px; }
+    .sk-years { gap: 10px; }
+    .sk-years-list { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+    .sk-years-list::-webkit-scrollbar { display: none; }
+    .sk-year-tab { flex-shrink: 0; }
+  }
+  @media (max-width: 480px) {
+    .sk-modal { min-width: 0; width: 100%; }
+    .sk-modal-grid { grid-template-columns: repeat(2, 1fr); }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
