@@ -18,6 +18,7 @@ jobs:
       - run: pnpm run lint
       - run: pnpm run build:demo
       - uses: FirebaseExtended/action-hosting-deploy@500ac625ca2dd40cbd15f7659af953801858032a
+        if: github.actor != 'dependabot[bot]'
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}'
