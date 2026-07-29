@@ -1,3 +1,6 @@
+## [1.2.0](https://github.com/rosado-io/streakr/compare/v1.1.2...v1.2.0) (2026-07-29)
+* feat: Turn Streakr into a presentation layer (#183) ([`374c4d9`](https://github.com/rosado-io/streakr/commit/374c4d9ebe5b0836d8c0593094761fbd149baf75)) by ****
+
 ## [1.1.2](https://github.com/rosado-io/streakr/compare/v1.1.1...v1.1.2) (2026-07-26)
 * fix(component): Corrige el arrastre móvil del anillo ([`782ade3`](https://github.com/rosado-io/streakr/commit/782ade3614572d2e77c4c2bdf3dbf40b5f56388e)) by ****
 
