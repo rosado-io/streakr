@@ -4,10 +4,11 @@ import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 
 export default defineConfig({
+  publicDir: false,
   plugins: [
     dts({
       insertTypesEntry: true,
-      rollupTypes: true,
+      bundleTypes: true,
       exclude: ["src/__tests__/**"],
     }),
     {
@@ -20,18 +21,9 @@ export default defineConfig({
   build: {
     target: "es2020",
     lib: {
-      entry: {
-        index: resolve(__dirname, "src/index.ts"),
-        agents: resolve(__dirname, "src/agents.ts"),
-      },
-      formats: ["es", "cjs"],
-      fileName: (format, entryName) => {
-        const base = entryName === "index" ? "streakr" : entryName;
-        return format === "es" ? `${base}.es.js` : `${base}.cjs`;
-      },
-    },
-    rollupOptions: {
-      external: [/^node:/],
+      entry: resolve(__dirname, "src/index.ts"),
+      formats: ["es"],
+      fileName: () => "streakr.js",
     },
     sourcemap: true,
     minify: "esbuild",

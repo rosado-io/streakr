@@ -1,77 +1,63 @@
-import type { StreakrOptions } from "../types";
+import type { StreakrUpdate } from "../types";
+import {
+  normalizeDays,
+  normalizeSources,
+  normalizeYears,
+  parseDateKey,
+  validateAccent,
+  validateBoolean,
+  validateSelectedYear,
+  validateStatus,
+  validateTheme,
+} from "./contract";
 import type { InternalState, ResolvedConfig } from "./config";
 
-export type UpdatePatch = Partial<StreakrOptions>;
-
-type UpdateHandlers = {
-  [Key in keyof StreakrOptions]-?: (patch: Pick<UpdatePatch, Key>) => void;
-};
-
-export const createUpdateHandlers = (
+export const applyUpdate = (
   cfg: ResolvedConfig,
   state: InternalState,
+  patch: StreakrUpdate,
   hooks: { onThemeChange: () => void },
-) => {
-  const updateHandlers = {
-    target: ({ target }) => {
-      if (target !== undefined) {
-        throw new Error("Cannot update 'target' after mount. Destroy and recreate the instance.");
-      }
-    },
-    theme: ({ theme }) => {
-      if (theme !== undefined) {
-        cfg.theme = theme;
-        hooks.onThemeChange();
-      }
-    },
-    accent: ({ accent }) => {
-      if (accent !== undefined) cfg.accent = accent;
-    },
-    tintHeatmap: ({ tintHeatmap }) => {
-      if (tintHeatmap !== undefined) cfg.tintHeatmap = tintHeatmap;
-    },
-    showProviders: ({ showProviders }) => {
-      if (showProviders !== undefined) cfg.showProviders = showProviders;
-    },
-    showStats: ({ showStats }) => {
-      if (showStats !== undefined) cfg.showStats = showStats;
-    },
-    state: ({ state: nextState }) => {
-      if (nextState !== undefined) cfg.state = nextState;
-    },
-    years: ({ years }) => {
-      if (years !== undefined) {
-        cfg.years = years;
-        if (cfg.years.length && (state.year == null || !cfg.years.includes(state.year))) {
-          state.year = cfg.years[cfg.years.length - 1] ?? null;
-        }
-      }
-    },
-    year: ({ year }) => {
-      if (year !== undefined) {
-        cfg.year = year;
-        state.year = year;
-      }
-    },
-    today: ({ today }) => {
-      if (today !== undefined) cfg.today = today;
-    },
-    getDays: ({ getDays }) => {
-      if (getDays !== undefined) cfg.getDays = getDays;
-    },
-    providers: ({ providers }) => {
-      if (providers !== undefined) cfg.providers = providers;
-    },
-    onYearChange: ({ onYearChange }) => {
-      if (onYearChange !== undefined) cfg.onYearChange = onYearChange;
-    },
-    onProviderToggle: ({ onProviderToggle }) => {
-      if (onProviderToggle !== undefined) cfg.onProviderToggle = onProviderToggle;
-    },
-  } satisfies UpdateHandlers;
+): void => {
+  const nextSources = patch.sources === undefined ? cfg.sources : normalizeSources(patch.sources);
+  const nextInputDays = patch.days === undefined ? cfg.inputDays : [...patch.days];
+  const nextYears = patch.years === undefined ? cfg.years : normalizeYears(patch.years);
+  const requestedYear =
+    patch.year ?? (state.year !== null && nextYears.includes(state.year) ? state.year : undefined);
+  const nextYear = validateSelectedYear(requestedYear, nextYears);
+  const nextAccent = patch.accent === undefined ? cfg.accent : validateAccent(patch.accent);
+  const nextStatus = patch.status === undefined ? cfg.status : validateStatus(patch.status);
+  const nextToday = patch.today === undefined ? cfg.today : parseDateKey(patch.today, "today");
+  const nextTheme = patch.theme === undefined ? cfg.theme : validateTheme(patch.theme);
+  const nextTintHeatmap =
+    patch.tintHeatmap === undefined
+      ? cfg.tintHeatmap
+      : validateBoolean(patch.tintHeatmap, "tintHeatmap");
+  const nextShowSources =
+    patch.showSources === undefined
+      ? cfg.showSources
+      : validateBoolean(patch.showSources, "showSources");
+  const nextShowStats =
+    patch.showStats === undefined ? cfg.showStats : validateBoolean(patch.showStats, "showStats");
+  const nextDays = normalizeDays(nextInputDays, nextSources);
 
-  const isUpdateKey = (key: string): key is keyof typeof updateHandlers =>
-    Object.getOwnPropertyDescriptor(updateHandlers, key) !== undefined;
+  cfg.sources = nextSources;
+  cfg.inputDays = nextInputDays;
+  cfg.days = nextDays;
+  cfg.years = nextYears;
+  cfg.year = nextYear;
+  cfg.accent = nextAccent;
+  cfg.status = nextStatus;
+  cfg.today = nextToday;
+  cfg.theme = nextTheme;
+  cfg.tintHeatmap = nextTintHeatmap;
+  cfg.showSources = nextShowSources;
+  cfg.showStats = nextShowStats;
+  state.year = nextYear;
 
-  return { updateHandlers, isUpdateKey };
+  if (patch.theme !== undefined) {
+    hooks.onThemeChange();
+  }
+  if (patch.errorMessage !== undefined) cfg.errorMessage = patch.errorMessage;
+  if (patch.onYearChange !== undefined) cfg.onYearChange = patch.onYearChange;
+  if (patch.onSourceToggle !== undefined) cfg.onSourceToggle = patch.onSourceToggle;
 };

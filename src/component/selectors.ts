@@ -1,50 +1,54 @@
-import type { StreakrDay, StreakrLeveledDay } from "../types";
 import { padDaysToRange, padDaysToYear, yearToDateRange } from "./calendar";
 import type { ComponentCtx, ResolvedConfig } from "./config";
 import { sourceCount } from "./config";
 import { computeStats, levelize, type StreakrStats } from "./metrics";
+import type { LeveledDay, RenderableDay } from "./types";
 
 const MAX_VISIBLE_YEARS = 5;
 
 export interface RenderFlags {
   isLoading: boolean;
+  isError: boolean;
   isEmpty: boolean;
   allOff: boolean;
   canEnableAll: boolean;
-  days: StreakrDay[];
-  providersWithDataCount: number;
-  leveled: StreakrLeveledDay[];
+  days: RenderableDay[];
+  sourcesWithDataCount: number;
+  sourceTotals: Record<string, number>;
+  leveled: LeveledDay[];
   stats: StreakrStats;
 }
 
 export const isCurrentYear = (ctx: ComponentCtx): boolean =>
   ctx.state.year === ctx.cfg.today.getFullYear();
 
-const activeDayTotal = (ctx: ComponentCtx, day: StreakrDay): number =>
+const activeDayTotal = (ctx: ComponentCtx, day: RenderableDay): number =>
   day.sources == null
     ? day.total
-    : ctx.cfg.providers
-        .filter((provider) => ctx.state.providers[provider.key])
-        .reduce((total, provider) => total + sourceCount(day, provider.key), 0);
+    : ctx.cfg.sources
+        .filter((source) => ctx.state.sources[source.key])
+        .reduce((total, source) => total + sourceCount(day, source.key), 0);
 
-const getCurrentDays = (ctx: ComponentCtx): StreakrDay[] => {
+const getCurrentDays = (ctx: ComponentCtx): RenderableDay[] => {
   const { cfg, state } = ctx;
-  if (cfg.state !== "ready" || state.year == null) return [];
-  const currentYearDays = (cfg.getDays(state.year) || []).map((day) => ({
-    ...day,
-    total: activeDayTotal(ctx, day),
-  }));
+  if (cfg.status !== "ready" || state.year == null) return [];
+  const currentYearDays = cfg.days
+    .filter((day) => day.date.getFullYear() === state.year)
+    .map((day) => ({
+      ...day,
+      total: activeDayTotal(ctx, day),
+    }));
   if (!isCurrentYear(ctx)) return currentYearDays;
   const { start, end } = yearToDateRange(cfg.today);
   return currentYearDays.filter((day) => day.date >= start && day.date <= end);
 };
 
-const getHeatmapDays = (ctx: ComponentCtx, days: StreakrDay[]): StreakrDay[] => {
+const getHeatmapDays = (ctx: ComponentCtx, days: RenderableDay[]): RenderableDay[] => {
   if (ctx.state.year == null) return days;
   return padDaysToYear(days, ctx.state.year);
 };
 
-const getStatsDays = (ctx: ComponentCtx, days: StreakrDay[]): StreakrDay[] => {
+const getStatsDays = (ctx: ComponentCtx, days: RenderableDay[]): RenderableDay[] => {
   if (ctx.state.year == null) return days;
   if (isCurrentYear(ctx)) {
     const { start, end } = yearToDateRange(ctx.cfg.today);
@@ -64,14 +68,14 @@ export const visibleYears = (
   };
 };
 
-export const computeProviderTotals = (ctx: ComponentCtx): Record<string, number> => {
-  const { cfg, state } = ctx;
-  const totals = Object.fromEntries(cfg.providers.map((p) => [p.key, 0]));
-  if (cfg.state !== "ready" || state.year == null) return totals;
-  const raw = getCurrentDays(ctx);
-  raw.forEach((d) => {
-    cfg.providers.forEach((p) => {
-      totals[p.key] = (totals[p.key] ?? 0) + sourceCount(d, p.key);
+const computeSourceTotals = (
+  ctx: ComponentCtx,
+  days: readonly RenderableDay[],
+): Record<string, number> => {
+  const totals = Object.fromEntries(ctx.cfg.sources.map((source) => [source.key, 0]));
+  days.forEach((day) => {
+    ctx.cfg.sources.forEach((source) => {
+      totals[source.key] = (totals[source.key] ?? 0) + sourceCount(day, source.key);
     });
   });
   return totals;
@@ -83,33 +87,37 @@ export const computeRenderFlags = (ctx: ComponentCtx): RenderFlags => {
   const heatmapDays = getHeatmapDays(ctx, days);
   const statsDays = getStatsDays(ctx, days);
   const stats = computeStats(statsDays);
-  const yearTotal = statsDays.reduce((a, d) => a + d.total, 0);
+  const yearTotal = statsDays.reduce((total, day) => total + day.total, 0);
   const leveled = levelize(heatmapDays);
-  const isLoading = cfg.state === "loading";
-  const isEmpty = cfg.state === "empty" || (cfg.state === "ready" && yearTotal === 0);
+  const isLoading = cfg.status === "loading";
+  const isError = cfg.status === "error";
+  const isEmpty = cfg.status === "empty" || (cfg.status === "ready" && yearTotal === 0);
   const hasTotalOnlyDays = days.some((day) => day.sources == null && day.total > 0);
   const allOff =
     !hasTotalOnlyDays &&
-    cfg.providers.length > 0 &&
-    cfg.providers.every((p) => !state.providers[p.key]);
+    cfg.sources.length > 0 &&
+    cfg.sources.every((source) => !state.sources[source.key]);
   const canEnableAll =
-    cfg.state === "ready" &&
+    cfg.status === "ready" &&
     yearTotal === 0 &&
-    cfg.providers.some(
-      (provider) =>
-        !state.providers[provider.key] && days.some((day) => sourceCount(day, provider.key) > 0),
+    cfg.sources.some(
+      (source) =>
+        !state.sources[source.key] && days.some((day) => sourceCount(day, source.key) > 0),
     );
-  const providersWithDataCount =
-    cfg.state === "ready"
-      ? cfg.providers.filter((p) => days.some((d) => sourceCount(d, p.key) > 0)).length
+  const sourcesWithDataCount =
+    cfg.status === "ready"
+      ? cfg.sources.filter((source) => days.some((day) => sourceCount(day, source.key) > 0)).length
       : 0;
+
   return {
     isLoading,
+    isError,
     isEmpty,
     allOff,
     canEnableAll,
     days,
-    providersWithDataCount,
+    sourcesWithDataCount,
+    sourceTotals: computeSourceTotals(ctx, days),
     leveled,
     stats,
   };

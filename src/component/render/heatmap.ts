@@ -1,7 +1,15 @@
-import type { StreakrDay, StreakrLeveledDay } from "../../types";
-import { DAY_LABELS, gridFromDays, monthHeaders, padDaysToYear } from "../calendar";
+import {
+  DAY_LABELS,
+  fmtDateLong,
+  gridFromDays,
+  localDateKey,
+  monthHeaders,
+  padDaysToYear,
+} from "../calendar";
 import type { ComponentCtx } from "../config";
 import { h, svg } from "../dom";
+import { formatTotalLabel } from "../metrics";
+import type { LeveledDay, RenderableDay } from "../types";
 
 const MOBILE_BREAKPOINT = 520;
 const HEATMAP_SKELETON_SWEEP_MS = 2860;
@@ -11,7 +19,7 @@ export const isMobileHeatmap = (wrap: HTMLElement): boolean =>
 
 const HEATMAP_DAY_LABEL_ROWS = [1, 3, 5];
 
-export type BindCellEvents = (rect: SVGElement, day: StreakrDay) => void;
+export type BindCellEvents = (rect: SVGElement, day: RenderableDay) => void;
 
 interface HeatmapGeometry {
   labelsW: number;
@@ -24,7 +32,7 @@ interface HeatmapGeometry {
 }
 
 type HeatmapCellBuilder = (
-  day: StreakrLeveledDay | null,
+  day: LeveledDay | null,
   ri: number,
   sq: number,
   colStep: number,
@@ -64,13 +72,17 @@ const buildHeatmapCell =
       },
     });
     if (day) {
+      rect.setAttribute("data-date", day.dateKey);
+      rect.setAttribute("tabindex", "-1");
+      rect.setAttribute("role", "img");
+      rect.setAttribute("aria-label", `${fmtDateLong(day.date)}, ${formatTotalLabel(day.total)}`);
       bindCellEvents(rect, day);
     }
     return rect;
   };
 
 const buildHeatmapColumn = (
-  col: (StreakrLeveledDay | null)[],
+  col: (LeveledDay | null)[],
   ci: number,
   sq: number,
   colStep: number,
@@ -152,7 +164,7 @@ const appendHeatmapLabels = (
 };
 
 const createHeatmapSvg = (
-  cols: (StreakrLeveledDay | null)[][],
+  cols: (LeveledDay | null)[][],
   {
     className,
     ariaLabel,
@@ -174,7 +186,7 @@ const createHeatmapSvg = (
     width,
     height,
     viewBox: `0 0 ${width} ${height}`,
-    role: "img",
+    role: "group",
     "aria-label": ariaLabel,
   });
 
@@ -191,10 +203,11 @@ const createHeatmapSvg = (
 
 export const renderHeatmap = (
   wrap: HTMLElement,
-  days: StreakrLeveledDay[],
+  days: LeveledDay[],
   containerW: number,
   ariaLabel: string,
   bindCellEvents: BindCellEvents,
+  selectedDate: Date,
   revealUntil?: Date,
 ): void => {
   const cols = gridFromDays(days);
@@ -205,8 +218,43 @@ export const renderHeatmap = (
     wrap,
     buildCell: buildHeatmapCell(bindCellEvents, cols.length, revealUntil),
   });
+  bindHeatmapKeyboard(svgEl, selectedDate);
 
   wrap.replaceChildren(h("div", { class: "sk-heatmap-svg-wrap" }, [svgEl]));
+};
+
+const bindHeatmapKeyboard = (svgEl: SVGElement, selectedDate: Date): void => {
+  const cells = Array.from(svgEl.querySelectorAll<SVGElement>(".sk-heatmap-cell"));
+  const selectedKey = localDateKey(selectedDate);
+  const initial = cells.find((cell) => cell.dataset.date === selectedKey) ?? cells[0];
+  initial?.setAttribute("tabindex", "0");
+
+  svgEl.addEventListener("keydown", (event) => {
+    if (!(event.target instanceof SVGElement)) return;
+    const currentIndex = cells.indexOf(event.target);
+    if (currentIndex < 0) return;
+
+    let nextIndex: number;
+    if (event.key === "ArrowRight") nextIndex = currentIndex + 7;
+    else if (event.key === "ArrowLeft") nextIndex = currentIndex - 7;
+    else if (event.key === "ArrowDown") nextIndex = currentIndex + 1;
+    else if (event.key === "ArrowUp") nextIndex = currentIndex - 1;
+    else if (event.key === "Home") nextIndex = 0;
+    else if (event.key === "End") nextIndex = cells.length - 1;
+    else if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      return;
+    } else {
+      return;
+    }
+
+    event.preventDefault();
+    const next = cells[Math.max(0, Math.min(cells.length - 1, nextIndex))];
+    if (!next || next === event.target) return;
+    event.target.setAttribute("tabindex", "-1");
+    next.setAttribute("tabindex", "0");
+    next.focus();
+  });
 };
 
 const WAVE_PEAK_LEVELS = [0, 1, 1, 2, 2, 2, 3, 3, 4, 4] as const;
@@ -236,7 +284,7 @@ const buildSkeletonHeatmapCell =
 
 export const renderSkeletonHeatmap = (ctx: ComponentCtx, containerW: number): SVGElement => {
   const skeletonYear = ctx.state.year ?? ctx.cfg.today.getFullYear();
-  const skeletonDays = padDaysToYear([], skeletonYear).map((day): StreakrLeveledDay => ({
+  const skeletonDays = padDaysToYear([], skeletonYear).map((day): LeveledDay => ({
     ...day,
     level: 0,
   }));

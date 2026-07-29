@@ -1,4 +1,3 @@
-import type { StreakrLeveledDay } from "../types";
 import { dayToHandRotation, localDateKey } from "./calendar";
 import type { ComponentCtx } from "./config";
 import {
@@ -9,6 +8,7 @@ import {
   RING_OUTER_R,
   updateRingCenter,
 } from "./render/ring";
+import type { LeveledDay } from "./types";
 
 const RING_CLICK_DRAG_TOLERANCE = 6;
 const RING_SUPPRESS_CLICK_MS = 350;
@@ -24,7 +24,7 @@ export const bindRingEvents = (
   svgEl: SVGElement,
   handGroup: SVGGElement,
   centerEl: HTMLElement,
-  days: StreakrLeveledDay[],
+  days: LeveledDay[],
 ): void => {
   let activePointerId: number | null = null;
   let pointerDownPoint: RingPoint | null = null;
@@ -39,7 +39,7 @@ export const bindRingEvents = (
     );
   };
 
-  const selectDay = (day: StreakrLeveledDay, syncHand = true): void => {
+  const selectDay = (day: LeveledDay, syncHand = true): void => {
     ctx.state.selectedDay = day.date;
     updateRingCenter(centerEl, day);
     if (syncHand) {
@@ -47,7 +47,7 @@ export const bindRingEvents = (
     }
   };
 
-  const lineToDay = (target: EventTarget | null): StreakrLeveledDay | null => {
+  const lineToDay = (target: EventTarget | null): LeveledDay | null => {
     if (!(target instanceof SVGElement) || !target.classList.contains("sk-ring-line")) {
       return null;
     }
@@ -98,7 +98,7 @@ export const bindRingEvents = (
     return radius >= RING_INNER_R && radius <= RING_OUTER_R;
   };
 
-  const dayAtPoint = (point: RingPoint): StreakrLeveledDay | null => {
+  const dayAtPoint = (point: RingPoint): LeveledDay | null => {
     if (!isPointInRing(point) || days.length === 0) return null;
     const angle = Math.atan2(point.y - RING_CY, point.x - RING_CX);
     const turnFromTop = (((angle + Math.PI / 2) % FULL_TURN) + FULL_TURN) % FULL_TURN;

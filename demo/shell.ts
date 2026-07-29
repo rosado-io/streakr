@@ -6,44 +6,44 @@ const SOURCES: { key: string; name: string; kind: string; note: string }[] = [
   {
     key: "github",
     name: "GitHub",
-    kind: "REST / GraphQL",
-    note: "Contribution events for any public user, or a token for private counts.",
+    kind: "Visual preset",
+    note: "Render counts from GitHub when your data uses the github source key.",
   },
   {
     key: "gitlab",
     name: "GitLab",
-    kind: "REST",
-    note: "Self-hosted or gitlab.com — pass your own base URL.",
+    kind: "Visual preset",
+    note: "Display GitLab activity from your API, snapshot, database, or build.",
   },
   {
     key: "bitbucket",
     name: "Bitbucket",
-    kind: "REST",
-    note: "Workspace commits folded into the same daily series.",
+    kind: "Visual preset",
+    note: "Use the built-in Bitbucket color and icon with data you provide.",
   },
   {
     key: "claude",
     name: "Claude",
-    kind: "Co-authored-by",
-    note: "Trailer-matched from the commit message, counted as its own source.",
+    kind: "Visual preset",
+    note: "Attribute activity to Claude after your own pipeline classifies it.",
   },
   {
     key: "codex",
     name: "Codex",
-    kind: "Co-authored-by",
-    note: "Trailer-matched from the commit message, counted as its own source.",
+    kind: "Visual preset",
+    note: "Give Codex its own source count, color, icon, and toggle.",
   },
   {
     key: "opencode",
     name: "opencode",
-    kind: "Co-authored-by",
-    note: "Trailer-matched from the commit message, counted as its own source.",
+    kind: "Visual preset",
+    note: "Present opencode activity without coupling Streakr to your collector.",
   },
   {
     key: "copilot",
     name: "Copilot",
-    kind: "Co-authored-by",
-    note: "Trailer-matched from the commit message, counted as its own source.",
+    kind: "Visual preset",
+    note: "Present Copilot counts from whichever acquisition flow you trust.",
   },
 ];
 
@@ -67,18 +67,18 @@ const SOURCE_ICONS: Record<string, string> = {
 const PILLARS: { n: string; t: string; d: string }[] = [
   {
     n: "01",
-    t: "Normalize, then draw",
-    d: "Every provider is reduced to one canonical day series, so streaks and totals stay comparable across hosts.",
+    t: "One explicit contract",
+    d: "Pass YYYY-MM-DD, count, and optional source counts. Streakr validates them before drawing.",
   },
   {
     n: "02",
-    t: "Local git, no token",
-    d: "Scan clones on disk across every branch and remote — nothing leaves your machine.",
+    t: "You own acquisition",
+    d: "Fetch on a server, read a snapshot, query your database, or build the array locally.",
   },
   {
     n: "03",
-    t: "Bring your own data",
-    d: "Skip the providers entirely: hand getDays an array of dates and counts from anywhere.",
+    t: "Recipes when useful",
+    d: "Start from an official recipe, copy it into your app, and change every detail you need.",
   },
 ];
 
@@ -104,7 +104,7 @@ const RECORDS: { label: string; note: string }[] = [
 const HERO_FACTS: { k: string; v: string }[] = [
   { k: "Bundle", v: "ESM + 1 CSS file" },
   { k: "Runtime deps", v: "0" },
-  { k: "Sources", v: "7 built-in" },
+  { k: "Data contract", v: "1 serializable shape" },
   { k: "Layouts", v: "heatmap + ring" },
   { k: "License", v: "MIT" },
 ];
@@ -119,7 +119,7 @@ const MOUNT_TAIL = [
   "  target: document.querySelector('#streakr'),",
   "  theme: 'dark',",
   "  years: [2024, 2025, 2026],",
-  "  getDays: (year) => fetchActivity(year),",
+  "  days: activity,",
   "})",
 ].join("\n");
 
@@ -129,53 +129,56 @@ export const INSTALL_SNIPPETS: Record<string, string> = {
   yarn: `# install\nyarn add @rosado-io/streakr\n${MOUNT_TAIL}`,
   cdn: [
     "<!-- stylesheet -->",
-    '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@rosado-io/streakr@latest/dist/streakr.css">',
+    '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@rosado-io/streakr@1.2.0/dist/streakr.css">',
     "",
     "<!-- module -->",
     '<script type="module">',
-    "  import { createStreakr } from 'https://cdn.jsdelivr.net/npm/@rosado-io/streakr@latest/dist/streakr.es.js'",
+    "  import { createStreakr } from 'https://cdn.jsdelivr.net/npm/@rosado-io/streakr@1.2.0/dist/streakr.js'",
     "",
     "  createStreakr({",
     "    target: document.querySelector('#streakr'),",
     "    theme: 'dark',",
     "    years: [2024, 2025, 2026],",
-    "    getDays: (year) => fetchActivity(year),",
+    "    days: activity,",
     "  })",
     "</" + "script>",
   ].join("\n"),
 };
 
-export const AGENT_SNIPPETS: Record<string, string> = {
+export const RECIPE_SNIPPETS: Record<string, string> = {
   github: [
-    "// count commits co-authored by agents via the GitHub search API (server-side)",
-    "import { githubCoAuthorProvider, AGENT_PROVIDERS } from '@rosado-io/streakr'",
+    "// recipe: adapt a public GitHub calendar response",
+    "const response = await fetch(",
+    "  'https://github-contributions-api.jogruber.de/v4/octocat?y=2026'",
+    ")",
+    "const payload = await response.json()",
     "",
-    "const agents = githubCoAuthorProvider({ token: process.env.GITHUB_TOKEN })",
+    "const days = payload.contributions.map((day) => ({",
+    "  date: day.date,",
+    "  count: day.count,",
+    "  sources: { github: day.count },",
+    "}))",
     "",
-    "const days = await agents.fetchEvents({",
-    "  user: 'octocat',",
-    "  start: '2026-01-01',",
-    "  end: '2026-12-31',",
-    "})",
-    "// [{ date: '2026-07-14', count: 4, sources: { claude: 3, codex: 1 } }, ...]",
-    "",
-    "// add the agent chips to the component",
     "createStreakr({",
-    "  providers: [...DEFAULT_PROVIDERS, ...AGENT_PROVIDERS],",
+    "  target: document.querySelector('#streakr'),",
+    "  years: [2026],",
+    "  days,",
     "})",
   ].join("\n"),
   local: [
-    "// scan local clones — every branch, every host, no token needed (Node)",
-    "import { localGitCoAuthorProvider } from '@rosado-io/streakr/agents'",
+    "// your own endpoint, cache, auth, and error policy",
+    "const response = await fetch('/api/activity?year=2026')",
+    "const days = await response.json()",
     "",
-    "const local = localGitCoAuthorProvider({ roots: ['/Users/me/code'] })",
-    "",
-    "const days = await local.fetchEvents({",
-    "  user: 'ignored', // the local scan only uses the date range",
-    "  start: '2026-01-01',",
-    "  end: '2026-12-31',",
+    "createStreakr({",
+    "  target: document.querySelector('#streakr'),",
+    "  years: [2024, 2025, 2026],",
+    "  days,",
+    "  sources: [",
+    "    { key: 'work', name: 'Work', color: '#39d353' },",
+    "    { key: 'personal', name: 'Personal', color: '#4f8cff' },",
+    "  ],",
     "})",
-    "// parses Co-authored-by trailers: claude · codex · opencode · copilot",
   ].join("\n"),
 };
 
@@ -297,6 +300,7 @@ function heroFactRows(): string {
 export function shellHtml(): string {
   return `
   <div class="lv2">
+    <a class="lv2-skip" href="#main">Skip to content</a>
     <header class="lv2-nav">
       <div class="lv2-nav-inner">
         <a class="lv2-brand" href="#top">
@@ -305,10 +309,10 @@ export function shellHtml(): string {
         </a>
         <nav class="lv2-nav-links">
           <a href="#live">Live demo</a>
-          <a href="#universal">Providers</a>
+          <a href="#universal">Contract</a>
           <a href="#records">Records</a>
           <a href="#install">Install</a>
-          <a href="#agents">Agents</a>
+          <a href="#recipes">Recipes</a>
         </nav>
         <a class="lv2-star" href="${REPO_URL}" target="_blank" rel="noreferrer">
           ${GITHUB_MARK}
@@ -318,19 +322,19 @@ export function shellHtml(): string {
       </div>
     </header>
 
+    <main id="main">
     <section class="lv2-hero" id="top">
       <div class="lv2-hero-glow" aria-hidden="true"></div>
       <div class="lv2-hero-inner">
         <div class="lv2-hero-copy">
           ${eyebrow("Vanilla JS &nbsp;·&nbsp; MIT &nbsp;·&nbsp; no framework")}
           <h1 class="lv2-h1">
-            Your contributions.<br />
-            <span class="lv2-h1-accent">Every platform.</span>
+            Your activity data.<br />
+            <span class="lv2-h1-accent">Beautifully presented.</span>
           </h1>
           <p class="lv2-sub">
-            A drop-in contribution calendar that unifies GitHub, GitLab and Bitbucket — and splits
-            out the commits co-authored by Claude, Codex, opencode and Copilot. One card, two
-            layouts, no build step.
+            Streakr renders contribution data from anywhere. You own acquisition, caching and
+            credentials; Streakr owns the responsive heatmap, ring, filters and statistics.
           </p>
           <div class="lv2-cta">
             <a class="lv2-btn lv2-btn-primary" href="${REPO_URL}" target="_blank" rel="noreferrer">
@@ -356,7 +360,7 @@ export function shellHtml(): string {
         <p class="lv2-section-sub">
           The same component draws a 53-week heatmap in wide containers and a radial year ring
           under 520px — it switches on container width, not on user agent. Everything here is a
-          real instance: toggle a provider chip and the grid, the ring and the records recompute.
+          real instance: toggle a source chip and the grid, the ring and the records recompute.
         </p>
       </div>
 
@@ -404,8 +408,8 @@ export function shellHtml(): string {
     </section>
 
     <section class="lv2-section" id="universal">
-      ${eyebrow("02 — Universal")}
-      <h2 class="lv2-h2 lv2-h2-block">Seven sources. One grid.</h2>
+      ${eyebrow("02 — Contract")}
+      <h2 class="lv2-h2 lv2-h2-block">Any data. One shape.</h2>
       <div class="lv2-sources">${sourceCards()}</div>
       <div class="lv2-pillars">${pillarCards()}</div>
     </section>
@@ -416,8 +420,8 @@ export function shellHtml(): string {
           ${eyebrow("03 — Records")}
           <h2 class="lv2-h2">Four numbers, computed for you</h2>
           <p class="lv2-sub lv2-sub-sm">
-            Streaks come out of the normalized daily series, so they respect whichever providers
-            are switched on. Ask for the current year and the card swaps Active Rate for Current
+            Streaks come out of the validated daily series, so they respect whichever sources
+            are switched on. Select the current year and the card swaps Active Rate for Current
             Streak.
           </p>
         </div>
@@ -429,7 +433,7 @@ export function shellHtml(): string {
       <div class="lv2-section-head">
         <div>
           ${eyebrow("04 — Install")}
-          <h2 class="lv2-h2">Mounted in four lines</h2>
+          <h2 class="lv2-h2">Data in. Calendar out.</h2>
         </div>
         <p class="lv2-section-sub">
           Ships ESM plus one stylesheet with no CSS dependencies. Drop it into a bundler, or pull
@@ -450,21 +454,21 @@ export function shellHtml(): string {
       </div>
     </section>
 
-    <section class="lv2-section" id="agents">
-      ${eyebrow("05 — AI agents")}
-      <h2 class="lv2-h2 lv2-h2-block">Who actually wrote the commit?</h2>
+    <section class="lv2-section" id="recipes">
+      ${eyebrow("05 — Recipes")}
+      <h2 class="lv2-h2 lv2-h2-block">Bring your data. Or borrow a recipe.</h2>
       <div class="lv2-agents">
         <div class="lv2-agents-copy">
           <p class="lv2-sub lv2-sub-sm">
-            Streakr reads the <code class="lv2-inline">Co-authored-by:</code> trailers on every
-            commit, matches them against known agent identities, and splits the day's count into
-            human and agent shares — each agent gets its own chip.
+            Recipes show one way to acquire and adapt data, but they stay in your application.
+            Keep them, replace them, or connect your own API—the renderer only cares about its
+            small serializable contract.
           </p>
           <div class="lv2-trailer">
             <div class="lv2-trailer-subject">fix(grid): pad trailing week columns</div>
             <div class="lv2-trailer-gap"></div>
             <div class="lv2-trailer-line">Co-authored-by: Claude &lt;noreply@anthropic.com&gt;</div>
-            <div class="lv2-trailer-line">Co-authored-by: Codex &lt;noreply@openai.com&gt;</div>
+            <div class="lv2-trailer-line">Co-authored-by: Codex &lt;codex@openai.com&gt;</div>
             <div class="lv2-trailer-gap"></div>
             <div class="lv2-trailer-out">
               <span class="lv2-trailer-arrow">→</span>
@@ -476,13 +480,13 @@ export function shellHtml(): string {
         </div>
         <div class="lv2-panel">
           <div class="lv2-panel-bar">
-            <div class="lv2-tabs" id="agents-tabs">
-              <button class="lv2-tab active" type="button" data-tab="github">GitHub API</button>
-              <button class="lv2-tab" type="button" data-tab="local">Local git</button>
+            <div class="lv2-tabs" id="recipes-tabs">
+              <button class="lv2-tab active" type="button" data-tab="github">GitHub JSON</button>
+              <button class="lv2-tab" type="button" data-tab="local">Your API</button>
             </div>
-            <button class="lv2-copy" type="button" data-copy="agents-tab">copy</button>
+            <button class="lv2-copy" type="button" data-copy="recipes-tab">copy</button>
           </div>
-          <pre class="lv2-code"><code id="agents-code">${highlight(AGENT_SNIPPETS.github ?? "")}</code></pre>
+          <pre class="lv2-code"><code id="recipes-code">${highlight(RECIPE_SNIPPETS.github ?? "")}</code></pre>
         </div>
       </div>
     </section>
@@ -498,6 +502,7 @@ export function shellHtml(): string {
         <a class="lv2-btn lv2-btn-ghost" href="${NPM_URL}" target="_blank" rel="noreferrer">View on npm</a>
       </div>
     </section>
+    </main>
 
     <footer class="lv2-footer">
       <div class="lv2-footer-inner">
@@ -507,7 +512,7 @@ export function shellHtml(): string {
         </div>
         <div class="lv2-footer-links">
           <a href="${REPO_URL}#readme">Docs</a>
-          <a href="${REPO_URL}/blob/main/docs/providers.md">Providers</a>
+          <a href="${REPO_URL}/tree/main/docs/recipes">Recipes</a>
           <a href="${REPO_URL}">GitHub</a>
           <a href="${NPM_URL}">npm</a>
           <a href="${REPO_URL}/blob/main/CHANGELOG.md">Changelog</a>

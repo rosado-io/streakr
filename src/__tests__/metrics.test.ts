@@ -1,10 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { levelize } from "../component/metrics";
-import { buildCalendarGrid } from "../core/grid";
-import type { StreakrDay, ContributionDay, StreakrLeveledDay } from "../types";
+import type { LeveledDay, RenderableDay } from "../component/types";
 
-function sday(date: string, total: number): StreakrDay {
-  return { date: new Date(`${date}T00:00:00`), total };
+function sday(date: string, total: number): RenderableDay {
+  return { date: new Date(`${date}T00:00:00`), dateKey: date, total };
 }
 
 describe("levelize", () => {
@@ -25,7 +24,7 @@ describe("levelize", () => {
       sday("2025-06-20", 30),
       sday("2025-06-21", 100),
     ];
-    const byTotal = new Map<number, StreakrLeveledDay["level"]>(
+    const byTotal = new Map<number, LeveledDay["level"]>(
       levelize(days).map((d) => [d.total, d.level]),
     );
 
@@ -55,24 +54,5 @@ describe("levelize", () => {
       "2025-06-21",
     ]);
     expect(leveled.every((d) => d.sources === undefined)).toBe(true);
-  });
-
-  it("produces the same levels as buildCalendarGrid for the same counts", () => {
-    const counts = [0, 1, 3, 7, 15, 30, 100];
-    const streakDays: StreakrDay[] = counts.map((c, i) => sday(`2025-06-${16 + i}`, c));
-    const contributionDays: ContributionDay[] = counts.map((c, i) => ({
-      date: `2025-06-${16 + i}`,
-      count: c,
-    }));
-
-    const leveled = levelize(streakDays);
-    const grid = buildCalendarGrid(contributionDays);
-    const gridCells = grid.weeks.flat().filter((c): c is NonNullable<typeof c> => c !== null);
-
-    counts.forEach((_, i) => {
-      const dateStr = `2025-06-${16 + i}`;
-      const gridLevel = gridCells.find((c) => c.date === dateStr)?.level;
-      expect(gridLevel).toBe(leveled[i]!.level);
-    });
   });
 });

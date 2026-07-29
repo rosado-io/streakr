@@ -40,6 +40,7 @@ export const renderYearModal = (card: Element, options: YearModalOptions): void 
           "button",
           {
             class: "sk-modal-year" + (currentYear === y ? " active" : ""),
+            "aria-current": currentYear === y ? "true" : undefined,
             onclick: () => {
               onSelect(y);
               onClose();
