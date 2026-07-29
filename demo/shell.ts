@@ -2,49 +2,47 @@ const REPO_URL = "https://github.com/rosado-io/streakr";
 const NPM_URL = "https://www.npmjs.com/package/@rosado-io/streakr";
 export const INSTALL_CMD = "npm i @rosado-io/streakr";
 
-const SOURCES: { key: string; name: string; kind: string; note: string }[] = [
-  {
-    key: "github",
-    name: "GitHub",
-    kind: "Visual preset",
-    note: "Render counts from GitHub when your data uses the github source key.",
-  },
-  {
-    key: "gitlab",
-    name: "GitLab",
-    kind: "Visual preset",
-    note: "Display GitLab activity from your API, snapshot, database, or build.",
-  },
-  {
-    key: "bitbucket",
-    name: "Bitbucket",
-    kind: "Visual preset",
-    note: "Use the built-in Bitbucket color and icon with data you provide.",
-  },
-  {
-    key: "claude",
-    name: "Claude",
-    kind: "Visual preset",
-    note: "Attribute activity to Claude after your own pipeline classifies it.",
-  },
-  {
-    key: "codex",
-    name: "Codex",
-    kind: "Visual preset",
-    note: "Give Codex its own source count, color, icon, and toggle.",
-  },
-  {
-    key: "opencode",
-    name: "opencode",
-    kind: "Visual preset",
-    note: "Present opencode activity without coupling Streakr to your collector.",
-  },
-  {
-    key: "copilot",
-    name: "Copilot",
-    kind: "Visual preset",
-    note: "Present Copilot counts from whichever acquisition flow you trust.",
-  },
+type SourceCard = { key: string; name: string; kind: string; note: string };
+
+const sourceCard = (key: string, name: string, note: string): SourceCard => ({
+  key,
+  name,
+  kind: "Visual preset",
+  note,
+});
+
+const SOURCES: SourceCard[] = [
+  sourceCard(
+    "github",
+    "GitHub",
+    "Render counts from GitHub when your data uses the github source key.",
+  ),
+  sourceCard(
+    "gitlab",
+    "GitLab",
+    "Display GitLab activity from your API, snapshot, database, or build.",
+  ),
+  sourceCard(
+    "bitbucket",
+    "Bitbucket",
+    "Use the built-in Bitbucket color and icon with data you provide.",
+  ),
+  sourceCard(
+    "claude",
+    "Claude",
+    "Attribute activity to Claude after your own pipeline classifies it.",
+  ),
+  sourceCard("codex", "Codex", "Give Codex its own source count, color, icon, and toggle."),
+  sourceCard(
+    "opencode",
+    "opencode",
+    "Present opencode activity without coupling Streakr to your collector.",
+  ),
+  sourceCard(
+    "copilot",
+    "Copilot",
+    "Present Copilot counts from whichever acquisition flow you trust.",
+  ),
 ];
 
 const SOURCE_ICONS: Record<string, string> = {
