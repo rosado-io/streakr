@@ -63,7 +63,7 @@ const assertTarget = (target: HTMLElement | undefined): HTMLElement => {
 
 const assertArray = (value: unknown, key: string): readonly unknown[] => {
   if (!Array.isArray(value)) {
-    throw new Error(`streakr: \`${key}\` is required`);
+    throw new TypeError(`streakr: \`${key}\` is required`);
   }
   return value;
 };

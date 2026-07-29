@@ -72,7 +72,7 @@ const buildHeatmapCell =
       },
     });
     if (day) {
-      rect.setAttribute("data-date", day.dateKey);
+      rect.dataset.date = day.dateKey;
       rect.setAttribute("tabindex", "-1");
       rect.setAttribute("role", "img");
       rect.setAttribute("aria-label", `${fmtDateLong(day.date)}, ${formatTotalLabel(day.total)}`);

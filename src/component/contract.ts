@@ -62,7 +62,7 @@ export const normalizeSources = (sources: readonly unknown[]): StreakrSource[] =
     }
     const source = input as Partial<StreakrSource>;
     if (typeof source.key !== "string") {
-      throw new Error("streakr: every source requires a string key");
+      throw new TypeError("streakr: every source requires a string key");
     }
     if (!SOURCE_KEY_PATTERN.test(source.key)) {
       throw new Error(`streakr: invalid source key "${source.key}"`);
@@ -74,7 +74,7 @@ export const normalizeSources = (sources: readonly unknown[]): StreakrSource[] =
       throw new Error(`streakr: source "${source.key}" requires a name`);
     }
     if (typeof source.color !== "string") {
-      throw new Error(`streakr: source "${source.key}" requires a color`);
+      throw new TypeError(`streakr: source "${source.key}" requires a color`);
     }
     const colorProbe = document.createElement("span");
     colorProbe.style.color = source.color;
@@ -103,7 +103,7 @@ export const normalizeDays = (
     }
     const day = input as Partial<StreakrDay>;
     if (typeof day.date !== "string") {
-      throw new Error(`streakr: ${label}.date must use YYYY-MM-DD`);
+      throw new TypeError(`streakr: ${label}.date must use YYYY-MM-DD`);
     }
     if (dates.has(day.date)) {
       throw new Error(`streakr: duplicate day "${day.date}"`);
@@ -172,7 +172,7 @@ export const validateTheme = (theme: StreakrThemeMode): StreakrThemeMode => {
 
 export const validateBoolean = (value: unknown, label: string): boolean => {
   if (typeof value !== "boolean") {
-    throw new Error(`streakr: \`${label}\` must be a boolean`);
+    throw new TypeError(`streakr: \`${label}\` must be a boolean`);
   }
   return value;
 };
@@ -198,7 +198,7 @@ export const validateSourceState = (
       throw new Error(`streakr: source state contains unknown source "${key}"`);
     }
     if (typeof enabled !== "boolean") {
-      throw new Error(`streakr: source state for "${key}" must be a boolean`);
+      throw new TypeError(`streakr: source state for "${key}" must be a boolean`);
     }
     normalized[key] = enabled;
   }

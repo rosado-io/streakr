@@ -12,32 +12,41 @@ import {
 } from "./contract";
 import type { InternalState, ResolvedConfig } from "./config";
 
+const resolvePatchValue = <TInput, TOutput>(
+  value: TInput | undefined,
+  current: TOutput,
+  validate: (value: TInput) => TOutput,
+): TOutput => (value === undefined ? current : validate(value));
+
+const retainedYear = (year: number | null, years: readonly number[]): number | undefined =>
+  year !== null && years.includes(year) ? year : undefined;
+
 export const applyUpdate = (
   cfg: ResolvedConfig,
   state: InternalState,
   patch: StreakrUpdate,
   hooks: { onThemeChange: () => void },
 ): void => {
-  const nextSources = patch.sources === undefined ? cfg.sources : normalizeSources(patch.sources);
-  const nextInputDays = patch.days === undefined ? cfg.inputDays : [...patch.days];
-  const nextYears = patch.years === undefined ? cfg.years : normalizeYears(patch.years);
-  const requestedYear =
-    patch.year ?? (state.year !== null && nextYears.includes(state.year) ? state.year : undefined);
+  const nextSources = resolvePatchValue(patch.sources, cfg.sources, normalizeSources);
+  const nextInputDays = resolvePatchValue(patch.days, cfg.inputDays, (days) => [...days]);
+  const nextYears = resolvePatchValue(patch.years, cfg.years, normalizeYears);
+  const requestedYear = patch.year ?? retainedYear(state.year, nextYears);
   const nextYear = validateSelectedYear(requestedYear, nextYears);
-  const nextAccent = patch.accent === undefined ? cfg.accent : validateAccent(patch.accent);
-  const nextStatus = patch.status === undefined ? cfg.status : validateStatus(patch.status);
-  const nextToday = patch.today === undefined ? cfg.today : parseDateKey(patch.today, "today");
-  const nextTheme = patch.theme === undefined ? cfg.theme : validateTheme(patch.theme);
-  const nextTintHeatmap =
-    patch.tintHeatmap === undefined
-      ? cfg.tintHeatmap
-      : validateBoolean(patch.tintHeatmap, "tintHeatmap");
-  const nextShowSources =
-    patch.showSources === undefined
-      ? cfg.showSources
-      : validateBoolean(patch.showSources, "showSources");
-  const nextShowStats =
-    patch.showStats === undefined ? cfg.showStats : validateBoolean(patch.showStats, "showStats");
+  const nextAccent = resolvePatchValue(patch.accent, cfg.accent, validateAccent);
+  const nextStatus = resolvePatchValue(patch.status, cfg.status, validateStatus);
+  const nextToday = resolvePatchValue(patch.today, cfg.today, (today) =>
+    parseDateKey(today, "today"),
+  );
+  const nextTheme = resolvePatchValue(patch.theme, cfg.theme, validateTheme);
+  const nextTintHeatmap = resolvePatchValue(patch.tintHeatmap, cfg.tintHeatmap, (tintHeatmap) =>
+    validateBoolean(tintHeatmap, "tintHeatmap"),
+  );
+  const nextShowSources = resolvePatchValue(patch.showSources, cfg.showSources, (showSources) =>
+    validateBoolean(showSources, "showSources"),
+  );
+  const nextShowStats = resolvePatchValue(patch.showStats, cfg.showStats, (showStats) =>
+    validateBoolean(showStats, "showStats"),
+  );
   const nextDays = normalizeDays(nextInputDays, nextSources);
 
   cfg.sources = nextSources;
