@@ -1,5 +1,5 @@
-import type { StreakrDay, StreakrLeveledDay } from "../types";
 import { computeLevels } from "../core/leveling";
+import type { LeveledDay, RenderableDay } from "./types";
 
 export interface StreakrStats {
   total: number;
@@ -8,7 +8,7 @@ export interface StreakrStats {
   current: number;
 }
 
-export const levelize = (days: StreakrDay[]): StreakrLeveledDay[] => {
+export const levelize = (days: RenderableDay[]): LeveledDay[] => {
   const levels = computeLevels(days.map((day) => day.total));
   return days.map((day, i) => ({ ...day, level: levels[i] ?? 0 }));
 };
@@ -22,7 +22,7 @@ const nextStreakState = (
   return { count: acc.count, halted: true };
 };
 
-export const computeStats = (days: StreakrDay[]): StreakrStats => {
+export const computeStats = (days: RenderableDay[]): StreakrStats => {
   const total = days.reduce((sum, d) => sum + d.total, 0);
   const active = days.reduce((count, d) => count + (d.total > 0 ? 1 : 0), 0);
   const best = days.reduce(

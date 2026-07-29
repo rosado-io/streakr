@@ -1,17 +1,18 @@
-import type { StreakrDay, StreakrProvider } from "../types";
+import type { StreakrSource } from "../types";
 import { fmtDateLong } from "./calendar";
 import type { ComponentCtx } from "./config";
 import { sourceCount } from "./config";
 import { h } from "./dom";
 import { formatTotalLabel } from "./metrics";
+import type { RenderableDay } from "./types";
 
 export interface Tooltip {
   el: HTMLElement;
-  show: (e: MouseEvent, day: StreakrDay) => void;
-  showProviderLabel: (e: MouseEvent, provider: StreakrProvider) => void;
-  move: (e: MouseEvent) => void;
+  show: (event: MouseEvent, day: RenderableDay) => void;
+  showSourceLabel: (event: MouseEvent, source: StreakrSource) => void;
+  move: (event: MouseEvent) => void;
   hide: () => void;
-  bindCellEvents: (rect: SVGElement, day: StreakrDay) => void;
+  bindCellEvents: (rect: SVGElement, day: RenderableDay) => void;
 }
 
 export const createTooltip = (ctx: ComponentCtx): Tooltip => {
@@ -21,58 +22,72 @@ export const createTooltip = (ctx: ComponentCtx): Tooltip => {
     "aria-live": "polite",
   }) as HTMLElement;
 
-  const show = (e: MouseEvent, day: StreakrDay): void => {
+  const renderDay = (day: RenderableDay): void => {
     el.replaceChildren();
     el.appendChild(h("div", { class: "tt-date", text: fmtDateLong(day.date) }));
     el.appendChild(h("div", { class: "tt-total", text: formatTotalLabel(day.total) }));
-    ctx.cfg.providers
-      .filter((provider) => ctx.state.providers[provider.key])
-      .map((provider) => ({ provider, value: sourceCount(day, provider.key) }))
+    ctx.cfg.sources
+      .filter((source) => ctx.state.sources[source.key])
+      .map((source) => ({ source, value: sourceCount(day, source.key) }))
       .filter(({ value }) => value > 0)
-      .forEach(({ provider, value }) => {
+      .forEach(({ source, value }) => {
         el.appendChild(
           h("div", { class: "tt-row" }, [
             h("span", { class: "tt-label" }, [
-              h("span", { class: "dot", style: { background: provider.color } }),
-              provider.name,
+              h("span", { class: "dot", style: { background: source.color } }),
+              source.name,
             ]),
             h("span", { class: "tt-val", text: String(value) }),
           ]),
         );
       });
-    el.style.left = `${e.clientX + 14}px`;
-    el.style.top = `${e.clientY + 14}px`;
+  };
+
+  const place = (x: number, y: number): void => {
+    el.style.left = `${x + 14}px`;
+    el.style.top = `${y + 14}px`;
+  };
+
+  const show = (event: MouseEvent, day: RenderableDay): void => {
+    renderDay(day);
+    place(event.clientX, event.clientY);
     el.classList.add("visible");
   };
 
-  const showProviderLabel = (e: MouseEvent, provider: StreakrProvider): void => {
+  const showSourceLabel = (event: MouseEvent, source: StreakrSource): void => {
     el.replaceChildren();
     el.appendChild(
       h("div", { class: "tt-row" }, [
         h("span", { class: "tt-label" }, [
-          h("span", { class: "dot", style: { background: provider.color } }),
-          provider.name,
+          h("span", { class: "dot", style: { background: source.color } }),
+          source.name,
         ]),
       ]),
     );
-    move(e);
+    place(event.clientX, event.clientY);
     el.classList.add("visible");
   };
 
-  const move = (e: MouseEvent): void => {
-    el.style.left = `${e.clientX + 14}px`;
-    el.style.top = `${e.clientY + 14}px`;
+  const move = (event: MouseEvent): void => {
+    place(event.clientX, event.clientY);
   };
 
   const hide = (): void => {
     el.classList.remove("visible");
   };
 
-  const bindCellEvents = (rect: SVGElement, day: StreakrDay): void => {
-    rect.addEventListener("mouseenter", (e) => show(e, day));
-    rect.addEventListener("mousemove", (e) => move(e));
+  const bindCellEvents = (rect: SVGElement, day: RenderableDay): void => {
+    rect.addEventListener("mouseenter", (event) => show(event, day));
+    rect.addEventListener("mousemove", move);
     rect.addEventListener("mouseleave", hide);
+    rect.addEventListener("focus", () => {
+      const bounds = rect.getBoundingClientRect();
+      renderDay(day);
+      place(bounds.left + bounds.width / 2, bounds.top + bounds.height / 2);
+      el.classList.add("visible");
+    });
+    rect.addEventListener("blur", hide);
   };
 
-  return { el, show, showProviderLabel, move, hide, bindCellEvents };
+  return { el, show, showSourceLabel, move, hide, bindCellEvents };
 };

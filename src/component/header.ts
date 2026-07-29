@@ -2,13 +2,13 @@ import type { ComponentCtx } from "./config";
 import { h } from "./dom";
 import { logoR } from "./logo";
 import { isCurrentYear, visibleYears, type RenderFlags } from "./selectors";
-import { renderProviderRow } from "./provider-row";
+import { renderSourceRow } from "./source-row";
 import type { Tooltip } from "./tooltip";
 
 export interface HeaderActions {
   setYear: (year: number) => void;
   openYearModal: () => void;
-  toggleProvider: (key: string) => void;
+  toggleSource: (key: string) => void;
 }
 
 const renderTitleRow = (ctx: ComponentCtx): HTMLElement => {
@@ -32,6 +32,7 @@ const buildYearTab = (
     class: "sk-year-tab" + (ctx.state.year === year ? " active" : ""),
     onclick: () => actions.setYear(year),
     disabled: isLoading || undefined,
+    "aria-current": ctx.state.year === year ? "true" : undefined,
     text: String(year),
   });
 
@@ -48,6 +49,7 @@ const renderYearsList = (
     list.appendChild(
       h("button", {
         class: "sk-year-tab active",
+        "aria-current": "true",
         onclick: () => actions.openYearModal(),
         text: String(ctx.state.year),
       }),
@@ -69,12 +71,10 @@ const renderYearsList = (
   return list;
 };
 
-const shouldRenderProviderRow = (ctx: ComponentCtx, flags: RenderFlags): boolean =>
-  ctx.cfg.showProviders &&
-  ctx.cfg.providers.length > 0 &&
-  (flags.isLoading
-    ? ctx.cfg.providers.length > 1
-    : !flags.isEmpty && flags.providersWithDataCount > 1);
+const shouldRenderSourceRow = (ctx: ComponentCtx, flags: RenderFlags): boolean =>
+  ctx.cfg.showSources &&
+  ctx.cfg.sources.length > 0 &&
+  (flags.isLoading ? ctx.cfg.sources.length > 1 : !flags.isEmpty && flags.sourcesWithDataCount > 1);
 
 const renderYearsBar = (
   ctx: ComponentCtx,
@@ -83,10 +83,12 @@ const renderYearsBar = (
   tooltip: Tooltip,
 ): HTMLElement => {
   const yearsBar = h("div", { class: "sk-years" });
-  yearsBar.dataset.noProviders = String(!ctx.cfg.showProviders);
+  yearsBar.dataset.noSources = String(!ctx.cfg.showSources);
   yearsBar.appendChild(renderYearsList(ctx, actions, flags.isLoading));
-  if (shouldRenderProviderRow(ctx, flags)) {
-    yearsBar.appendChild(renderProviderRow(ctx, tooltip, actions.toggleProvider, flags.isLoading));
+  if (shouldRenderSourceRow(ctx, flags)) {
+    yearsBar.appendChild(
+      renderSourceRow(ctx, tooltip, actions.toggleSource, flags.sourceTotals, flags.isLoading),
+    );
   }
   return yearsBar;
 };

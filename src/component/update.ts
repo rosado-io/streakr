@@ -1,77 +1,72 @@
-import type { StreakrOptions } from "../types";
+import type { StreakrUpdate } from "../types";
+import {
+  normalizeDays,
+  normalizeSources,
+  normalizeYears,
+  parseDateKey,
+  validateAccent,
+  validateBoolean,
+  validateSelectedYear,
+  validateStatus,
+  validateTheme,
+} from "./contract";
 import type { InternalState, ResolvedConfig } from "./config";
 
-export type UpdatePatch = Partial<StreakrOptions>;
+const resolvePatchValue = <TInput, TOutput>(
+  value: TInput | undefined,
+  current: TOutput,
+  validate: (value: TInput) => TOutput,
+): TOutput => (value === undefined ? current : validate(value));
 
-type UpdateHandlers = {
-  [Key in keyof StreakrOptions]-?: (patch: Pick<UpdatePatch, Key>) => void;
-};
+const retainedYear = (year: number | null, years: readonly number[]): number | undefined =>
+  year !== null && years.includes(year) ? year : undefined;
 
-export const createUpdateHandlers = (
+export const applyUpdate = (
   cfg: ResolvedConfig,
   state: InternalState,
+  patch: StreakrUpdate,
   hooks: { onThemeChange: () => void },
-) => {
-  const updateHandlers = {
-    target: ({ target }) => {
-      if (target !== undefined) {
-        throw new Error("Cannot update 'target' after mount. Destroy and recreate the instance.");
-      }
-    },
-    theme: ({ theme }) => {
-      if (theme !== undefined) {
-        cfg.theme = theme;
-        hooks.onThemeChange();
-      }
-    },
-    accent: ({ accent }) => {
-      if (accent !== undefined) cfg.accent = accent;
-    },
-    tintHeatmap: ({ tintHeatmap }) => {
-      if (tintHeatmap !== undefined) cfg.tintHeatmap = tintHeatmap;
-    },
-    showProviders: ({ showProviders }) => {
-      if (showProviders !== undefined) cfg.showProviders = showProviders;
-    },
-    showStats: ({ showStats }) => {
-      if (showStats !== undefined) cfg.showStats = showStats;
-    },
-    state: ({ state: nextState }) => {
-      if (nextState !== undefined) cfg.state = nextState;
-    },
-    years: ({ years }) => {
-      if (years !== undefined) {
-        cfg.years = years;
-        if (cfg.years.length && (state.year == null || !cfg.years.includes(state.year))) {
-          state.year = cfg.years[cfg.years.length - 1] ?? null;
-        }
-      }
-    },
-    year: ({ year }) => {
-      if (year !== undefined) {
-        cfg.year = year;
-        state.year = year;
-      }
-    },
-    today: ({ today }) => {
-      if (today !== undefined) cfg.today = today;
-    },
-    getDays: ({ getDays }) => {
-      if (getDays !== undefined) cfg.getDays = getDays;
-    },
-    providers: ({ providers }) => {
-      if (providers !== undefined) cfg.providers = providers;
-    },
-    onYearChange: ({ onYearChange }) => {
-      if (onYearChange !== undefined) cfg.onYearChange = onYearChange;
-    },
-    onProviderToggle: ({ onProviderToggle }) => {
-      if (onProviderToggle !== undefined) cfg.onProviderToggle = onProviderToggle;
-    },
-  } satisfies UpdateHandlers;
+): void => {
+  const nextSources = resolvePatchValue(patch.sources, cfg.sources, normalizeSources);
+  const nextInputDays = resolvePatchValue(patch.days, cfg.inputDays, (days) => [...days]);
+  const nextYears = resolvePatchValue(patch.years, cfg.years, normalizeYears);
+  const requestedYear = patch.year ?? retainedYear(state.year, nextYears);
+  const nextYear = validateSelectedYear(requestedYear, nextYears);
+  const nextAccent = resolvePatchValue(patch.accent, cfg.accent, validateAccent);
+  const nextStatus = resolvePatchValue(patch.status, cfg.status, validateStatus);
+  const nextToday = resolvePatchValue(patch.today, cfg.today, (today) =>
+    parseDateKey(today, "today"),
+  );
+  const nextTheme = resolvePatchValue(patch.theme, cfg.theme, validateTheme);
+  const nextTintHeatmap = resolvePatchValue(patch.tintHeatmap, cfg.tintHeatmap, (tintHeatmap) =>
+    validateBoolean(tintHeatmap, "tintHeatmap"),
+  );
+  const nextShowSources = resolvePatchValue(patch.showSources, cfg.showSources, (showSources) =>
+    validateBoolean(showSources, "showSources"),
+  );
+  const nextShowStats = resolvePatchValue(patch.showStats, cfg.showStats, (showStats) =>
+    validateBoolean(showStats, "showStats"),
+  );
+  const nextDays = normalizeDays(nextInputDays, nextSources);
 
-  const isUpdateKey = (key: string): key is keyof typeof updateHandlers =>
-    Object.getOwnPropertyDescriptor(updateHandlers, key) !== undefined;
+  cfg.sources = nextSources;
+  cfg.inputDays = nextInputDays;
+  cfg.days = nextDays;
+  cfg.years = nextYears;
+  cfg.year = nextYear;
+  cfg.accent = nextAccent;
+  cfg.status = nextStatus;
+  cfg.today = nextToday;
+  cfg.theme = nextTheme;
+  cfg.tintHeatmap = nextTintHeatmap;
+  cfg.showSources = nextShowSources;
+  cfg.showStats = nextShowStats;
+  state.year = nextYear;
 
-  return { updateHandlers, isUpdateKey };
+  if (patch.theme !== undefined) {
+    hooks.onThemeChange();
+  }
+  if (patch.errorMessage !== undefined) cfg.errorMessage = patch.errorMessage;
+  if (patch.onYearChange !== undefined) cfg.onYearChange = patch.onYearChange;
+  if (patch.onSourceToggle !== undefined) cfg.onSourceToggle = patch.onSourceToggle;
 };

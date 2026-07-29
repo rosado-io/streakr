@@ -59,8 +59,12 @@ function generateYear(year: number, seed: number): StreakrDay[] {
     const { github, gitlab } = humanCounts(rand, total);
     const { claude, codex, opencode, copilot } = agentCounts(rand, total, adoption);
     days.push({
-      date: new Date(cur),
-      total: github + gitlab + claude + codex + opencode + copilot,
+      date: [
+        cur.getFullYear(),
+        String(cur.getMonth() + 1).padStart(2, "0"),
+        String(cur.getDate()).padStart(2, "0"),
+      ].join("-"),
+      count: github + gitlab + claude + codex + opencode + copilot,
       sources: { github, gitlab, claude, codex, opencode, copilot },
     });
     cur.setDate(cur.getDate() + 1);
@@ -74,11 +78,11 @@ YEARS_LIST.forEach((y, i) => {
   YEARS[y] = generateYear(y, 1000 + i * 137);
 });
 
-const TODAY = new Date(2026, 3, 26);
-YEARS[2026] = YEARS[2026].filter((d) => d.date <= TODAY);
+const TODAY = "2026-04-26";
+YEARS[2026] = YEARS[2026].filter((day) => day.date <= TODAY);
 
 export const StreakrSampleData = {
   availableYears: YEARS_LIST,
-  getDays: (year: number): StreakrDay[] => YEARS[year] ?? [],
+  days: YEARS_LIST.flatMap((year) => YEARS[year] ?? []),
   today: TODAY,
 };

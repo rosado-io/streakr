@@ -1,7 +1,24 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createStreakr } from "../component/streakr";
-import type { StreakrDay, StreakrInstance, StreakrProvider } from "../types";
+import { createStreakr as createComponent } from "../component/streakr";
+import type { StreakrDay, StreakrInstance, StreakrOptions, StreakrSource } from "../types";
 import streakrCss from "../component/streakr.css?raw";
+
+const dateKey = (date: Date): string =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate(),
+  ).padStart(2, "0")}`;
+
+type TestOptions = Omit<StreakrOptions, "days"> & {
+  days: readonly StreakrDay[] | ((year: number) => readonly StreakrDay[]);
+};
+
+const createStreakr = (options: TestOptions): StreakrInstance => {
+  const inputDays = options.days;
+  const resolvedDays =
+    typeof inputDays === "function" ? options.years.flatMap((year) => inputDays(year)) : inputDays;
+  const days = [...new Map(resolvedDays.map((day) => [day.date, day])).values()];
+  return createComponent({ ...options, days });
+};
 
 function makeYearDays(year: number, fillEvery = 3): StreakrDay[] {
   const days: StreakrDay[] = [];
@@ -11,8 +28,8 @@ function makeYearDays(year: number, fillEvery = 3): StreakrDay[] {
   while (cur <= end) {
     const fill = i % fillEvery === 0;
     days.push({
-      date: new Date(cur),
-      total: fill ? 3 : 0,
+      date: dateKey(new Date(cur)),
+      count: fill ? 3 : 0,
       sources: fill ? { github: 2, gitlab: 1, bitbucket: 0 } : {},
     });
     cur.setDate(cur.getDate() + 1);
@@ -26,7 +43,7 @@ describe("createStreakr", () => {
   let instance: StreakrInstance | null = null;
   let originalGetBoundingClientRect: typeof HTMLElement.prototype.getBoundingClientRect;
   const years = [2022, 2023, 2024, 2025, 2026];
-  const getDays = (year: number) => makeYearDays(year);
+  const days = years.flatMap((year) => makeYearDays(year));
 
   const rect = (width: number): DOMRect => ({
     width,
@@ -74,35 +91,35 @@ describe("createStreakr", () => {
           // @ts-expect-error — intentionally invalid
           target: null,
           years,
-          getDays,
+          days,
         }),
       ).toThrow(/`target` is required/);
     });
 
     it("mounts an .sk-root element inside target", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       expect(target.querySelector(".sk-root")).toBeTruthy();
     });
 
     it("renders a card and a header inside root", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       expect(target.querySelector(".sk-root .sk-card")).toBeTruthy();
       expect(target.querySelector(".sk-root .sk-header")).toBeTruthy();
     });
 
     it("appends a tooltip element inside the root", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       expect(target.querySelector(".sk-root > .sk-tooltip")).toBeTruthy();
     });
 
     it("applies the theme dataset attribute", () => {
-      instance = createStreakr({ target, theme: "light", years, getDays });
+      instance = createStreakr({ target, theme: "light", years, days });
       const root = target.querySelector<HTMLElement>(".sk-root");
       expect(root?.dataset.theme).toBe("light");
     });
 
     it("defaults theme to dark", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       const root = target.querySelector<HTMLElement>(".sk-root");
       expect(root?.dataset.theme).toBe("dark");
     });
@@ -121,7 +138,7 @@ describe("createStreakr", () => {
         dispatchEvent: vi.fn(),
       }));
 
-      instance = createStreakr({ target, theme: "system", years, getDays });
+      instance = createStreakr({ target, theme: "system", years, days });
       const root = target.querySelector<HTMLElement>(".sk-root");
       expect(root?.dataset.theme).toBe("dark");
 
@@ -138,7 +155,7 @@ describe("createStreakr", () => {
       delete window.matchMedia;
 
       try {
-        instance = createStreakr({ target, theme: "system", years, getDays });
+        instance = createStreakr({ target, theme: "system", years, days });
         const root = target.querySelector<HTMLElement>(".sk-root");
         expect(root?.dataset.theme).toBe("light");
       } finally {
@@ -147,7 +164,7 @@ describe("createStreakr", () => {
     });
 
     it("applies accent CSS variables on the root", () => {
-      instance = createStreakr({ target, accent: "#ff00aa", years, getDays });
+      instance = createStreakr({ target, accent: "#ff00aa", years, days });
       const root = target.querySelector<HTMLElement>(".sk-root");
       expect(root?.style.getPropertyValue("--sk-accent")).toBe("#ff00aa");
     });
@@ -158,20 +175,20 @@ describe("createStreakr", () => {
         accent: "#abcdef",
         tintHeatmap: false,
         years,
-        getDays,
+        days,
       });
       const root = target.querySelector<HTMLElement>(".sk-root");
       expect(root?.style.getPropertyValue("--sk-heat-4")).toBe("");
     });
 
     it("uses the last entry of `years` when `year` is omitted", () => {
-      instance = createStreakr({ target, years: [2022, 2023, 2024], getDays });
+      instance = createStreakr({ target, years: [2022, 2023, 2024], days });
       const subtitle = target.querySelector(".sk-subtitle");
       expect(subtitle?.textContent).toBe("2024");
     });
 
     it("labels the actual current year as year to date", () => {
-      instance = createStreakr({ target, years, year: 2026, getDays });
+      instance = createStreakr({ target, years, year: 2026, days });
       expect(target.querySelector(".sk-subtitle")?.textContent).toBe("Year to date");
     });
 
@@ -180,7 +197,7 @@ describe("createStreakr", () => {
         target,
         years: [2022, 2023, 2024, 2025, 2026],
         year: 2024,
-        getDays,
+        days,
       });
       expect(target.querySelector(".sk-subtitle")?.textContent).toBe("2024");
     });
@@ -188,26 +205,26 @@ describe("createStreakr", () => {
 
   describe("year tabs", () => {
     it("renders one tab per visible year", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       const tabs = target.querySelectorAll(".sk-year-tab");
       expect(tabs).toHaveLength(5);
     });
 
     it("marks the active year with .active", () => {
-      instance = createStreakr({ target, years, year: 2024, getDays });
+      instance = createStreakr({ target, years, year: 2024, days });
       const active = target.querySelector(".sk-year-tab.active");
       expect(active?.textContent).toBe("2024");
     });
 
     it("renders a 'more' button when years exceed MAX_VISIBLE_YEARS", () => {
       const many = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
-      instance = createStreakr({ target, years: many, getDays });
+      instance = createStreakr({ target, years: many, days });
       expect(target.querySelector(".sk-year-more")).toBeTruthy();
     });
 
     it("clicking a year tab switches active year and fires onYearChange", () => {
       const onYearChange = vi.fn();
-      instance = createStreakr({ target, years, year: 2026, getDays, onYearChange });
+      instance = createStreakr({ target, years, year: 2026, days, onYearChange });
       const tab2024 = Array.from(target.querySelectorAll<HTMLButtonElement>(".sk-year-tab")).find(
         (b) => b.textContent === "2024",
       );
@@ -219,7 +236,7 @@ describe("createStreakr", () => {
 
     it("renders a hidden-year pseudo tab when current year is not in the visible window", () => {
       const many = [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018];
-      instance = createStreakr({ target, years: many, year: 2010, getDays });
+      instance = createStreakr({ target, years: many, year: 2010, days });
       const active = target.querySelector(".sk-year-tab.active");
       expect(active?.textContent).toBe("2010");
     });
@@ -229,41 +246,41 @@ describe("createStreakr", () => {
     const many = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
 
     it("opens when the 'more' button is clicked", () => {
-      instance = createStreakr({ target, years: many, getDays });
+      instance = createStreakr({ target, years: many, days });
       target.querySelector<HTMLButtonElement>(".sk-year-more")?.click();
       expect(target.querySelector(".sk-modal")).toBeTruthy();
     });
 
     it("renders a button per year inside the modal", () => {
-      instance = createStreakr({ target, years: many, getDays });
+      instance = createStreakr({ target, years: many, days });
       target.querySelector<HTMLButtonElement>(".sk-year-more")?.click();
       const cells = target.querySelectorAll(".sk-modal-year");
       expect(cells).toHaveLength(many.length);
     });
 
     it("closes when Escape is pressed", () => {
-      instance = createStreakr({ target, years: many, getDays });
+      instance = createStreakr({ target, years: many, days });
       target.querySelector<HTMLButtonElement>(".sk-year-more")?.click();
       document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
       expect(target.querySelector(".sk-modal")).toBeNull();
     });
 
     it("closes when the overlay is clicked", () => {
-      instance = createStreakr({ target, years: many, getDays });
+      instance = createStreakr({ target, years: many, days });
       target.querySelector<HTMLButtonElement>(".sk-year-more")?.click();
       target.querySelector<HTMLElement>(".sk-modal-overlay")?.click();
       expect(target.querySelector(".sk-modal")).toBeNull();
     });
 
     it("clicking the close button dismisses the modal", () => {
-      instance = createStreakr({ target, years: many, getDays });
+      instance = createStreakr({ target, years: many, days });
       target.querySelector<HTMLButtonElement>(".sk-year-more")?.click();
       target.querySelector<HTMLButtonElement>(".sk-modal-close")?.click();
       expect(target.querySelector(".sk-modal")).toBeNull();
     });
 
     it("picking a year from the modal switches active year", () => {
-      instance = createStreakr({ target, years: many, year: 2026, getDays });
+      instance = createStreakr({ target, years: many, year: 2026, days });
       target.querySelector<HTMLButtonElement>(".sk-year-more")?.click();
       const buttons = Array.from(target.querySelectorAll<HTMLButtonElement>(".sk-modal-year"));
       const target2020 = buttons.find((b) => b.textContent?.startsWith("2020"));
@@ -272,109 +289,119 @@ describe("createStreakr", () => {
     });
   });
 
-  describe("providers", () => {
+  describe("sources", () => {
     it("renders the three default chips", () => {
-      instance = createStreakr({ target, years, getDays });
-      const chips = target.querySelectorAll(".sk-provider");
+      instance = createStreakr({ target, years, days });
+      const chips = target.querySelectorAll(".sk-source");
       expect(chips).toHaveLength(3);
     });
 
-    it("hides chips when showProviders is false", () => {
-      instance = createStreakr({ target, years, showProviders: false, getDays });
-      expect(target.querySelector(".sk-providers")).toBeNull();
+    it("hides chips when showSources is false", () => {
+      instance = createStreakr({ target, years, showSources: false, days });
+      expect(target.querySelector(".sk-sources")).toBeNull();
     });
 
-    it("toggles a provider on click and fires onProviderToggle", () => {
-      const onProviderToggle = vi.fn();
-      instance = createStreakr({ target, years, getDays, onProviderToggle });
-      const githubChip = target.querySelector<HTMLButtonElement>(".sk-provider");
+    it("toggles a source on click and fires onSourceToggle", () => {
+      const onSourceToggle = vi.fn();
+      instance = createStreakr({ target, years, days, onSourceToggle });
+      const githubChip = target.querySelector<HTMLButtonElement>(".sk-source");
       githubChip?.click();
-      expect(onProviderToggle).toHaveBeenCalledTimes(1);
-      const [key, enabled, allState] = onProviderToggle.mock.calls[0]!;
+      expect(onSourceToggle).toHaveBeenCalledTimes(1);
+      const [key, enabled, allState] = onSourceToggle.mock.calls[0]!;
       expect(key).toBe("github");
       expect(enabled).toBe(false);
       expect(allState).toMatchObject({ github: false });
     });
 
-    it("renders custom providers and ignores the built-ins", () => {
-      const custom: StreakrProvider[] = [
+    it("renders custom sources and ignores the built-ins", () => {
+      const custom: StreakrSource[] = [
         { key: "gitea", name: "Gitea", color: "#609926" },
         { key: "forgejo", name: "Forgejo", color: "#d97706" },
       ];
       instance = createStreakr({
         target,
         years,
-        providers: custom,
-        getDays: (y) => [
+        sources: custom,
+        days: (y) => [
           {
-            date: new Date(y, 0, 5),
-            total: 4,
+            date: dateKey(new Date(y, 0, 5)),
+            count: 4,
             sources: { gitea: 3, forgejo: 1 },
           },
         ],
       });
-      const chips = target.querySelectorAll(".sk-provider");
+      const chips = target.querySelectorAll(".sk-source");
       expect(chips).toHaveLength(2);
       expect(chips[0]!.getAttribute("aria-label")).toContain("Gitea");
       expect(chips[1]!.getAttribute("aria-label")).toContain("Forgejo");
     });
 
     it("renders a custom icon when supplied", () => {
-      const custom: StreakrProvider[] = [
+      const custom: StreakrSource[] = [
         {
           key: "linear",
           name: "Linear",
           color: "#5e6ad2",
-          icon: '<svg data-test="custom-icon"></svg>',
+          icon: () => {
+            const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            icon.dataset.test = "custom-icon";
+            return icon;
+          },
         },
         { key: "jira", name: "Jira", color: "#0052cc" },
       ];
       instance = createStreakr({
         target,
         years,
-        providers: custom,
-        getDays: (y) => [{ date: new Date(y, 0, 5), total: 2, sources: { linear: 1, jira: 1 } }],
+        sources: custom,
+        days: (y) => [
+          { date: dateKey(new Date(y, 0, 5)), count: 2, sources: { linear: 1, jira: 1 } },
+        ],
       });
-      expect(target.querySelector(".sk-provider [data-test='custom-icon']")).toBeTruthy();
+      expect(target.querySelector(".sk-source [data-test='custom-icon']")).toBeTruthy();
     });
 
     it("falls back to the color dot when no built-in icon exists and none supplied", () => {
-      const custom: StreakrProvider[] = [
+      const custom: StreakrSource[] = [
         { key: "gitea", name: "Gitea", color: "#609926" },
         { key: "forgejo", name: "Forgejo", color: "#d97706" },
       ];
       instance = createStreakr({
         target,
         years,
-        providers: custom,
-        getDays: (y) => [{ date: new Date(y, 0, 5), total: 2, sources: { gitea: 1, forgejo: 1 } }],
+        sources: custom,
+        days: (y) => [
+          { date: dateKey(new Date(y, 0, 5)), count: 2, sources: { gitea: 1, forgejo: 1 } },
+        ],
       });
-      const iconWrap = target.querySelector<HTMLElement>(".sk-provider-icon");
+      const iconWrap = target.querySelector<HTMLElement>(".sk-source-icon");
       // happy-dom preserves the literal hex; jsdom would normalize to rgb()
       expect(iconWrap?.style.background.toLowerCase()).toContain("#609926");
     });
 
-    it("hides the chip row when only one provider has contributions (issue #84)", () => {
+    it("hides the chip row when only one source has contributions (issue #84)", () => {
       instance = createStreakr({
         target,
         years,
-        getDays: (y) => [
-          { date: new Date(y, 0, 5), total: 3, sources: { github: 3 } },
-          { date: new Date(y, 1, 1), total: 2, sources: { github: 2 } },
+        days: (y) => [
+          { date: dateKey(new Date(y, 0, 5)), count: 3, sources: { github: 3 } },
+          { date: dateKey(new Date(y, 1, 1)), count: 2, sources: { github: 2 } },
         ],
       });
-      expect(target.querySelector(".sk-providers")).toBeNull();
-      expect(target.querySelectorAll(".sk-provider")).toHaveLength(0);
+      expect(target.querySelector(".sk-sources")).toBeNull();
+      expect(target.querySelectorAll(".sk-source")).toHaveLength(0);
     });
 
-    it("shows the chip row when ≥2 providers have contributions", () => {
+    it("shows the chip row when ≥2 sources have contributions", () => {
       instance = createStreakr({
         target,
         years,
-        getDays: (y) => [{ date: new Date(y, 0, 5), total: 3, sources: { github: 2, gitlab: 1 } }],
+        days: (y) => [
+          { date: dateKey(new Date(y, 0, 5)), count: 3, sources: { github: 2, gitlab: 1 } },
+        ],
       });
-      expect(target.querySelector(".sk-providers")).toBeTruthy();
-      expect(target.querySelectorAll(".sk-provider")).toHaveLength(3);
+      expect(target.querySelector(".sk-sources")).toBeTruthy();
+      expect(target.querySelectorAll(".sk-source")).toHaveLength(3);
     });
 
     it("recomputes chip-row visibility when the year changes", () => {
@@ -382,39 +409,39 @@ describe("createStreakr", () => {
         target,
         years: [2024, 2025],
         year: 2024,
-        getDays: (y) =>
+        days: (y) =>
           y === 2024
-            ? [{ date: new Date(2024, 0, 5), total: 3, sources: { github: 2, gitlab: 1 } }]
-            : [{ date: new Date(2025, 0, 5), total: 2, sources: { github: 2 } }],
+            ? [{ date: dateKey(new Date(2024, 0, 5)), count: 3, sources: { github: 2, gitlab: 1 } }]
+            : [{ date: dateKey(new Date(2025, 0, 5)), count: 2, sources: { github: 2 } }],
       });
-      expect(target.querySelector(".sk-providers")).toBeTruthy();
+      expect(target.querySelector(".sk-sources")).toBeTruthy();
       const tab2025 = Array.from(target.querySelectorAll<HTMLButtonElement>(".sk-year-tab")).find(
         (b) => b.textContent === "2025",
       );
       tab2025?.click();
-      expect(target.querySelector(".sk-providers")).toBeNull();
+      expect(target.querySelector(".sk-sources")).toBeNull();
     });
 
-    it("renders the no-providers state when all are disabled", () => {
-      instance = createStreakr({ target, years, getDays });
-      instance.setProviders({ github: false, gitlab: false, bitbucket: false });
+    it("renders the no-sources state when all are disabled", () => {
+      instance = createStreakr({ target, years, days });
+      instance.setSources({ github: false, gitlab: false, bitbucket: false });
       expect(target.querySelector(".sk-noprov")).toBeTruthy();
     });
 
-    it("'Enable all' button restores all providers", () => {
-      instance = createStreakr({ target, years, getDays });
-      instance.setProviders({ github: false, gitlab: false, bitbucket: false });
+    it("'Enable all' button restores all sources", () => {
+      instance = createStreakr({ target, years, days });
+      instance.setSources({ github: false, gitlab: false, bitbucket: false });
       const enable = Array.from(
         target.querySelectorAll<HTMLButtonElement>(".sk-noprov button"),
       ).find((b) => b.textContent === "Enable all");
       enable?.click();
       expect(target.querySelector(".sk-noprov")).toBeNull();
-      expect(target.querySelectorAll(".sk-provider.active")).toHaveLength(3);
+      expect(target.querySelectorAll(".sk-source.active")).toHaveLength(3);
     });
 
-    it("offers 'Enable all' when only zero-count providers remain enabled", () => {
-      instance = createStreakr({ target, years, getDays });
-      instance.setProviders({ github: false, gitlab: false, bitbucket: true });
+    it("offers 'Enable all' when only zero-count sources remain enabled", () => {
+      instance = createStreakr({ target, years, days });
+      instance.setSources({ github: false, gitlab: false, bitbucket: true });
 
       const empty = target.querySelector(".sk-empty");
       const enable = Array.from(empty?.querySelectorAll<HTMLButtonElement>("button") ?? []).find(
@@ -424,39 +451,39 @@ describe("createStreakr", () => {
 
       enable?.click();
       expect(target.querySelector(".sk-empty")).toBeNull();
-      expect(target.querySelectorAll(".sk-provider.active")).toHaveLength(3);
+      expect(target.querySelectorAll(".sk-source.active")).toHaveLength(3);
     });
   });
 
   describe("ready body", () => {
     it("renders 4 stat cards by default", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       expect(target.querySelectorAll(".sk-stat")).toHaveLength(4);
     });
 
     it("hides stats when showStats is false", () => {
-      instance = createStreakr({ target, years, showStats: false, getDays });
+      instance = createStreakr({ target, years, showStats: false, days });
       expect(target.querySelector(".sk-stats")).toBeNull();
     });
 
     it("shows Current Streak for the current year", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       expect(target.textContent).toContain("Current Streak");
       expect(target.textContent).not.toContain("Active Rate");
     });
 
     it("shows Active Rate instead of Current Streak for historical years", () => {
       const historicalDays: StreakrDay[] = [
-        { date: new Date(2025, 0, 1), total: 1, sources: { github: 1 } },
-        { date: new Date(2025, 0, 2), total: 0, sources: {} },
-        { date: new Date(2025, 0, 3), total: 2, sources: { github: 1, gitlab: 1 } },
-        { date: new Date(2025, 0, 4), total: 0, sources: {} },
+        { date: dateKey(new Date(2025, 0, 1)), count: 1, sources: { github: 1 } },
+        { date: dateKey(new Date(2025, 0, 2)), count: 0, sources: {} },
+        { date: dateKey(new Date(2025, 0, 3)), count: 2, sources: { github: 1, gitlab: 1 } },
+        { date: dateKey(new Date(2025, 0, 4)), count: 0, sources: {} },
       ];
       instance = createStreakr({
         target,
         years: [2025, 2026],
         year: 2025,
-        getDays: () => historicalDays,
+        days: () => historicalDays,
       });
 
       expect(target.textContent).toContain("Active Rate");
@@ -466,21 +493,21 @@ describe("createStreakr", () => {
     });
 
     it("renders a heatmap SVG", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       expect(target.querySelector(".sk-heatmap-svg")).toBeTruthy();
     });
 
     it("renders the current-year heatmap with a full-year footprint", () => {
       const fullYear = makeYearDays(2025);
       const cutoff = new Date(2026, 4, 10);
-      const partialYear = makeYearDays(2026).filter((d) => d.date <= cutoff);
+      const partialYear = makeYearDays(2026).filter((d) => d.date <= dateKey(cutoff));
       const partialGetDays = (year: number) => (year === 2026 ? partialYear : fullYear);
       instance = createStreakr({
         target,
         years: [2025, 2026],
         year: 2025,
-        today: new Date(2026, 4, 10),
-        getDays: partialGetDays,
+        today: dateKey(new Date(2026, 4, 10)),
+        days: partialGetDays,
       });
       const fullCols = target.querySelectorAll(".sk-heatmap-svg > g > g").length;
       instance.setYear(2026);
@@ -495,21 +522,21 @@ describe("createStreakr", () => {
     it("excludes prior-year days from the current year", () => {
       const today = new Date(2026, 0, 15);
       const priorYearDay: StreakrDay = {
-        date: new Date(2025, 11, 25),
-        total: 3,
+        date: dateKey(new Date(2025, 11, 25)),
+        count: 3,
         sources: { github: 3 },
       };
       const currentYearDay: StreakrDay = {
-        date: new Date(2026, 0, 5),
-        total: 5,
+        date: dateKey(new Date(2026, 0, 5)),
+        count: 5,
         sources: { github: 5 },
       };
       instance = createStreakr({
         target,
         years: [2025, 2026],
         year: 2026,
-        today,
-        getDays: (year) => (year === 2026 ? [currentYearDay] : [priorYearDay]),
+        today: dateKey(today),
+        days: (year) => (year === 2026 ? [currentYearDay] : [priorYearDay]),
       });
 
       const statValues = target.querySelectorAll<HTMLElement>(".sk-stat-value");
@@ -521,8 +548,8 @@ describe("createStreakr", () => {
         target,
         years: [2026],
         year: 2026,
-        today: new Date(2026, 0, 15),
-        getDays: (year) => (year === 2026 ? [{ date: new Date(2026, 0, 5), total: 4 }] : []),
+        today: dateKey(new Date(2026, 0, 15)),
+        days: (year) => (year === 2026 ? [{ date: dateKey(new Date(2026, 0, 5)), count: 4 }] : []),
       });
 
       expect(target.querySelector(".sk-empty")).toBeNull();
@@ -530,16 +557,16 @@ describe("createStreakr", () => {
       expect(target.textContent).toContain("Total Contributions");
     });
 
-    it("keeps total-only days visible when all providers are disabled", () => {
+    it("keeps total-only days visible when all sources are disabled", () => {
       instance = createStreakr({
         target,
         years: [2026],
         year: 2026,
-        today: new Date(2026, 0, 15),
-        getDays: (year) => (year === 2026 ? [{ date: new Date(2026, 0, 5), total: 4 }] : []),
+        today: dateKey(new Date(2026, 0, 15)),
+        days: (year) => (year === 2026 ? [{ date: dateKey(new Date(2026, 0, 5)), count: 4 }] : []),
       });
 
-      instance.setProviders({ github: false, gitlab: false, bitbucket: false });
+      instance.setSources({ github: false, gitlab: false, bitbucket: false });
 
       expect(target.querySelector(".sk-noprov")).toBeNull();
       expect(target.querySelector(".sk-empty")).toBeNull();
@@ -547,20 +574,32 @@ describe("createStreakr", () => {
       expect(target.textContent).toContain("Total Contributions");
     });
 
-    it("excludes prior-year days from current-year provider chip totals", () => {
+    it("excludes prior-year days from current-year source chip totals", () => {
       const today = new Date(2026, 0, 15);
       instance = createStreakr({
         target,
         years: [2025, 2026],
         year: 2026,
-        today,
-        getDays: (year) =>
+        today: dateKey(today),
+        days: (year) =>
           year === 2026
-            ? [{ date: new Date(2026, 0, 5), total: 12, sources: { github: 5, gitlab: 7 } }]
-            : [{ date: new Date(2025, 11, 25), total: 5, sources: { github: 3, gitlab: 2 } }],
+            ? [
+                {
+                  date: dateKey(new Date(2026, 0, 5)),
+                  count: 12,
+                  sources: { github: 5, gitlab: 7 },
+                },
+              ]
+            : [
+                {
+                  date: dateKey(new Date(2025, 11, 25)),
+                  count: 5,
+                  sources: { github: 3, gitlab: 2 },
+                },
+              ],
       });
 
-      const counts = Array.from(target.querySelectorAll(".sk-provider-count")).map(
+      const counts = Array.from(target.querySelectorAll(".sk-source-count")).map(
         (el) => el.textContent,
       );
       expect(counts).toEqual(["5", "7", "0"]);
@@ -570,8 +609,8 @@ describe("createStreakr", () => {
       const days: StreakrDay[] = [];
       for (let i = 0; i < 5; i++) {
         days.push({
-          date: new Date(2026, 0, 1 + i),
-          total: 2,
+          date: dateKey(new Date(2026, 0, 1 + i)),
+          count: 2,
           sources: { github: 2 },
         });
       }
@@ -579,8 +618,8 @@ describe("createStreakr", () => {
         target,
         years: [2026],
         year: 2026,
-        today: new Date(2026, 0, 5),
-        getDays: () => days,
+        today: dateKey(new Date(2026, 0, 5)),
+        days: () => days,
       });
       const statValues = target.querySelectorAll<HTMLElement>(".sk-stat-value");
       const currentStreak = statValues[2]?.textContent ?? "";
@@ -588,7 +627,7 @@ describe("createStreakr", () => {
     });
 
     it("renders the Less/More legend with 5 swatches", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       const swatches = target.querySelectorAll(".sk-legend-sq");
       expect(swatches).toHaveLength(5);
       expect(target.querySelector(".sk-legend")?.textContent).toContain("Less");
@@ -596,7 +635,7 @@ describe("createStreakr", () => {
     });
 
     it("never applies a loading animation class or stagger delay to ready cells", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       expect(target.querySelector("rect.sk-heatmap-skeleton-cell")).toBeNull();
       const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell");
       expect(cells.length).toBeGreaterThan(0);
@@ -607,7 +646,7 @@ describe("createStreakr", () => {
     });
 
     it("does not introduce a loading animation on update() re-render", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       instance.update({ theme: "light" });
 
       expect(target.querySelector("rect.sk-heatmap-skeleton-cell")).toBeNull();
@@ -617,7 +656,7 @@ describe("createStreakr", () => {
     });
 
     it("staggers skeleton cells by column and varies their peak intensity", () => {
-      instance = createStreakr({ target, years, state: "loading", getDays });
+      instance = createStreakr({ target, years, status: "loading", days });
       const cells = Array.from(
         target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-skeleton-cell"),
       );
@@ -634,10 +673,10 @@ describe("createStreakr", () => {
     });
 
     it("sweeps the grid up to the current day on the loading→ready transition, settling each cell into its real color", () => {
-      instance = createStreakr({ target, years, state: "loading", getDays });
+      instance = createStreakr({ target, years, status: "loading", days });
       expect(target.querySelector("rect.sk-heatmap-skeleton-cell")).toBeTruthy();
 
-      instance.update({ state: "ready" });
+      instance.update({ status: "ready" });
 
       expect(target.querySelector("rect.sk-heatmap-skeleton-cell")).toBeNull();
       const cells = Array.from(target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell"));
@@ -681,8 +720,8 @@ describe("createStreakr", () => {
     });
 
     it("does not replay the reveal sweep on a later render once already ready", () => {
-      instance = createStreakr({ target, years, state: "loading", getDays });
-      instance.update({ state: "ready" });
+      instance = createStreakr({ target, years, status: "loading", days });
+      instance.update({ status: "ready" });
       instance.update({ theme: "light" });
 
       const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell");
@@ -696,13 +735,13 @@ describe("createStreakr", () => {
 
   describe("lifecycle states", () => {
     it("renders the loading skeleton when state='loading'", () => {
-      instance = createStreakr({ target, years, state: "loading", getDays });
+      instance = createStreakr({ target, years, status: "loading", days });
       expect(target.querySelector(".sk-heatmap-svg--skeleton")).toBeTruthy();
       expect(target.querySelector(".sk-heatmap-stage > .sk-heatmap-svg-wrap")).toBeTruthy();
       expect(target.querySelector(".sk-legend")).toBeTruthy();
       expect(target.querySelector(".sk-heatmap-svg")).toBeTruthy();
-      expect(target.querySelectorAll(".sk-provider")).toHaveLength(3);
-      expect(target.querySelectorAll(".sk-provider-count .sk-skeleton")).toHaveLength(3);
+      expect(target.querySelectorAll(".sk-source")).toHaveLength(3);
+      expect(target.querySelectorAll(".sk-source-count .sk-skeleton")).toHaveLength(3);
       expect(target.querySelectorAll(".sk-stat")).toHaveLength(4);
       expect(target.textContent).toContain("Total Contributions");
       expect(target.textContent).toContain("Best Streak");
@@ -716,7 +755,7 @@ describe("createStreakr", () => {
     });
 
     it("gives loading skeleton cells a staggered sweep animation", () => {
-      instance = createStreakr({ target, years, state: "loading", getDays });
+      instance = createStreakr({ target, years, status: "loading", days });
       const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-skeleton-cell");
       expect(cells.length).toBeGreaterThan(0);
       cells.forEach((cell) => {
@@ -728,20 +767,18 @@ describe("createStreakr", () => {
     });
 
     it("keeps the skeleton sweep animating indefinitely while loading (infinite iteration)", () => {
-      instance = createStreakr({ target, years, state: "loading", getDays });
+      instance = createStreakr({ target, years, status: "loading", days });
       expect(target.querySelector("rect.sk-heatmap-skeleton-cell")).toBeTruthy();
 
       const ruleMatch = streakrCss.match(/\.sk-heatmap-skeleton-cell\s*{[^}]*}/);
       expect(ruleMatch?.[0]).toContain("infinite");
 
-      instance.update({ state: "loading" });
+      instance.update({ status: "loading" });
       expect(target.querySelector("rect.sk-heatmap-skeleton-cell")).toBeTruthy();
     });
 
-    it("does not depend on getDays/contribution data for the loading skeleton", () => {
-      const getDaysSpy = vi.fn(getDays);
-      instance = createStreakr({ target, years, state: "loading", getDays: getDaysSpy });
-      expect(getDaysSpy).not.toHaveBeenCalled();
+    it("renders the loading skeleton without contribution data", () => {
+      instance = createStreakr({ target, years, status: "loading", days: [] });
       const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-skeleton-cell");
       cells.forEach((cell) => {
         expect(cell.getAttribute("fill")).toBe("var(--sk-heat-0)");
@@ -769,15 +806,15 @@ describe("createStreakr", () => {
         };
       };
 
-      instance = createStreakr({ target, years: [2026], year: 2026, getDays });
+      instance = createStreakr({ target, years: [2026], year: 2026, days });
       const ready = heatmapSnapshot();
-      instance.update({ state: "loading" });
+      instance.update({ status: "loading" });
 
       expect(heatmapSnapshot()).toEqual(ready);
     });
 
     it("renders the empty illustration when state='empty'", () => {
-      instance = createStreakr({ target, years, state: "empty", getDays });
+      instance = createStreakr({ target, years, status: "empty", days });
       expect(target.querySelector(".sk-empty")).toBeTruthy();
     });
 
@@ -785,7 +822,7 @@ describe("createStreakr", () => {
       instance = createStreakr({
         target,
         years,
-        getDays: () => [{ date: new Date(2026, 0, 1), total: 0, sources: {} }],
+        days: () => [{ date: dateKey(new Date(2026, 0, 1)), count: 0, sources: {} }],
       });
       expect(target.querySelector(".sk-empty")).toBeTruthy();
       expect(target.querySelector(".sk-empty button")).toBeNull();
@@ -796,7 +833,7 @@ describe("createStreakr", () => {
       instance = createStreakr({
         target,
         years: [],
-        getDays: getEmptyDays,
+        days: getEmptyDays,
       });
 
       expect(target.querySelector(".sk-empty")).toBeTruthy();
@@ -806,7 +843,7 @@ describe("createStreakr", () => {
 
   describe("tooltip", () => {
     it("appears on cell mouseenter for a non-empty cell", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell");
       const cell = cells[3]!;
       cell.dispatchEvent(new MouseEvent("mouseenter", { clientX: 50, clientY: 50 }));
@@ -815,7 +852,7 @@ describe("createStreakr", () => {
     });
 
     it("hides on cell mouseleave", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       const cell = target.querySelector<SVGRectElement>("rect.sk-heatmap-cell");
       expect(cell).toBeTruthy();
       cell?.dispatchEvent(new MouseEvent("mouseenter", { clientX: 50, clientY: 50 }));
@@ -825,7 +862,7 @@ describe("createStreakr", () => {
     });
 
     it("hides at the start of every render", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       const cell = target.querySelector<SVGRectElement>("rect.sk-heatmap-cell");
       expect(cell).toBeTruthy();
       cell?.dispatchEvent(new MouseEvent("mouseenter", { clientX: 10, clientY: 10 }));
@@ -835,21 +872,21 @@ describe("createStreakr", () => {
       expect(tooltip?.classList.contains("visible")).toBe(false);
     });
 
-    it("only lists enabled providers in tooltip rows", () => {
+    it("only lists enabled sources in tooltip rows", () => {
       instance = createStreakr({
         target,
         years: [2026],
-        today: new Date(2026, 0, 1),
-        getDays: () => [
+        today: dateKey(new Date(2026, 0, 1)),
+        days: () => [
           {
-            date: new Date(2026, 0, 1),
-            total: 7,
+            date: dateKey(new Date(2026, 0, 1)),
+            count: 7,
             sources: { github: 2, gitlab: 5 },
           },
         ],
       });
 
-      instance.setProviders({ gitlab: false });
+      instance.setSources({ gitlab: false });
 
       const cells = Array.from(target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell"));
       const cell = cells.find(
@@ -869,14 +906,14 @@ describe("createStreakr", () => {
 
   describe("instance API", () => {
     it("update() applies a partial patch", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       instance.update({ theme: "light" });
       expect(target.querySelector<HTMLElement>(".sk-root")?.dataset.theme).toBe("light");
     });
 
     it("update() ignores undefined values for every option", () => {
       const onYearChange = vi.fn();
-      const onProviderToggle = vi.fn();
+      const onSourceToggle = vi.fn();
       instance = createStreakr({
         target,
         years,
@@ -884,30 +921,29 @@ describe("createStreakr", () => {
         theme: "dark",
         accent: "#123456",
         tintHeatmap: true,
-        showProviders: true,
+        showSources: true,
         showStats: true,
-        state: "ready",
-        today: new Date(2026, 5, 20),
-        getDays,
+        status: "ready",
+        today: dateKey(new Date(2026, 5, 20)),
+        days,
         onYearChange,
-        onProviderToggle,
+        onSourceToggle,
       });
 
       instance.update({
-        target: undefined as unknown as HTMLElement,
         theme: undefined as unknown as "dark",
         accent: undefined as unknown as string,
         tintHeatmap: undefined as unknown as boolean,
-        showProviders: undefined as unknown as boolean,
+        showSources: undefined as unknown as boolean,
         showStats: undefined as unknown as boolean,
-        state: undefined as unknown as "ready",
+        status: undefined as unknown as "ready",
         years: undefined as unknown as number[],
         year: undefined as unknown as number,
-        today: undefined as unknown as Date,
-        getDays: undefined as unknown as typeof getDays,
-        providers: undefined as unknown as StreakrProvider[],
+        today: undefined as unknown as string,
+        days: undefined as unknown as typeof days,
+        sources: undefined as unknown as StreakrSource[],
         onYearChange: undefined as unknown as typeof onYearChange,
-        onProviderToggle: undefined as unknown as typeof onProviderToggle,
+        onSourceToggle: undefined as unknown as typeof onSourceToggle,
       });
 
       const root = target.querySelector<HTMLElement>(".sk-root");
@@ -915,72 +951,64 @@ describe("createStreakr", () => {
       expect(root?.style.getPropertyValue("--sk-accent")).toBe("#123456");
       expect(target.querySelectorAll(".sk-year-tab")).toHaveLength(years.length);
       expect(target.querySelector(".sk-year-tab.active")?.textContent).toBe("2026");
-      expect(target.querySelector(".sk-providers")).toBeTruthy();
+      expect(target.querySelector(".sk-sources")).toBeTruthy();
       expect(target.querySelector(".sk-stats")).toBeTruthy();
 
       instance.setYear(2024);
       expect(onYearChange).toHaveBeenCalledWith(2024);
-      target.querySelector<HTMLButtonElement>(".sk-provider")?.click();
-      expect(onProviderToggle).toHaveBeenCalled();
+      target.querySelector<HTMLButtonElement>(".sk-source")?.click();
+      expect(onSourceToggle).toHaveBeenCalled();
     });
 
-    it("update({ target }) throws after mount", () => {
-      instance = createStreakr({ target, years, getDays });
+    it("does not expose target through update()", () => {
+      instance = createStreakr({ target, years, days });
       const sk = instance;
       const other = document.createElement("div");
       document.body.appendChild(other);
-      expect(() => sk.update({ target: other })).toThrow(/Cannot update 'target' after mount/);
+      // @ts-expect-error target is intentionally excluded from the public update contract
+      sk.update({ target: other });
       expect(target.querySelector(".sk-root")).toBeTruthy();
+      expect(other.querySelector(".sk-root")).toBeNull();
       other.remove();
     });
 
-    it("update({ target: undefined }) is a no-op, not a throw", () => {
-      instance = createStreakr({ target, years, getDays });
-      const sk = instance;
-      expect(() => sk.update({ target: undefined as unknown as HTMLElement })).not.toThrow();
-      expect(target.querySelector<HTMLElement>(".sk-root")?.dataset.theme).toBe("dark");
-    });
-
     it("update() applies a valid patch and re-renders", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       expect(target.querySelectorAll(".sk-stat")).toHaveLength(4);
       instance.update({ showStats: false });
       expect(target.querySelector(".sk-stats")).toBeNull();
     });
 
     it("update({ year }) reflects the new year in the UI", () => {
-      instance = createStreakr({ target, years, year: 2026, getDays });
+      instance = createStreakr({ target, years, year: 2026, days });
       instance.update({ year: 2024 });
       expect(target.querySelector(".sk-year-tab.active")?.textContent).toBe("2024");
       expect(target.querySelector(".sk-subtitle")?.textContent).toBe("2024");
     });
 
     it("update({ years }) re-derives the active year when it is no longer present", () => {
-      instance = createStreakr({ target, years, year: 2026, getDays });
+      instance = createStreakr({ target, years, year: 2026, days });
       instance.update({ years: [2022, 2023, 2024] });
       expect(target.querySelector(".sk-year-tab.active")?.textContent).toBe("2024");
     });
 
-    it("update({ years: [] }) keeps the active year visible", () => {
-      instance = createStreakr({ target, years, year: 2026, getDays });
+    it("update({ years: [] }) clears the active year", () => {
+      instance = createStreakr({ target, years, year: 2026, days });
       instance.update({ years: [] });
-      expect(target.querySelectorAll(".sk-year-tab")).toHaveLength(1);
-      expect(target.querySelector(".sk-year-tab.active")?.textContent).toBe("2026");
-      expect(target.querySelector(".sk-subtitle")?.textContent).toBe("Year to date");
+      expect(target.querySelectorAll(".sk-year-tab")).toHaveLength(0);
+      expect(target.querySelector(".sk-subtitle")?.textContent).toBe("");
     });
 
-    it("update() preserves patch order for interdependent year options", () => {
-      instance = createStreakr({ target, years, year: 2026, getDays });
+    it("update() validates interdependent year options atomically", () => {
+      instance = createStreakr({ target, years, year: 2026, days });
 
-      instance.update({ year: 2023, years: [2024, 2025] });
+      expect(() => instance?.update({ year: 2023, years: [2024, 2025] })).toThrow(/year.*included/);
+      instance.update({ years: [2024, 2025], year: 2025 });
       expect(target.querySelector(".sk-year-tab.active")?.textContent).toBe("2025");
-
-      instance.update({ years: [2024, 2025], year: 2023 });
-      expect(target.querySelector(".sk-year-tab.active")?.textContent).toBe("2023");
     });
 
     it("update() rejects unknown keys at compile time", () => {
-      const sk = createStreakr({ target, years, getDays });
+      const sk = createStreakr({ target, years, days });
       expect(() => {
         // @ts-expect-error — 'unknownField' is not a key of StreakrOptions
         sk.update({ unknownField: true });
@@ -990,13 +1018,13 @@ describe("createStreakr", () => {
     });
 
     it("update({ theme }) applies the new theme and re-renders", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       instance.update({ theme: "light" });
       expect(target.querySelector<HTMLElement>(".sk-root")?.dataset.theme).toBe("light");
     });
 
     it("update({ accent }) applies the new accent color", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       instance.update({ accent: "#ff0000" });
       expect(
         target.querySelector<HTMLElement>(".sk-root")?.style.getPropertyValue("--sk-accent"),
@@ -1004,49 +1032,58 @@ describe("createStreakr", () => {
     });
 
     it("update({ tintHeatmap }) toggles heatmap tinting", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       const root = target.querySelector<HTMLElement>(".sk-root");
       expect(root?.style.getPropertyValue("--sk-heat-4")).toBe("#39d353");
       instance.update({ tintHeatmap: false });
       expect(root?.style.getPropertyValue("--sk-heat-4")).toBe("");
     });
 
-    it("update({ showProviders }) toggles the provider chips", () => {
-      instance = createStreakr({ target, years, getDays });
-      instance.update({ showProviders: false });
-      expect(target.querySelector(".sk-providers")).toBeNull();
+    it("update({ showSources }) toggles the source chips", () => {
+      instance = createStreakr({ target, years, days });
+      instance.update({ showSources: false });
+      expect(target.querySelector(".sk-sources")).toBeNull();
     });
 
     it("update({ state }) switches to loading state", () => {
-      instance = createStreakr({ target, years, getDays });
-      instance.update({ state: "loading" });
+      instance = createStreakr({ target, years, days });
+      instance.update({ status: "loading" });
       expect(target.querySelector(".sk-skeleton")).toBeTruthy();
     });
 
     it("update({ today }) updates the reference date", () => {
-      instance = createStreakr({ target, years, year: 2024, getDays });
+      instance = createStreakr({ target, years, year: 2024, days });
       expect(target.querySelector(".sk-subtitle")?.textContent).toBe("2024");
-      instance.update({ today: new Date(2024, 5, 15) });
+      instance.update({ today: dateKey(new Date(2024, 5, 15)) });
       expect(target.querySelector(".sk-subtitle")?.textContent).toBe("Year to date");
     });
 
-    it("update({ getDays }) swaps the data source and re-renders", () => {
-      instance = createStreakr({ target, years, getDays });
-      const newGetDays = vi.fn(() => [{ date: new Date(2026, 0, 1), total: 99 }]);
-      instance.update({ getDays: newGetDays });
-      expect(newGetDays).toHaveBeenCalledWith(2026);
+    it("update({ days }) swaps the data source and re-renders", () => {
+      instance = createStreakr({ target, years, days });
+      instance.update({ days: [{ date: dateKey(new Date(2026, 0, 1)), count: 99 }] });
+      expect(target.textContent).toContain("99");
     });
 
-    it("update({ providers }) replaces the provider list", () => {
-      instance = createStreakr({ target, years, getDays });
+    it("update({ sources }) replaces the source list", () => {
+      instance = createStreakr({ target, years, days });
+      const sourceDays = days.map((day) => {
+        if (!day.sources) return day;
+        const { bitbucket: _bitbucket, ...sources } = day.sources;
+        return {
+          ...day,
+          count: Object.values(sources).reduce((sum, count) => sum + count, 0),
+          sources,
+        };
+      });
       instance.update({
-        providers: [
+        days: sourceDays,
+        sources: [
           { key: "github", name: "GitHub", color: "#39d353" },
           { key: "gitlab", name: "GitLab", color: "#fc6d26" },
         ],
       });
-      const labels = Array.from(target.querySelectorAll<HTMLButtonElement>(".sk-provider")).map(
-        (provider) => provider.getAttribute("aria-label"),
+      const labels = Array.from(target.querySelectorAll<HTMLButtonElement>(".sk-source")).map(
+        (source) => source.getAttribute("aria-label"),
       );
       expect(labels).toHaveLength(2);
       expect(labels[0]).toContain("GitHub");
@@ -1054,18 +1091,18 @@ describe("createStreakr", () => {
     });
 
     it("update({ onYearChange }) registers a new year-change callback", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       const cb = vi.fn();
       instance.update({ onYearChange: cb });
       instance.setYear(2024);
       expect(cb).toHaveBeenCalledWith(2024);
     });
 
-    it("update({ onProviderToggle }) registers a new toggle callback", () => {
-      instance = createStreakr({ target, years, getDays });
+    it("update({ onSourceToggle }) registers a new toggle callback", () => {
+      instance = createStreakr({ target, years, days });
       const cb = vi.fn();
-      instance.update({ onProviderToggle: cb });
-      const chip = target.querySelector<HTMLButtonElement>(".sk-provider");
+      instance.update({ onSourceToggle: cb });
+      const chip = target.querySelector<HTMLButtonElement>(".sk-source");
       chip?.click();
       expect(cb).toHaveBeenCalledWith("github", false, {
         github: false,
@@ -1075,20 +1112,20 @@ describe("createStreakr", () => {
     });
 
     it("setYear() updates the active year", () => {
-      instance = createStreakr({ target, years, year: 2026, getDays });
+      instance = createStreakr({ target, years, year: 2026, days });
       instance.setYear(2024);
       expect(target.querySelector(".sk-year-tab.active")?.textContent).toBe("2024");
     });
 
-    it("setProviders() merges toggle state", () => {
-      instance = createStreakr({ target, years, getDays });
-      instance.setProviders({ github: false });
-      const githubChip = target.querySelector<HTMLButtonElement>(".sk-provider");
+    it("setSources() merges toggle state", () => {
+      instance = createStreakr({ target, years, days });
+      instance.setSources({ github: false });
+      const githubChip = target.querySelector<HTMLButtonElement>(".sk-source");
       expect(githubChip?.classList.contains("active")).toBe(false);
     });
 
     it("destroy() removes the root element and tooltip", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       instance.destroy();
       instance = null;
       expect(target.querySelector(".sk-root")).toBeNull();
@@ -1097,7 +1134,7 @@ describe("createStreakr", () => {
 
     it("destroy() removes the keydown listener (modal Escape no-op afterwards)", () => {
       const many = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
-      instance = createStreakr({ target, years: many, getDays });
+      instance = createStreakr({ target, years: many, days });
       target.querySelector<HTMLButtonElement>(".sk-year-more")?.click();
       instance.destroy();
       instance = null;
@@ -1137,29 +1174,31 @@ describe("createStreakr", () => {
     };
 
     it("observes the heatmap wrap after mount", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       expect(observed.some((el) => el.classList.contains("sk-heatmap-wrap"))).toBe(true);
     });
 
     it("keeps the current layout when the observer fires without a width change", () => {
       setContainerWidth(1024);
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       const svgBefore = target.querySelector(".sk-heatmap-svg");
       expect(svgBefore).toBeTruthy();
 
       fireResize();
+      vi.runOnlyPendingTimers();
 
       expect(target.querySelector(".sk-heatmap-svg")).toBe(svgBefore);
     });
 
     it("switches to the ring on the first resize below the breakpoint even when the initial observation never fired", () => {
       setContainerWidth(1024);
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       expect(target.querySelector(".sk-heatmap-svg")).toBeTruthy();
       expect(target.querySelector(".sk-ring-svg")).toBeNull();
 
       setContainerWidth(375);
       fireResize();
+      vi.runOnlyPendingTimers();
 
       expect(target.querySelector(".sk-ring-svg")).toBeTruthy();
       expect(target.querySelector(".sk-heatmap-svg")).toBeNull();
@@ -1167,11 +1206,12 @@ describe("createStreakr", () => {
 
     it("switches back to the heatmap when resized above the breakpoint", () => {
       setContainerWidth(375);
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       expect(target.querySelector(".sk-ring-svg")).toBeTruthy();
 
       setContainerWidth(1024);
       fireResize();
+      vi.runOnlyPendingTimers();
 
       expect(target.querySelector(".sk-heatmap-svg")).toBeTruthy();
       expect(target.querySelector(".sk-ring-svg")).toBeNull();
@@ -1240,28 +1280,28 @@ describe("createStreakr", () => {
 
     it("renders the ring instead of the heatmap on narrow containers", () => {
       setContainerWidth(375);
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       expect(target.querySelector(".sk-ring-svg")).toBeTruthy();
       expect(target.querySelector(".sk-heatmap-svg")).toBeNull();
     });
 
     it("renders the ring skeleton on narrow containers when loading", () => {
       setContainerWidth(375);
-      instance = createStreakr({ target, years, state: "loading", getDays });
+      instance = createStreakr({ target, years, status: "loading", days });
       expect(target.querySelector(".sk-ring-svg--skeleton")).toBeTruthy();
       expect(target.querySelector(".sk-heatmap-svg--skeleton")).toBeNull();
     });
 
     it("keeps the heatmap on wide containers", () => {
       setContainerWidth(1024);
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       expect(target.querySelector(".sk-heatmap-svg")).toBeTruthy();
       expect(target.querySelector(".sk-ring-svg")).toBeNull();
     });
 
     it("renders 12 month labels around the ring", () => {
       setContainerWidth(375);
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       const labels = target.querySelectorAll(".sk-ring-months text");
       expect(labels).toHaveLength(12);
       expect(Array.from(labels).map((l) => l.textContent)).toEqual([
@@ -1282,7 +1322,7 @@ describe("createStreakr", () => {
 
     it("places guide circles at the start and end of day lines", () => {
       setContainerWidth(375);
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       const innerRing = target.querySelector(".sk-ring-inner");
       const outerRing = target.querySelector(".sk-ring-outer");
       const daysGroup = target.querySelector(".sk-ring-days");
@@ -1307,7 +1347,7 @@ describe("createStreakr", () => {
 
     it("shows the selected day in the center", () => {
       setContainerWidth(375);
-      instance = createStreakr({ target, years, year: 2026, getDays });
+      instance = createStreakr({ target, years, year: 2026, days });
       const count = target.querySelector(".sk-ring-count");
       const date = target.querySelector(".sk-ring-date");
       expect(count).toBeTruthy();
@@ -1322,8 +1362,8 @@ describe("createStreakr", () => {
         target,
         years: [2026],
         year: 2026,
-        today: new Date(2026, 0, 5),
-        getDays,
+        today: dateKey(new Date(2026, 0, 5)),
+        days,
       });
 
       const lines = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line"));
@@ -1350,7 +1390,7 @@ describe("createStreakr", () => {
         target,
         years: [2025],
         year: 2025,
-        getDays: () => makeYearDays(2025, 1),
+        days: () => makeYearDays(2025, 1),
       });
 
       const lines = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line"));
@@ -1377,7 +1417,7 @@ describe("createStreakr", () => {
 
     it("clips the day-stroke group to the exact annulus between the guide circles", () => {
       setContainerWidth(375);
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
 
       const daysGroup = target.querySelector(".sk-ring-days");
       const innerRing = target.querySelector(".sk-ring-inner");
@@ -1412,7 +1452,7 @@ describe("createStreakr", () => {
 
     it("applies the same annulus clip to the loading skeleton ring", () => {
       setContainerWidth(375);
-      instance = createStreakr({ target, years, state: "loading", getDays });
+      instance = createStreakr({ target, years, status: "loading", days });
 
       const daysGroup = target.querySelector(".sk-ring-svg--skeleton .sk-ring-days");
       const clipAttr = daysGroup?.getAttribute("clip-path");
@@ -1429,8 +1469,8 @@ describe("createStreakr", () => {
         target,
         years: [2026],
         year: 2026,
-        state: "loading",
-        getDays,
+        status: "loading",
+        days,
       });
       expect(target.querySelectorAll(".sk-ring-skeleton-line")).toHaveLength(365);
     });
@@ -1441,8 +1481,8 @@ describe("createStreakr", () => {
         target,
         years: [2024],
         year: 2024,
-        state: "loading",
-        getDays,
+        status: "loading",
+        days,
       });
       expect(target.querySelectorAll(".sk-ring-skeleton-line")).toHaveLength(366);
     });
@@ -1453,8 +1493,8 @@ describe("createStreakr", () => {
         target,
         years: [2026],
         year: 2026,
-        state: "loading",
-        getDays,
+        status: "loading",
+        days,
       });
       const lines = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-skeleton-line"));
       expect(lines).toHaveLength(365);
@@ -1474,7 +1514,7 @@ describe("createStreakr", () => {
 
     it("keeps skeleton ring lines fully non-interactive", () => {
       setContainerWidth(375);
-      instance = createStreakr({ target, years, state: "loading", getDays });
+      instance = createStreakr({ target, years, status: "loading", days });
       const lines = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-skeleton-line"));
       expect(lines.length).toBeGreaterThan(0);
       lines.forEach((line) => {
@@ -1497,7 +1537,7 @@ describe("createStreakr", () => {
 
     it("spins the same hand the ready ring uses, starting between the center and the inner guide", () => {
       setContainerWidth(375);
-      instance = createStreakr({ target, years, state: "loading", getDays });
+      instance = createStreakr({ target, years, status: "loading", days });
       const hand = target.querySelector<SVGGElement>(".sk-ring-hand--skeleton");
       expect(hand).toBeTruthy();
       expect(hand?.hasAttribute("transform")).toBe(false);
@@ -1517,9 +1557,9 @@ describe("createStreakr", () => {
         target,
         years: [2026],
         year: 2026,
-        state: "loading",
-        today: new Date(2026, 0, 17),
-        getDays,
+        status: "loading",
+        today: dateKey(new Date(2026, 0, 17)),
+        days,
       });
       const center = target.querySelector(".sk-ring-center--loading");
       expect(center).toBeTruthy();
@@ -1534,9 +1574,9 @@ describe("createStreakr", () => {
         target,
         years: [2025],
         year: 2025,
-        state: "loading",
-        today: new Date(2026, 0, 17),
-        getDays,
+        status: "loading",
+        today: dateKey(new Date(2026, 0, 17)),
+        days,
       });
       const center = target.querySelector(".sk-ring-center--loading");
       expect(center?.querySelector(".sk-ring-date")?.textContent).toBe("Jan 1");
@@ -1548,9 +1588,9 @@ describe("createStreakr", () => {
         target,
         years: [2026],
         year: 2026,
-        state: "ready",
-        today: new Date(2026, 0, 17),
-        getDays,
+        status: "ready",
+        today: dateKey(new Date(2026, 0, 17)),
+        days,
       });
 
       const jan2Line = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line")).find(
@@ -1560,7 +1600,7 @@ describe("createStreakr", () => {
       jan2Line?.dispatchEvent(new Event("click", { bubbles: true }));
       expect(target.querySelector(".sk-ring-date")?.textContent).toBe("Jan 2");
 
-      instance.update({ state: "loading" });
+      instance.update({ status: "loading" });
       expect(target.querySelector(".sk-ring-center--loading .sk-ring-date")?.textContent).toBe(
         "Jan 2",
       );
@@ -1572,9 +1612,9 @@ describe("createStreakr", () => {
         target,
         years: [2026],
         year: 2026,
-        state: "loading",
-        today: new Date(2026, 0, 17),
-        getDays,
+        status: "loading",
+        today: dateKey(new Date(2026, 0, 17)),
+        days,
       });
       const lines = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-skeleton-line"));
       expect(lines).toHaveLength(365);
@@ -1591,12 +1631,12 @@ describe("createStreakr", () => {
         target,
         years: [2026],
         year: 2026,
-        state: "loading",
-        getDays,
+        status: "loading",
+        days,
       });
       expect(target.querySelector(".sk-ring-skeleton-line")).toBeTruthy();
 
-      instance.update({ state: "ready" });
+      instance.update({ status: "ready" });
 
       expect(target.querySelector(".sk-ring-skeleton-line")).toBeNull();
       expect(target.querySelector(".sk-ring-svg--skeleton")).toBeNull();
@@ -1617,7 +1657,7 @@ describe("createStreakr", () => {
 
     it("still selects the desktop heatmap skeleton (not the ring skeleton) above the mobile breakpoint", () => {
       setContainerWidth(1024);
-      instance = createStreakr({ target, years, state: "loading", getDays });
+      instance = createStreakr({ target, years, status: "loading", days });
       expect(target.querySelector(".sk-heatmap-svg--skeleton")).toBeTruthy();
       expect(target.querySelector(".sk-ring-svg--skeleton")).toBeNull();
       expect(target.querySelector(".sk-ring-skeleton-line")).toBeNull();
@@ -1629,10 +1669,10 @@ describe("createStreakr", () => {
         target,
         years: [2026],
         year: 2026,
-        today: new Date(2026, 0, 5),
-        getDays: () => [
-          { date: new Date(2026, 0, 1), total: 9, sources: { github: 9 } },
-          { date: new Date(2026, 0, 5), total: 2, sources: { github: 2 } },
+        today: dateKey(new Date(2026, 0, 5)),
+        days: () => [
+          { date: dateKey(new Date(2026, 0, 1)), count: 9, sources: { github: 9 } },
+          { date: dateKey(new Date(2026, 0, 5)), count: 2, sources: { github: 2 } },
         ],
       });
 
@@ -1656,10 +1696,10 @@ describe("createStreakr", () => {
         target,
         years: [2026],
         year: 2026,
-        today: new Date(2026, 0, 5),
-        getDays: () => [
-          { date: new Date(2026, 0, 2), total: 7, sources: { github: 7 } },
-          { date: new Date(2026, 0, 5), total: 2, sources: { github: 2 } },
+        today: dateKey(new Date(2026, 0, 5)),
+        days: () => [
+          { date: dateKey(new Date(2026, 0, 2)), count: 7, sources: { github: 7 } },
+          { date: dateKey(new Date(2026, 0, 5)), count: 2, sources: { github: 2 } },
         ],
       });
 
@@ -1681,8 +1721,8 @@ describe("createStreakr", () => {
         target,
         years: [2026],
         year: 2026,
-        today: new Date(2026, 0, 5),
-        getDays,
+        today: dateKey(new Date(2026, 0, 5)),
+        days,
       });
 
       const futureLine = target.querySelector<SVGLineElement>(".sk-ring-line--future");
@@ -1703,11 +1743,11 @@ describe("createStreakr", () => {
         target,
         years: [2025],
         year: 2025,
-        today: new Date(2025, 11, 31),
-        getDays: () => [
-          { date: new Date(2025, 0, 1), total: 2, sources: { github: 2 } },
-          { date: new Date(2025, 3, 2), total: 11, sources: { github: 11 } },
-          { date: new Date(2025, 6, 2), total: 22, sources: { github: 22 } },
+        today: dateKey(new Date(2025, 11, 31)),
+        days: () => [
+          { date: dateKey(new Date(2025, 0, 1)), count: 2, sources: { github: 2 } },
+          { date: dateKey(new Date(2025, 3, 2)), count: 11, sources: { github: 11 } },
+          { date: dateKey(new Date(2025, 6, 2)), count: 22, sources: { github: 22 } },
         ],
       });
 
@@ -1747,11 +1787,11 @@ describe("createStreakr", () => {
         target,
         years: [2025],
         year: 2025,
-        today: new Date(2025, 11, 31),
-        getDays: () => [
-          { date: new Date(2025, 0, 1), total: 2, sources: { github: 2 } },
-          { date: new Date(2025, 3, 2), total: 11, sources: { github: 11 } },
-          { date: new Date(2025, 6, 2), total: 22, sources: { github: 22 } },
+        today: dateKey(new Date(2025, 11, 31)),
+        days: () => [
+          { date: dateKey(new Date(2025, 0, 1)), count: 2, sources: { github: 2 } },
+          { date: dateKey(new Date(2025, 3, 2)), count: 11, sources: { github: 11 } },
+          { date: dateKey(new Date(2025, 6, 2)), count: 22, sources: { github: 22 } },
         ],
       });
 
@@ -1778,11 +1818,11 @@ describe("createStreakr", () => {
         target,
         years: [2025],
         year: 2025,
-        today: new Date(2025, 11, 31),
-        getDays: () => [
-          { date: new Date(2025, 0, 1), total: 2, sources: { github: 2 } },
-          { date: new Date(2025, 3, 2), total: 11, sources: { github: 11 } },
-          { date: new Date(2025, 6, 2), total: 22, sources: { github: 22 } },
+        today: dateKey(new Date(2025, 11, 31)),
+        days: () => [
+          { date: dateKey(new Date(2025, 0, 1)), count: 2, sources: { github: 2 } },
+          { date: dateKey(new Date(2025, 3, 2)), count: 11, sources: { github: 11 } },
+          { date: dateKey(new Date(2025, 6, 2)), count: 22, sources: { github: 22 } },
         ],
       });
 
@@ -1808,11 +1848,11 @@ describe("createStreakr", () => {
         target,
         years: [2025],
         year: 2025,
-        today: new Date(2025, 11, 31),
-        getDays: () => [
-          { date: new Date(2025, 0, 1), total: 2, sources: { github: 2 } },
-          { date: new Date(2025, 3, 2), total: 11, sources: { github: 11 } },
-          { date: new Date(2025, 6, 2), total: 22, sources: { github: 22 } },
+        today: dateKey(new Date(2025, 11, 31)),
+        days: () => [
+          { date: dateKey(new Date(2025, 0, 1)), count: 2, sources: { github: 2 } },
+          { date: dateKey(new Date(2025, 3, 2)), count: 11, sources: { github: 11 } },
+          { date: dateKey(new Date(2025, 6, 2)), count: 22, sources: { github: 22 } },
         ],
       });
 
@@ -1841,10 +1881,10 @@ describe("createStreakr", () => {
         target,
         years: [2026],
         year: 2026,
-        today: new Date(2026, 0, 5),
-        getDays: () => [
-          { date: new Date(2026, 0, 4), total: 4, sources: { github: 4 } },
-          { date: new Date(2026, 0, 10), total: 10, sources: { github: 10 } },
+        today: dateKey(new Date(2026, 0, 5)),
+        days: () => [
+          { date: dateKey(new Date(2026, 0, 4)), count: 4, sources: { github: 4 } },
+          { date: dateKey(new Date(2026, 0, 10)), count: 10, sources: { github: 10 } },
         ],
       });
 
@@ -1876,7 +1916,7 @@ describe("createStreakr", () => {
 
     it("keeps the ring compact and the shared legend below", () => {
       setContainerWidth(375);
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       const ring = target.querySelector(".sk-ring");
 
       expect(target.querySelector(".sk-ring-title")).toBeNull();
@@ -1893,8 +1933,8 @@ describe("createStreakr", () => {
         target,
         years: [2026],
         year: 2026,
-        today: new Date(2026, 5, 20),
-        getDays,
+        today: dateKey(new Date(2026, 5, 20)),
+        days,
       });
       instance.setYear(2026);
       target.querySelector<HTMLButtonElement>(".sk-ring-center")?.click();
@@ -1914,14 +1954,14 @@ describe("createStreakr", () => {
     };
 
     it("tooltip has role=tooltip and aria-live=polite", () => {
-      instance = createStreakr({ target, years, getDays });
+      instance = createStreakr({ target, years, days });
       const tooltip = target.querySelector(".sk-tooltip");
       expect(tooltip?.getAttribute("role")).toBe("tooltip");
       expect(tooltip?.getAttribute("aria-live")).toBe("polite");
     });
 
     it("moves focus to the first year button when the modal opens", () => {
-      instance = createStreakr({ target, years: many, getDays });
+      instance = createStreakr({ target, years: many, days });
       target.querySelector<HTMLButtonElement>(".sk-year-more")?.click();
       const yearButtons = target.querySelectorAll<HTMLButtonElement>(".sk-modal-year");
       expect(yearButtons.length).toBeGreaterThan(0);
@@ -1929,7 +1969,7 @@ describe("createStreakr", () => {
     });
 
     it("traps Tab focus within the modal", () => {
-      instance = createStreakr({ target, years: many, getDays });
+      instance = createStreakr({ target, years: many, days });
       target.querySelector<HTMLButtonElement>(".sk-year-more")?.click();
       const modal = target.querySelector<HTMLElement>(".sk-modal");
       expect(modal).toBeTruthy();
@@ -1950,7 +1990,7 @@ describe("createStreakr", () => {
     });
 
     it("restores focus to the 'More years' button when the modal closes via Escape", () => {
-      instance = createStreakr({ target, years: many, getDays });
+      instance = createStreakr({ target, years: many, days });
       target.querySelector<HTMLButtonElement>(".sk-year-more")?.click();
       expect(target.querySelector(".sk-modal")).toBeTruthy();
       document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
@@ -1959,7 +1999,7 @@ describe("createStreakr", () => {
     });
 
     it("restores focus to the 'More years' button when the modal closes via backdrop", () => {
-      instance = createStreakr({ target, years: many, getDays });
+      instance = createStreakr({ target, years: many, days });
       target.querySelector<HTMLButtonElement>(".sk-year-more")?.click();
       target.querySelector<HTMLElement>(".sk-modal-overlay")?.click();
       expect(target.querySelector(".sk-modal")).toBeNull();
@@ -1972,10 +2012,10 @@ describe("createStreakr", () => {
         target,
         years: [2026],
         year: 2026,
-        today: new Date(2026, 0, 5),
-        getDays: () => [
-          { date: new Date(2026, 0, 2), total: 7, sources: { github: 7 } },
-          { date: new Date(2026, 0, 5), total: 2, sources: { github: 2 } },
+        today: dateKey(new Date(2026, 0, 5)),
+        days: () => [
+          { date: dateKey(new Date(2026, 0, 2)), count: 7, sources: { github: 7 } },
+          { date: dateKey(new Date(2026, 0, 5)), count: 2, sources: { github: 2 } },
         ],
       });
 
@@ -2003,10 +2043,10 @@ describe("createStreakr", () => {
         target,
         years: [2026],
         year: 2026,
-        today: new Date(2026, 0, 5),
-        getDays: () => [
-          { date: new Date(2026, 0, 2), total: 7, sources: { github: 7 } },
-          { date: new Date(2026, 0, 5), total: 2, sources: { github: 2 } },
+        today: dateKey(new Date(2026, 0, 5)),
+        days: () => [
+          { date: dateKey(new Date(2026, 0, 2)), count: 7, sources: { github: 7 } },
+          { date: dateKey(new Date(2026, 0, 5)), count: 2, sources: { github: 2 } },
         ],
       });
 
@@ -2033,10 +2073,10 @@ describe("createStreakr", () => {
         target,
         years: [2026],
         year: 2026,
-        today: new Date(2026, 0, 5),
-        getDays: () => [
-          { date: new Date(2026, 0, 2), total: 7, sources: { github: 7 } },
-          { date: new Date(2026, 0, 5), total: 2, sources: { github: 2 } },
+        today: dateKey(new Date(2026, 0, 5)),
+        days: () => [
+          { date: dateKey(new Date(2026, 0, 2)), count: 7, sources: { github: 7 } },
+          { date: dateKey(new Date(2026, 0, 5)), count: 2, sources: { github: 2 } },
         ],
       });
 

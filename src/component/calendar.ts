@@ -1,4 +1,4 @@
-import type { StreakrDay } from "../types";
+import type { RenderableDay } from "./types";
 
 export const DAY_LABELS = ["Mon", "Wed", "Fri"];
 
@@ -39,29 +39,29 @@ const pad2 = (value: number): string => String(value).padStart(2, "0");
 export const localDateKey = (d: Date): string =>
   `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 
-export const padDaysToYear = (days: StreakrDay[], year: number): StreakrDay[] => {
-  const byDate = new Map(days.map((day) => [localDateKey(day.date), day]));
+export const padDaysToYear = (days: RenderableDay[], year: number): RenderableDay[] => {
+  const byDate = new Map(days.map((day) => [day.dateKey, day]));
   const isLeap = (y: number) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
   const dayCount = isLeap(year) ? 366 : 365;
 
   return Array.from({ length: dayCount }, (_, i) => {
     const cur = new Date(year, 0, i + 1);
     const key = localDateKey(cur);
-    return byDate.get(key) ?? { date: cur, total: 0, sources: {} };
+    return byDate.get(key) ?? { date: cur, dateKey: key, total: 0, sources: {} };
   });
 };
 
 const padGridColumns = <T>(cols: (T | null)[][]): (T | null)[][] =>
   cols.map((col) => [...col, ...new Array<T | null>(Math.max(0, 7 - col.length)).fill(null)]);
 
-export const padDaysToRange = (days: StreakrDay[], start: Date, end: Date): StreakrDay[] => {
-  const byDate = new Map(days.map((day) => [localDateKey(day.date), day]));
-  const out: StreakrDay[] = [];
+export const padDaysToRange = (days: RenderableDay[], start: Date, end: Date): RenderableDay[] => {
+  const byDate = new Map(days.map((day) => [day.dateKey, day]));
+  const out: RenderableDay[] = [];
   const cur = new Date(start);
 
   while (cur <= end) {
     const key = localDateKey(cur);
-    out.push(byDate.get(key) ?? { date: new Date(cur), total: 0, sources: {} });
+    out.push(byDate.get(key) ?? { date: new Date(cur), dateKey: key, total: 0, sources: {} });
     cur.setDate(cur.getDate() + 1);
   }
 
@@ -73,7 +73,7 @@ export const yearToDateRange = (today: Date): { start: Date; end: Date } => ({
   end: new Date(today),
 });
 
-export const gridFromDays = <T extends StreakrDay>(days: T[]): (T | null)[][] => {
+export const gridFromDays = <T extends RenderableDay>(days: T[]): (T | null)[][] => {
   const first = days[0];
   if (!first) return [];
   return padGridColumns(
@@ -89,10 +89,10 @@ export const gridFromDays = <T extends StreakrDay>(days: T[]): (T | null)[][] =>
   );
 };
 
-export const monthHeaders = (cols: (StreakrDay | null)[][]): { col: number; label: string }[] =>
+export const monthHeaders = (cols: (RenderableDay | null)[][]): { col: number; label: string }[] =>
   cols.reduce<{ headers: { col: number; label: string }[]; lastMonth: number }>(
     (state, col, index) => {
-      const firstDay = col.find((day): day is StreakrDay => Boolean(day));
+      const firstDay = col.find((day): day is RenderableDay => Boolean(day));
       const month = firstDay?.date.getMonth();
       const lastHeader = state.headers[state.headers.length - 1];
       const hasRoom = !lastHeader || index - lastHeader.col >= 3;

@@ -27,7 +27,12 @@ body {
 
 body {
   color: #ededed;
-  font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    "Geist",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-wrap: pretty;
@@ -54,6 +59,24 @@ a {
 }
 a:hover {
   color: var(--lv2-accent, #39d353);
+}
+
+.lv2-skip {
+  position: fixed;
+  z-index: 1000;
+  top: 12px;
+  left: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #fff;
+  color: #000;
+  transform: translateY(-160%);
+  transition: transform 150ms ease;
+}
+
+.lv2-skip:focus {
+  color: #000;
+  transform: translateY(0);
 }
 
 .lv2 {
