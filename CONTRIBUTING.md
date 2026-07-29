@@ -24,12 +24,12 @@ pnpm check:package   # npm exports and declaration contract
 ## Commit convention
 
 Use [Conventional Commits](https://www.conventionalcommits.org/) with an
-imperative description in Spanish:
+imperative description in English:
 
 ```
-feat(component): Agrega navegación por teclado al selector
-fix(component): Corrige el foco del calendario
-docs: Actualiza las recetas de adquisición
+feat(component): Add keyboard navigation to the selector
+fix(component): Fix calendar focus
+docs: Update acquisition recipes
 ```
 
 Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`,
@@ -46,4 +46,4 @@ commit types drive version bumps. Use `!` after the type or a
 3. CI must be green: lint, format, typecheck, tests with coverage, build, dead
    code audit, package validation, and SonarCloud.
 4. PRs are squash-merged. The squash title becomes the release commit, so make
-   it a valid Conventional Commit in Spanish.
+   it a valid Conventional Commit in English.
