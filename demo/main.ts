@@ -3,18 +3,18 @@
 import "./fonts.css";
 import "./styles.css";
 import {
-  AGENT_PROVIDERS,
+  AGENT_SOURCES,
   createStreakr,
   type StreakrInstance,
-  type StreakrProvider,
-  type StreakrState,
+  type StreakrSource,
+  type StreakrStatus,
   type StreakrTheme,
 } from "../src/index";
 import { StreakrSampleData } from "./sample-data";
 import {
-  AGENT_SNIPPETS,
   INSTALL_CMD,
   INSTALL_SNIPPETS,
+  RECIPE_SNIPPETS,
   highlight,
   logoSvg,
   shellHtml,
@@ -28,7 +28,7 @@ const ACCENT_PRESETS: { label: string; value: string }[] = [
   { label: "Pink", value: "#ff5d9e" },
 ];
 
-const DEMO_PROVIDERS: StreakrProvider[] = [
+const DEMO_SOURCES: StreakrSource[] = [
   { key: "github", name: "GitHub", color: "#39d353" },
   { key: "gitlab", name: "GitLab", color: "#fc6d26" },
 ];
@@ -45,25 +45,39 @@ document.querySelectorAll<HTMLElement>("[data-logo]").forEach((el) => {
 interface DemoState {
   theme: StreakrTheme;
   accent: string;
-  showProviders: boolean;
+  showSources: boolean;
   showStats: boolean;
   showAgents: boolean;
-  componentState: StreakrState;
+  componentStatus: StreakrStatus;
   year: number;
 }
 
 const state: DemoState = {
   theme: "dark",
   accent: "#39d353",
-  showProviders: true,
+  showSources: true,
   showStats: true,
   showAgents: true,
-  componentState: "ready",
+  componentStatus: "ready",
   year: 2026,
 };
 
-function activeProviders(): StreakrProvider[] {
-  return state.showAgents ? [...DEMO_PROVIDERS, ...AGENT_PROVIDERS] : DEMO_PROVIDERS;
+function activeSources(): StreakrSource[] {
+  return state.showAgents ? [...DEMO_SOURCES, ...AGENT_SOURCES] : DEMO_SOURCES;
+}
+
+function activeDays() {
+  const keys = new Set(activeSources().map(({ key }) => key));
+  return StreakrSampleData.days.map((day) => {
+    const sources = Object.fromEntries(
+      Object.entries(day.sources ?? {}).filter(([key]) => keys.has(key)),
+    );
+    return {
+      ...day,
+      count: Object.values(sources).reduce((total, count) => total + count, 0),
+      sources,
+    };
+  });
 }
 
 const slots: { el: HTMLElement; instance: StreakrInstance | null }[] = [];
@@ -85,14 +99,14 @@ function mountAll(): void {
       theme: state.theme,
       accent: state.accent,
       tintHeatmap: true,
-      showProviders: state.showProviders,
+      showSources: state.showSources,
       showStats: state.showStats,
-      state: state.componentState,
-      providers: activeProviders(),
+      status: state.componentStatus,
+      sources: activeSources(),
       years: StreakrSampleData.availableYears,
       year: state.year,
       today: StreakrSampleData.today,
-      getDays: StreakrSampleData.getDays,
+      days: activeDays(),
       onYearChange: (year) => {
         state.year = year;
         syncThemedContainers();
@@ -116,10 +130,11 @@ function updateAll(): void {
       theme: state.theme,
       accent: state.accent,
       tintHeatmap: true,
-      showProviders: state.showProviders,
+      showSources: state.showSources,
       showStats: state.showStats,
-      state: state.componentState,
-      providers: activeProviders(),
+      status: state.componentStatus,
+      sources: activeSources(),
+      days: activeDays(),
     });
   });
   syncThemedContainers();
@@ -241,8 +256,8 @@ function renderControls(): void {
   const options = document.createElement("div");
   options.className = "lv2-switches";
   options.appendChild(
-    switchRow("Provider chips", state.showProviders, () => {
-      state.showProviders = !state.showProviders;
+    switchRow("Source chips", state.showSources, () => {
+      state.showSources = !state.showSources;
       updateAll();
       renderControls();
       renderLiveCode();
@@ -274,9 +289,9 @@ function renderControls(): void {
           { label: "ready", value: "ready" },
           { label: "loading", value: "loading" },
         ],
-        state.componentState,
+        state.componentStatus,
         (value) => {
-          state.componentState = value;
+          state.componentStatus = value;
           updateAll();
           renderControls();
           renderLiveCode();
@@ -288,14 +303,14 @@ function renderControls(): void {
 }
 
 function liveSource(): string {
-  const providerImport = state.showAgents
-    ? "createStreakr, DEFAULT_PROVIDERS, AGENT_PROVIDERS"
-    : "createStreakr, DEFAULT_PROVIDERS";
-  const providerLine = state.showAgents
-    ? "  providers: [...DEFAULT_PROVIDERS, ...AGENT_PROVIDERS],"
-    : "  providers: DEFAULT_PROVIDERS,";
+  const sourceImport = state.showAgents
+    ? "createStreakr, DEFAULT_SOURCES, AGENT_SOURCES"
+    : "createStreakr, DEFAULT_SOURCES";
+  const sourceLine = state.showAgents
+    ? "  sources: [...DEFAULT_SOURCES, ...AGENT_SOURCES],"
+    : "  sources: DEFAULT_SOURCES,";
   return [
-    `import { ${providerImport} } from '@rosado-io/streakr'`,
+    `import { ${sourceImport} } from '@rosado-io/streakr'`,
     "import '@rosado-io/streakr/styles.css'",
     "",
     "createStreakr({",
@@ -303,13 +318,13 @@ function liveSource(): string {
     `  theme: '${state.theme}',`,
     `  accent: '${state.accent}',`,
     "  tintHeatmap: true,",
-    `  showProviders: ${String(state.showProviders)},`,
+    `  showSources: ${String(state.showSources)},`,
     `  showStats: ${String(state.showStats)},`,
-    `  state: '${state.componentState}',`,
-    providerLine,
+    `  status: '${state.componentStatus}',`,
+    sourceLine,
     `  years: [${StreakrSampleData.availableYears.join(", ")}],`,
     `  year: ${String(state.year)},`,
-    "  getDays: (year) => fetchActivity(year),",
+    "  days: activity,",
     "})",
   ].join("\n");
 }
@@ -319,9 +334,9 @@ function renderLiveCode(): void {
   if (el) el.innerHTML = highlight(liveSource());
 }
 
-const activeTab: Record<string, string> = { install: "npm", agents: "github" };
+const activeTab: Record<string, string> = { install: "npm", recipes: "github" };
 
-function renderCodeTabs(name: "install" | "agents", snippets: Record<string, string>): void {
+function renderCodeTabs(name: "install" | "recipes", snippets: Record<string, string>): void {
   const tabs = document.querySelectorAll<HTMLButtonElement>(`#${name}-tabs .lv2-tab`);
   const codeEl = document.getElementById(`${name}-code`);
   if (!codeEl) return;
@@ -345,7 +360,7 @@ function copyTextFor(key: string): string {
   if (key === "install") return INSTALL_CMD;
   if (key === "live") return liveSource();
   if (key === "install-tab") return INSTALL_SNIPPETS[activeTab.install ?? "npm"] ?? "";
-  if (key === "agents-tab") return AGENT_SNIPPETS[activeTab.agents ?? "github"] ?? "";
+  if (key === "recipes-tab") return RECIPE_SNIPPETS[activeTab.recipes ?? "github"] ?? "";
   return "";
 }
 
@@ -393,5 +408,5 @@ mountAll();
 renderControls();
 renderLiveCode();
 renderCodeTabs("install", INSTALL_SNIPPETS);
-renderCodeTabs("agents", AGENT_SNIPPETS);
+renderCodeTabs("recipes", RECIPE_SNIPPETS);
 loadStars();

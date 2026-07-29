@@ -1,83 +1,53 @@
-export interface ContributionDay {
-  date: string;
-  count: number;
-  sources?: Record<string, number>;
-}
-
-export interface StreakResult {
-  total: number;
-  bestStreak: number;
-  currentStreak: number;
-}
-
-export interface GridOptions {
-  startDate?: string;
-  endDate?: string;
-  weekStartsOn?: 0 | 1;
-}
-
-export interface CalendarCell {
-  date: string;
-  count: number;
-  level: number;
-}
-
-export interface CalendarGrid {
-  weeks: (CalendarCell | null)[][];
-  totalContributions: number;
-}
-
-export interface FetchParams {
-  user: string;
-  start: string;
-  end: string;
+/**
+ * One calendar day in Streakr's presentation contract.
+ *
+ * `date` must use the local-calendar form `YYYY-MM-DD`. When `sources` is
+ * present, its values must add up to `count`.
+ */
+export interface StreakrDay {
+  readonly date: string;
+  readonly count: number;
+  readonly sources?: Readonly<Record<string, number>>;
 }
 
 export type StreakrTheme = "dark" | "light";
 
 export type StreakrThemeMode = StreakrTheme | "system";
 
-export type StreakrState = "loading" | "empty" | "ready";
+export type StreakrStatus = "loading" | "empty" | "ready" | "error";
 
-export type StreakrProviders = Record<string, boolean>;
+export type StreakrSourceState = Readonly<Record<string, boolean>>;
 
-export interface StreakrProvider {
-  key: string;
-  name: string;
-  color: string;
-  icon?: string;
-}
-
-export interface StreakrDay {
-  date: Date;
-  total: number;
-  sources?: Record<string, number>;
-}
-
-export interface StreakrLeveledDay extends StreakrDay {
-  level: 0 | 1 | 2 | 3 | 4;
+export interface StreakrSource {
+  readonly key: string;
+  readonly name: string;
+  readonly color: string;
+  readonly icon?: () => SVGElement;
 }
 
 export interface StreakrOptions {
-  target: HTMLElement;
-  theme?: StreakrThemeMode;
-  accent?: string;
-  tintHeatmap?: boolean;
-  showProviders?: boolean;
-  showStats?: boolean;
-  state?: StreakrState;
-  years: number[];
-  year?: number;
-  today?: Date;
-  getDays: (year: number) => StreakrDay[];
-  providers?: StreakrProvider[];
-  onYearChange?: (year: number) => void;
-  onProviderToggle?: (key: string, enabled: boolean, providers: StreakrProviders) => void;
+  readonly target: HTMLElement;
+  readonly days: readonly StreakrDay[];
+  readonly years: readonly number[];
+  readonly year?: number;
+  readonly today?: string;
+  readonly status?: StreakrStatus;
+  readonly errorMessage?: string;
+  readonly theme?: StreakrThemeMode;
+  readonly accent?: string;
+  readonly tintHeatmap?: boolean;
+  readonly showSources?: boolean;
+  readonly showStats?: boolean;
+  readonly sources?: readonly StreakrSource[];
+  readonly onYearChange?: (year: number) => void;
+  readonly onSourceToggle?: (key: string, enabled: boolean, sources: StreakrSourceState) => void;
 }
 
+export type StreakrUpdate = Partial<Omit<StreakrOptions, "target">>;
+
 export interface StreakrInstance {
-  update(patch: Partial<StreakrOptions>): void;
+  update(patch: StreakrUpdate): void;
   setYear(year: number): void;
-  setProviders(next: StreakrProviders): void;
+  setSources(next: StreakrSourceState): void;
   destroy(): void;
 }

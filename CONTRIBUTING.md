@@ -4,8 +4,8 @@ Thanks for your interest in contributing!
 
 ## Development setup
 
-Requires Node.js >= 20.19.0 and [pnpm](https://pnpm.io) (the repo pins
-`packageManager` to pnpm 10.12.2).
+Use Node.js 22 and [pnpm](https://pnpm.io). The repository pins pnpm 10.12.2
+through the `packageManager` field.
 
 ```bash
 pnpm install
@@ -17,23 +17,33 @@ pnpm typecheck       # tsc --noEmit
 pnpm format:check    # prettier
 pnpm audit:dead-code # knip
 pnpm build           # library build
+pnpm build:demo      # production demo build
+pnpm check:package   # npm exports and declaration contract
 ```
 
 ## Commit convention
 
-We use [Conventional Commits](https://www.conventionalcommits.org/), **written in English**:
+Use [Conventional Commits](https://www.conventionalcommits.org/) with an
+imperative description in English:
 
 ```
-feat(component): add year selector keyboard navigation
-fix(agents): handle repositories without remotes
-docs: clarify provider aggregation
+feat(component): Add keyboard navigation to the selector
+fix(component): Fix calendar focus
+docs: Update acquisition recipes
 ```
 
-Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `build`, `perf`. Scopes commonly used: `component`, `agents`, `providers`, `core`, `demo`, `deps`. Releases are automated with semantic-release, so commit types drive version bumps — a `BREAKING CHANGE:` footer triggers a major release.
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`,
+`ci`, `chore`, and `revert`. Common scopes include `component`, `contract`,
+`demo`, `docs`, and `deps`. Releases are automated with semantic-release, so
+commit types drive version bumps. Use `!` after the type or a
+`BREAKING CHANGE:` footer for a major release.
 
 ## Pull requests
 
-1. Branch off `main`.
+1. Branch off `main` using a hyphenated name such as
+   `feat-presentation-contract`; do not use `/` as a separator.
 2. Keep the PR focused; include tests for behavior changes.
-3. CI must be green: lint, format, typecheck, tests with coverage (SonarCloud requires >= 80% coverage on new code), and build.
-4. PRs are squash-merged; the squash title becomes the release commit, so make it a valid Conventional Commit in English.
+3. CI must be green: lint, format, typecheck, tests with coverage, build, dead
+   code audit, package validation, and SonarCloud.
+4. PRs are squash-merged. The squash title becomes the release commit, so make
+   it a valid Conventional Commit in English.

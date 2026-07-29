@@ -1,4 +1,3 @@
-import type { StreakrDay, StreakrLeveledDay } from "../../types";
 import {
   dayAngle,
   dayToHandRotation,
@@ -14,6 +13,7 @@ import { h, svg } from "../dom";
 import { formatTotalLabel } from "../metrics";
 import { isCurrentYear } from "../selectors";
 import { bindRingEvents } from "../ring-interaction";
+import type { LeveledDay, RenderableDay } from "../types";
 
 const RING_SIZE = 360;
 export const RING_CX = RING_SIZE / 2;
@@ -35,16 +35,16 @@ const describeAnnulusPath = (cx: number, cy: number, innerR: number, outerR: num
 
 const ringLineColor = (level: number): string => `var(--sk-heat-${level})`;
 
-const ringDayAriaLabel = (day: StreakrLeveledDay): string =>
+const ringDayAriaLabel = (day: LeveledDay): string =>
   `${day.date.getDate()} ${MONTH_LABELS_SHORT[day.date.getMonth()]} ${day.date.getFullYear()}, ${formatTotalLabel(day.total)}`;
 
 const dayStartMs = (day: Date): number =>
   new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime();
 
-const ringCenterLabel = (day: StreakrDay): string =>
+const ringCenterLabel = (day: RenderableDay): string =>
   `Selected ${fmtDateLong(day.date)}. Tap to reset to today.`;
 
-export const updateRingCenter = (centerEl: HTMLElement, day: StreakrDay): void => {
+export const updateRingCenter = (centerEl: HTMLElement, day: RenderableDay): void => {
   centerEl.setAttribute("aria-label", ringCenterLabel(day));
   const countEl = centerEl.querySelector<HTMLElement>(".sk-ring-count");
   const dateEl = centerEl.querySelector<HTMLElement>(".sk-ring-date");
@@ -52,9 +52,18 @@ export const updateRingCenter = (centerEl: HTMLElement, day: StreakrDay): void =
   if (dateEl) dateEl.textContent = fmtDateShort(day.date);
 };
 
-export const findDayByDate = (days: StreakrLeveledDay[], date: Date): StreakrLeveledDay => {
+export const findDayByDate = (days: LeveledDay[], date: Date): LeveledDay => {
   const found = days.find((d) => localDateKey(d.date) === localDateKey(date));
-  return found ?? days[0] ?? { date, total: 0, level: 0, sources: {} };
+  return (
+    found ??
+    days[0] ?? {
+      date,
+      dateKey: localDateKey(date),
+      total: 0,
+      level: 0,
+      sources: {},
+    }
+  );
 };
 
 type RingDayLineAttrs = {
@@ -70,7 +79,7 @@ type RingDayLineAttrs = {
 };
 
 export interface RingRenderer {
-  renderRing: (wrap: HTMLElement, days: StreakrLeveledDay[]) => void;
+  renderRing: (wrap: HTMLElement, days: LeveledDay[]) => void;
   renderSkeletonRing: () => SVGElement;
   renderSkeletonRingCenter: () => HTMLElement;
 }
@@ -81,7 +90,7 @@ export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): R
   const isFutureRingDay = (day: Date): boolean =>
     isCurrentYear(ctx) && dayStartMs(day) > dayStartMs(ctx.cfg.today);
 
-  const createRingSvgBase = <T extends StreakrDay>(
+  const createRingSvgBase = <T extends RenderableDay>(
     days: T[],
     svgClass: string,
     ariaLabel: string,
@@ -189,7 +198,7 @@ export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): R
     ]) as SVGGElement;
   };
 
-  const renderRingSvg = (days: StreakrLeveledDay[], selectedDay: Date): SVGElement => {
+  const renderRingSvg = (days: LeveledDay[], selectedDay: Date): SVGElement => {
     const totalDays = days.length;
     const svgEl = createRingSvgBase(
       days,
@@ -220,7 +229,7 @@ export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): R
     return svgEl;
   };
 
-  const renderRingCenter = (day: StreakrDay): HTMLElement =>
+  const renderRingCenter = (day: RenderableDay): HTMLElement =>
     h(
       "button",
       {
@@ -235,7 +244,7 @@ export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): R
       ],
     );
 
-  const renderRing = (wrap: HTMLElement, days: StreakrLeveledDay[]): void => {
+  const renderRing = (wrap: HTMLElement, days: LeveledDay[]): void => {
     const selected = findDayByDate(days, ctx.state.selectedDay);
     ctx.state.selectedDay = selected.date;
     const svgEl = renderRingSvg(days, selected.date);

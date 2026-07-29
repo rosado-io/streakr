@@ -3,6 +3,8 @@ name: CI
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
 
 permissions:
   contents: read
@@ -41,6 +43,12 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Audit dead code
+        run: pnpm audit:dead-code
+
+      - name: Validate package contract
+        run: pnpm check:package
 
       - name: SonarCloud Scan
         if: ${{ github.actor != 'dependabot[bot]' }}

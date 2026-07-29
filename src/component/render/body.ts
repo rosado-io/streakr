@@ -1,9 +1,9 @@
-import type { StreakrLeveledDay } from "../../types";
 import type { ComponentCtx } from "../config";
 import { h, trustedHtml } from "../dom";
 import type { StreakrStats } from "../metrics";
 import { isCurrentYear } from "../selectors";
 import type { Tooltip } from "../tooltip";
+import type { LeveledDay } from "../types";
 import { isMobileHeatmap, renderHeatmap, renderSkeletonHeatmap } from "./heatmap";
 import type { RingRenderer } from "./ring";
 import { formatActiveRate, loadingStatCard, statCard } from "./stats";
@@ -16,12 +16,13 @@ export type ReadyBody = HTMLElement & {
 export interface BodyRenderer {
   renderLoadingBody: () => HTMLElement;
   renderReadyBody: (
-    leveled: StreakrLeveledDay[],
+    leveled: LeveledDay[],
     stats: StreakrStats,
     isRevealing: boolean,
   ) => HTMLElement;
   renderEmpty: (canEnableAll?: boolean) => HTMLElement;
-  renderNoProviders: () => HTMLElement;
+  renderNoSources: () => HTMLElement;
+  renderError: () => HTMLElement;
 }
 
 export interface BodyRendererDeps {
@@ -61,6 +62,8 @@ export const createBodyRenderer = (ctx: ComponentCtx, deps: BodyRendererDeps): B
 
   const renderLoadingBody = (): HTMLElement => {
     const { body, heatmapWrap, heatmapInner } = createReadyBodyShell();
+    body.setAttribute("role", "status");
+    body.setAttribute("aria-label", "Loading activity");
 
     const draw = () => {
       const isMobile = isMobileHeatmap(heatmapWrap);
@@ -106,7 +109,7 @@ export const createBodyRenderer = (ctx: ComponentCtx, deps: BodyRendererDeps): B
     });
 
   const renderEmpty = (canEnableAll = false): HTMLElement =>
-    h("div", { class: "sk-empty" }, [
+    h("div", { class: "sk-empty", role: "status" }, [
       h("div", {
         class: "sk-empty-icon",
         html: trustedHtml(
@@ -123,23 +126,35 @@ export const createBodyRenderer = (ctx: ComponentCtx, deps: BodyRendererDeps): B
       }),
       h("div", {
         class: "sk-empty-sub",
-        text: "When you commit, push, or open PRs across your connected accounts, they'll show up here.",
+        text: "Activity will appear here when data is available for the selected year.",
       }),
       canEnableAll ? renderEnableAllButton() : null,
     ]);
 
-  const renderNoProviders = (): HTMLElement =>
+  const renderNoSources = (): HTMLElement =>
     h("div", { class: "sk-noprov" }, [
       h("span", { class: "sk-noprov-dot" }),
       h("div", {
         style: { flex: "1" },
-        text: "All providers are disabled — toggle one above to see contributions.",
+        text: "All sources are disabled — toggle one above to see activity.",
       }),
       renderEnableAllButton(),
     ]);
 
+  const renderError = (): HTMLElement =>
+    h("div", { class: "sk-empty sk-error", role: "alert" }, [
+      h("div", {
+        class: "sk-empty-title",
+        text: "Unable to display activity",
+      }),
+      h("div", {
+        class: "sk-empty-sub",
+        text: ctx.cfg.errorMessage,
+      }),
+    ]);
+
   const renderReadyBody = (
-    leveled: StreakrLeveledDay[],
+    leveled: LeveledDay[],
     stats: StreakrStats,
     isRevealing: boolean,
   ): HTMLElement => {
@@ -162,6 +177,7 @@ export const createBodyRenderer = (ctx: ComponentCtx, deps: BodyRendererDeps): B
             Math.max(200, w),
             ariaLabel,
             tooltip.bindCellEvents,
+            ctx.state.selectedDay,
             pendingReveal ? ctx.cfg.today : undefined,
           );
         }
@@ -190,5 +206,5 @@ export const createBodyRenderer = (ctx: ComponentCtx, deps: BodyRendererDeps): B
     return body;
   };
 
-  return { renderLoadingBody, renderReadyBody, renderEmpty, renderNoProviders };
+  return { renderLoadingBody, renderReadyBody, renderEmpty, renderNoSources, renderError };
 };
