@@ -29,8 +29,8 @@ function makeYearDays(year: number, fillEvery = 3): StreakrDay[] {
     const fill = i % fillEvery === 0;
     days.push({
       date: dateKey(new Date(cur)),
-      count: fill ? 3 : 0,
-      sources: fill ? { github: 2, gitlab: 1, bitbucket: 0 } : {},
+      count: fill ? 4 : 0,
+      sources: fill ? { github: 2, gitlab: 1, bitbucket: 1 } : {},
     });
     cur.setDate(cur.getDate() + 1);
     i++;
@@ -401,7 +401,36 @@ describe("createStreakr", () => {
         ],
       });
       expect(target.querySelector(".sk-sources")).toBeTruthy();
-      expect(target.querySelectorAll(".sk-source")).toHaveLength(3);
+      expect(target.querySelectorAll(".sk-source")).toHaveLength(2);
+    });
+
+    it("hides source badges with 0 contributions in active period (issue #185)", () => {
+      const custom: StreakrSource[] = [
+        { key: "github", name: "GitHub", color: "#39d353" },
+        { key: "gitlab", name: "GitLab", color: "#fc6d26" },
+        { key: "kimi", name: "Kimi", color: "#1883ff" },
+        { key: "antigravity", name: "Antigravity", color: "#3186ff" },
+      ];
+      instance = createStreakr({
+        target,
+        years,
+        sources: custom,
+        days: (y) => [
+          {
+            date: dateKey(new Date(y, 0, 5)),
+            count: 3,
+            sources: { github: 2, gitlab: 1, kimi: 0, antigravity: 0 },
+          },
+        ],
+      });
+      expect(target.querySelector(".sk-sources")).toBeTruthy();
+      const chips = target.querySelectorAll(".sk-source");
+      expect(chips).toHaveLength(2);
+      const labels = Array.from(chips).map((c) => c.getAttribute("aria-label") ?? "");
+      expect(labels.some((l) => l.includes("GitHub"))).toBe(true);
+      expect(labels.some((l) => l.includes("GitLab"))).toBe(true);
+      expect(labels.some((l) => l.includes("Kimi"))).toBe(false);
+      expect(labels.some((l) => l.includes("Antigravity"))).toBe(false);
     });
 
     it("recomputes chip-row visibility when the year changes", () => {
@@ -440,7 +469,18 @@ describe("createStreakr", () => {
     });
 
     it("offers 'Enable all' when only zero-count sources remain enabled", () => {
-      instance = createStreakr({ target, years, days });
+      // bitbucket intentionally has 0 contributions to trigger canEnableAll
+      instance = createStreakr({
+        target,
+        years,
+        days: (y) => [
+          {
+            date: dateKey(new Date(y, 0, 5)),
+            count: 3,
+            sources: { github: 2, gitlab: 1, bitbucket: 0 },
+          },
+        ],
+      });
       instance.setSources({ github: false, gitlab: false, bitbucket: true });
 
       const empty = target.querySelector(".sk-empty");
@@ -451,7 +491,8 @@ describe("createStreakr", () => {
 
       enable?.click();
       expect(target.querySelector(".sk-empty")).toBeNull();
-      expect(target.querySelectorAll(".sk-source.active")).toHaveLength(3);
+      // bitbucket has 0 contributions, so it is not rendered even after enabling all (issue #185)
+      expect(target.querySelectorAll(".sk-source.active")).toHaveLength(2);
     });
   });
 
@@ -599,10 +640,11 @@ describe("createStreakr", () => {
               ],
       });
 
+      // bitbucket has 0 contributions in 2026, so it is filtered out (issue #185)
       const counts = Array.from(target.querySelectorAll(".sk-source-count")).map(
         (el) => el.textContent,
       );
-      expect(counts).toEqual(["5", "7", "0"]);
+      expect(counts).toEqual(["5", "7"]);
     });
 
     it("does not let future days reset the Current Streak stat", () => {
