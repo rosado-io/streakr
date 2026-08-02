@@ -36,14 +36,23 @@ function agentCounts(
   rand: () => number,
   total: number,
   adoption: number,
-): { claude: number; codex: number; opencode: number; copilot: number } {
-  const none = { claude: 0, codex: 0, opencode: 0, copilot: 0 };
+): {
+  claude: number;
+  codex: number;
+  opencode: number;
+  copilot: number;
+  kimi: number;
+  antigravity: number;
+} {
+  const none = { claude: 0, codex: 0, opencode: 0, copilot: 0, kimi: 0, antigravity: 0 };
   if (total === 0 || adoption === 0 || rand() >= adoption) return none;
   return {
     claude: 1 + Math.round(rand() * 4 * adoption),
     codex: rand() < 0.3 ? Math.round(rand() * 3) : 0,
     copilot: rand() < 0.2 ? Math.round(rand() * 2) : 0,
     opencode: rand() < 0.12 ? Math.round(rand() * 2) : 0,
+    kimi: rand() < 0.25 ? Math.round(rand() * 3) : 0,
+    antigravity: rand() < 0.15 ? Math.round(rand() * 2) : 0,
   };
 }
 
@@ -57,15 +66,19 @@ function generateYear(year: number, seed: number): StreakrDay[] {
   while (cur <= end) {
     const total = dayTotal(rand, cur.getDay());
     const { github, gitlab } = humanCounts(rand, total);
-    const { claude, codex, opencode, copilot } = agentCounts(rand, total, adoption);
+    const { claude, codex, opencode, copilot, kimi, antigravity } = agentCounts(
+      rand,
+      total,
+      adoption,
+    );
     days.push({
       date: [
         cur.getFullYear(),
         String(cur.getMonth() + 1).padStart(2, "0"),
         String(cur.getDate()).padStart(2, "0"),
       ].join("-"),
-      count: github + gitlab + claude + codex + opencode + copilot,
-      sources: { github, gitlab, claude, codex, opencode, copilot },
+      count: github + gitlab + claude + codex + opencode + copilot + kimi + antigravity,
+      sources: { github, gitlab, claude, codex, opencode, copilot, kimi, antigravity },
     });
     cur.setDate(cur.getDate() + 1);
   }
