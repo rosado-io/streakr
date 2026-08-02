@@ -35,7 +35,10 @@ export const renderSourceRow = (
   isLoading = false,
 ): HTMLElement => {
   const row = h("div", { class: "sk-sources", "aria-label": "Activity sources" });
-  ctx.cfg.sources.forEach((source) => {
+  const visibleSources = isLoading
+    ? ctx.cfg.sources
+    : ctx.cfg.sources.filter((source) => (totals[source.key] ?? 0) > 0);
+  visibleSources.forEach((source) => {
     const active = !!ctx.state.sources[source.key];
     const total = (totals[source.key] ?? 0).toLocaleString();
     const activeState = active ? "enabled" : "disabled";
