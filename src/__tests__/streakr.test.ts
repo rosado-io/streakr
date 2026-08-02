@@ -416,7 +416,11 @@ describe("createStreakr", () => {
         years,
         sources: custom,
         days: (y) => [
-          { date: dateKey(new Date(y, 0, 5)), count: 3, sources: { github: 2, gitlab: 1, kimi: 0, antigravity: 0 } },
+          {
+            date: dateKey(new Date(y, 0, 5)),
+            count: 3,
+            sources: { github: 2, gitlab: 1, kimi: 0, antigravity: 0 },
+          },
         ],
       });
       expect(target.querySelector(".sk-sources")).toBeTruthy();
@@ -470,7 +474,11 @@ describe("createStreakr", () => {
         target,
         years,
         days: (y) => [
-          { date: dateKey(new Date(y, 0, 5)), count: 3, sources: { github: 2, gitlab: 1, bitbucket: 0 } },
+          {
+            date: dateKey(new Date(y, 0, 5)),
+            count: 3,
+            sources: { github: 2, gitlab: 1, bitbucket: 0 },
+          },
         ],
       });
       instance.setSources({ github: false, gitlab: false, bitbucket: true });
