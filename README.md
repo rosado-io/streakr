@@ -134,7 +134,7 @@ instance to move it.
 ### Visual sources
 
 `DEFAULT_SOURCES` contains GitHub, GitLab, and Bitbucket presentation presets.
-`AGENT_SOURCES` contains Claude, Codex, opencode, and Copilot presets. They do
+`AGENT_SOURCES` contains Claude, Codex, opencode, Copilot, Kimi, and Antigravity presets. They do
 not fetch or classify data.
 
 ```ts
