@@ -1,6 +1,6 @@
 {
   "name": "@rosado-io/streakr",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "A framework-agnostic presentation layer for contribution and activity calendars.",
   "type": "module",
   "module": "./dist/streakr.js",
