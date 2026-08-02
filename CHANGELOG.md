@@ -1,3 +1,6 @@
+## [1.3.0](https://github.com/rosado-io/streakr/compare/v1.2.0...v1.3.0) (2026-08-02)
+* feat: add Kimi and Antigravity agent providers (#184) ([`81e4d67`](https://github.com/rosado-io/streakr/commit/81e4d67308fc401f24bca65451af6049bbefe6cd)) by ****
+
 ## [1.2.0](https://github.com/rosado-io/streakr/compare/v1.1.2...v1.2.0) (2026-07-29)
 * feat: Turn Streakr into a presentation layer (#183) ([`374c4d9`](https://github.com/rosado-io/streakr/commit/374c4d9ebe5b0836d8c0593094761fbd149baf75)) by ****
 
