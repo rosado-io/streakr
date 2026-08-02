@@ -419,14 +419,14 @@ a:hover {
 .lv2-stage-desktop {
   /* Below this basis the pane wraps to its own row and takes the full stage
      width — either way the wrap stays above the component's 520px threshold. */
-  flex: 1 1 980px;
+  flex: 1 1 956px;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 .lv2-stage-mobile {
-  flex: 0 1 316px;
+  flex: 0 1 368px;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -1049,11 +1049,11 @@ a:hover {
     align-items: center;
   }
   .lv2-phone {
-    width: min(340px, 100%);
+    width: min(368px, 100%);
     margin: 0 auto;
   }
   .lv2-stage-mobile .lv2-stage-label {
-    width: min(340px, 100%);
+    width: min(368px, 100%);
     margin: 0 auto;
   }
 }
