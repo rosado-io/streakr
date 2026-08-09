@@ -55,7 +55,9 @@ export const updateRingCenter = (centerEl: HTMLElement, day: RenderableDay): voi
 
 export const findDayByDateKey = (days: LeveledDay[], dateKey: string): LeveledDay => {
   const found = days.find((d) => d.dateKey === dateKey);
-  return found ?? days[0] ?? { date: parseLocalDate(dateKey), dateKey, total: 0, level: 0, sources: {} };
+  return (
+    found ?? days[0] ?? { date: parseLocalDate(dateKey), dateKey, total: 0, level: 0, sources: {} }
+  );
 };
 
 export const findDayByDate = (days: LeveledDay[], date: Date): LeveledDay => {
