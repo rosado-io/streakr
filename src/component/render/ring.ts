@@ -60,7 +60,7 @@ export const findDayByDateKey = (days: LeveledDay[], dateKey: string): LeveledDa
   );
 };
 
-export const findDayByDate = (days: LeveledDay[], date: Date): LeveledDay => {
+const findDayByDate = (days: LeveledDay[], date: Date): LeveledDay => {
   const dateKey = localDateKey(date);
   const found = days.find((d) => d.dateKey === dateKey);
   return found ?? days[0] ?? { date, dateKey, total: 0, level: 0, sources: {} };
