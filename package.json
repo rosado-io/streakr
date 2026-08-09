@@ -21,6 +21,7 @@
     "build:demo": "vite build --config vite.demo.config.ts",
     "test": "vitest",
     "test:ci": "vitest run --coverage",
+    "test:tz": "TZ=America/New_York vitest run",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "audit:dead-code": "knip",

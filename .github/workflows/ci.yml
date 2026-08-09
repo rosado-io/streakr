@@ -44,6 +44,9 @@ jobs:
       - name: Test with coverage
         run: pnpm test:ci
 
+      - name: Test in a non-UTC timezone
+        run: pnpm test:tz
+
       - name: Build
         run: pnpm build
 
