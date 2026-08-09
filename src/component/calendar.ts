@@ -39,6 +39,11 @@ const pad2 = (value: number): string => String(value).padStart(2, "0");
 export const localDateKey = (d: Date): string =>
   `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 
+export const parseLocalDate = (key: string): Date => {
+  const [year = 1970, month = 1, day = 1] = key.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
 export const padDaysToYear = (days: RenderableDay[], year: number): RenderableDay[] => {
   const byDate = new Map(days.map((day) => [day.dateKey, day]));
   const isLeap = (y: number) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;

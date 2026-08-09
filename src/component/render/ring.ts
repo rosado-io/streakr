@@ -6,6 +6,7 @@ import {
   localDateKey,
   MONTH_LABELS_SHORT,
   padDaysToYear,
+  parseLocalDate,
   polarToCartesian,
 } from "../calendar";
 import type { ComponentCtx } from "../config";
@@ -52,18 +53,15 @@ export const updateRingCenter = (centerEl: HTMLElement, day: RenderableDay): voi
   if (dateEl) dateEl.textContent = fmtDateShort(day.date);
 };
 
+export const findDayByDateKey = (days: LeveledDay[], dateKey: string): LeveledDay => {
+  const found = days.find((d) => d.dateKey === dateKey);
+  return found ?? days[0] ?? { date: parseLocalDate(dateKey), dateKey, total: 0, level: 0, sources: {} };
+};
+
 export const findDayByDate = (days: LeveledDay[], date: Date): LeveledDay => {
-  const found = days.find((d) => localDateKey(d.date) === localDateKey(date));
-  return (
-    found ??
-    days[0] ?? {
-      date,
-      dateKey: localDateKey(date),
-      total: 0,
-      level: 0,
-      sources: {},
-    }
-  );
+  const dateKey = localDateKey(date);
+  const found = days.find((d) => d.dateKey === dateKey);
+  return found ?? days[0] ?? { date, dateKey, total: 0, level: 0, sources: {} };
 };
 
 type RingDayLineAttrs = {
@@ -213,7 +211,7 @@ export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): R
         return {
           class: "sk-ring-line" + (future ? " sk-ring-line--future" : ""),
           stroke: future ? "transparent" : ringLineColor(day.level),
-          "data-date": day.date.toISOString(),
+          "data-date": day.dateKey,
           "data-future": future ? "true" : undefined,
           tabindex: future ? undefined : interactiveTabIndex,
           role: future ? undefined : "button",
