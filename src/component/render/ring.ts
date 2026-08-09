@@ -84,9 +84,11 @@ export interface RingRenderer {
   renderSkeletonRingCenter: () => HTMLElement;
 }
 
-export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): RingRenderer => {
-  let ringClipIdSeq = 0;
+// Module-level on purpose: several streakr instances can share a document, so
+// clip-path ids must be unique across renderers, not just within one.
+let ringClipIdSeq = 0;
 
+export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): RingRenderer => {
   const isFutureRingDay = (day: Date): boolean =>
     isCurrentYear(ctx) && dayStartMs(day) > dayStartMs(ctx.cfg.today);
 

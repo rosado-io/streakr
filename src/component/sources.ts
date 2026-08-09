@@ -35,8 +35,22 @@ export const AGENT_SOURCES: readonly StreakrSource[] = [
   { key: "antigravity", name: "Antigravity", color: "#3487ff" },
 ];
 
-export const sourceIconHtml = (source: StreakrSource): string | null =>
-  BUILTIN_ICONS[source.key] ?? null;
+// Icons with internal defs (masks/filters) reference them by id; every chip
+// render inlines the same markup, so ids must be made unique per insertion to
+// avoid duplicate-id collisions across chips and streakr instances.
+let iconIdSeq = 0;
+
+const uniquifySvgIds = (markup: string): string => {
+  const suffix = `_sk${++iconIdSeq}`;
+  return markup
+    .replace(/id="([^"]+)"/g, (_match, id: string) => `id="${id}${suffix}"`)
+    .replace(/url\(#([^)]+)\)/g, (_match, id: string) => `url(#${id}${suffix})`);
+};
+
+export const sourceIconHtml = (source: StreakrSource): string | null => {
+  const markup = BUILTIN_ICONS[source.key] ?? null;
+  return markup?.includes('id="') ? uniquifySvgIds(markup) : markup;
+};
 
 export const enabledSourceState = (sources: readonly StreakrSource[]): Record<string, boolean> =>
   Object.fromEntries(sources.map(({ key }) => [key, true]));
