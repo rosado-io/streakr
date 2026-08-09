@@ -28,7 +28,8 @@
     "check:size": "node scripts/check-size.mjs",
     "format": "prettier --write 'src/**/*.ts' 'demo/**/*.ts' '*.config.ts' 'eslint.config.js'",
     "format:check": "prettier --check 'src/**/*.ts' 'demo/**/*.ts' '*.config.ts' 'eslint.config.js'",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "typecheck:demo": "tsc --noEmit -p tsconfig.demo.json"
   },
   "keywords": [
     "contribution",

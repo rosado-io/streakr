@@ -38,6 +38,9 @@ jobs:
       - name: Type check
         run: pnpm typecheck
 
+      - name: Type check demo
+        run: pnpm typecheck:demo
+
       - name: Test with coverage
         run: pnpm test:ci
 
