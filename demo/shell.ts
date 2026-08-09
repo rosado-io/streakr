@@ -1,3 +1,5 @@
+import { version } from "../package.json";
+
 const REPO_URL = "https://github.com/rosado-io/streakr";
 const NPM_URL = "https://www.npmjs.com/package/@rosado-io/streakr";
 export const INSTALL_CMD = "npm i @rosado-io/streakr";
@@ -136,11 +138,11 @@ export const INSTALL_SNIPPETS: Record<string, string> = {
   yarn: `# install\nyarn add @rosado-io/streakr\n${MOUNT_TAIL}`,
   cdn: [
     "<!-- stylesheet -->",
-    '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@rosado-io/streakr@1.2.0/dist/streakr.css">',
+    `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@rosado-io/streakr@${version}/dist/streakr.css">`,
     "",
     "<!-- module -->",
     '<script type="module">',
-    "  import { createStreakr } from 'https://cdn.jsdelivr.net/npm/@rosado-io/streakr@1.2.0/dist/streakr.js'",
+    `  import { createStreakr } from 'https://cdn.jsdelivr.net/npm/@rosado-io/streakr@${version}/dist/streakr.js'`,
     "",
     "  createStreakr({",
     "    target: document.querySelector('#streakr'),",
