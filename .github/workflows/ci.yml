@@ -44,6 +44,9 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Check bundle size
+        run: pnpm check:size
+
       - name: Audit dead code
         run: pnpm audit:dead-code
 

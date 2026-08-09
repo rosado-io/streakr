@@ -25,6 +25,7 @@
     "lint:fix": "eslint . --fix",
     "audit:dead-code": "knip",
     "check:package": "publint && attw --pack . --profile esm-only --entrypoints . --ignore-rules cjs-resolves-to-esm",
+    "check:size": "node scripts/check-size.mjs",
     "format": "prettier --write 'src/**/*.ts' 'demo/**/*.ts' '*.config.ts' 'eslint.config.js'",
     "format:check": "prettier --check 'src/**/*.ts' 'demo/**/*.ts' '*.config.ts' 'eslint.config.js'",
     "typecheck": "tsc --noEmit"
