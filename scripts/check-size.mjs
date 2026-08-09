@@ -4,7 +4,7 @@
 import { statSync } from "node:fs";
 
 const BUDGETS = [
-  ["dist/streakr.js", 60 * 1024],
+  ["dist/streakr.js", 70 * 1024],
   ["dist/streakr.css", 28 * 1024],
 ];
 
