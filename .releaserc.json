@@ -12,7 +12,7 @@
       {
         "preset": "conventionalcommits",
         "writerOpts": {
-          "commitPartial": "* {{header}} ([`{{shortHash}}`]({{#if @root.host}}{{@root.host}}/{{/if}}{{@root.owner}}/{{@root.repository}}/commit/{{hash}})) by **{{authorName}}**\n"
+          "commitPartial": "* {{header}} ([`{{shortHash}}`]({{#if @root.host}}{{@root.host}}/{{/if}}{{@root.owner}}/{{@root.repository}}/commit/{{hash}})){{#if author.name}} by **{{author.name}}**{{/if}}\n"
         }
       }
     ],

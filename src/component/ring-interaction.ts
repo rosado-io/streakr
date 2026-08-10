@@ -1,7 +1,7 @@
 import { dayToHandRotation, localDateKey } from "./calendar";
 import type { ComponentCtx } from "./config";
 import {
-  findDayByDate,
+  findDayByDateKey,
   RING_CX,
   RING_CY,
   RING_INNER_R,
@@ -56,7 +56,7 @@ export const bindRingEvents = (
     }
     const dateAttr = target.dataset.date;
     if (!dateAttr) return null;
-    return findDayByDate(days, new Date(dateAttr));
+    return findDayByDateKey(days, dateAttr);
   };
 
   setHandRotation(dayToHandRotation(ctx.state.selectedDay, days.length));
@@ -220,7 +220,7 @@ export const bindRingEvents = (
     targetLine.focus();
     const dateAttr = targetLine.dataset.date;
     if (dateAttr) {
-      selectDay(findDayByDate(days, new Date(dateAttr)));
+      selectDay(findDayByDateKey(days, dateAttr));
     }
   };
 

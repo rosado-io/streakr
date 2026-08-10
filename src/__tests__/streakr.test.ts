@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createStreakr as createComponent } from "../component/streakr";
+import { sourceIconHtml } from "../component/sources";
 import type { StreakrDay, StreakrInstance, StreakrOptions, StreakrSource } from "../types";
 import streakrCss from "../component/streakr.css?raw";
 
@@ -494,6 +495,59 @@ describe("createStreakr", () => {
       // bitbucket has 0 contributions, so it is not rendered even after enabling all (issue #185)
       expect(target.querySelectorAll(".sk-source.active")).toHaveLength(2);
     });
+
+    it("gives built-in icons with internal defs unique ids across instances", () => {
+      const secondTarget = document.createElement("div");
+      document.body.appendChild(secondTarget);
+      const chipSources = [
+        { key: "github", name: "GitHub", color: "#39d353" },
+        { key: "antigravity", name: "Antigravity", color: "#3487ff" },
+      ];
+      const chipDays = [
+        { date: dateKey(new Date(2026, 0, 5)), count: 4, sources: { github: 2, antigravity: 2 } },
+      ];
+
+      instance = createStreakr({
+        target,
+        years: [2026],
+        days: chipDays,
+        sources: chipSources,
+      });
+      const other = createComponent({
+        target: secondTarget,
+        years: [2026],
+        days: chipDays,
+        sources: chipSources,
+      });
+
+      try {
+        const firstIds = Array.from(target.querySelectorAll(".sk-source-icon [id]")).map(
+          (el) => el.id,
+        );
+        const secondIds = Array.from(secondTarget.querySelectorAll(".sk-source-icon [id]")).map(
+          (el) => el.id,
+        );
+        expect(firstIds.length).toBeGreaterThan(0);
+        expect(secondIds.length).toBeGreaterThan(0);
+        expect(firstIds.some((id) => secondIds.includes(id))).toBe(false);
+
+        // url(#...) references must resolve within the same render
+        const iconWithIds = Array.from(target.querySelectorAll(".sk-source-icon")).find((el) =>
+          el.querySelector("[id]"),
+        );
+        const markup = iconWithIds?.innerHTML ?? "";
+        for (const id of firstIds) {
+          expect(markup).toContain(`url(#${id})`);
+        }
+      } finally {
+        other.destroy();
+        secondTarget.remove();
+      }
+    });
+
+    it("returns no built-in icon html for unknown source keys", () => {
+      expect(sourceIconHtml({ key: "custom", name: "Custom", color: "#ffffff" })).toBeNull();
+    });
   });
 
   describe("ready body", () => {
@@ -943,6 +997,64 @@ describe("createStreakr", () => {
       expect(tooltip?.textContent).toContain("2 contributions");
       expect(tooltip?.textContent).toContain("GitHub");
       expect(tooltip?.textContent).not.toContain("GitLab");
+    });
+
+    it("follows the pointer on mousemove", () => {
+      instance = createStreakr({ target, years, days });
+      const cell = target.querySelector<SVGRectElement>("rect.sk-heatmap-cell");
+      expect(cell).toBeTruthy();
+      cell?.dispatchEvent(new MouseEvent("mouseenter", { clientX: 10, clientY: 10 }));
+      const tooltip = target.querySelector<HTMLElement>(".sk-tooltip");
+      expect(tooltip?.style.left).toBe("24px");
+
+      cell?.dispatchEvent(new MouseEvent("mousemove", { clientX: 100, clientY: 200 }));
+      expect(tooltip?.style.left).toBe("114px");
+      expect(tooltip?.style.top).toBe("214px");
+    });
+
+    it("clamps the tooltip inside the viewport near the edges", () => {
+      instance = createStreakr({ target, years, days });
+      const cell = target.querySelector<SVGRectElement>("rect.sk-heatmap-cell");
+      expect(cell).toBeTruthy();
+      cell?.dispatchEvent(new MouseEvent("mouseenter", { clientX: 99999, clientY: 99999 }));
+
+      const tooltip = target.querySelector<HTMLElement>(".sk-tooltip");
+      expect(tooltip).toBeTruthy();
+      if (!tooltip) return;
+      const maxLeft = window.innerWidth - tooltip.offsetWidth - 8;
+      const maxTop = window.innerHeight - tooltip.offsetHeight - 8;
+      expect(Number.parseInt(tooltip.style.left, 10)).toBe(maxLeft);
+      expect(Number.parseInt(tooltip.style.top, 10)).toBe(maxTop);
+    });
+
+    it("shows only the source name on source chip hover", () => {
+      instance = createStreakr({ target, years, days });
+      const chip = target.querySelector<HTMLButtonElement>(".sk-source");
+      expect(chip).toBeTruthy();
+      chip?.dispatchEvent(new MouseEvent("mouseenter", { clientX: 20, clientY: 20 }));
+
+      const tooltip = target.querySelector<HTMLElement>(".sk-tooltip");
+      expect(tooltip?.classList.contains("visible")).toBe(true);
+      expect(tooltip?.textContent).toBe("GitHub");
+
+      chip?.dispatchEvent(new MouseEvent("mouseleave"));
+      expect(tooltip?.classList.contains("visible")).toBe(false);
+    });
+
+    it("links the cell to the tooltip via aria-describedby while focused", () => {
+      instance = createStreakr({ target, years, days });
+      const cell = target.querySelector<SVGRectElement>("rect.sk-heatmap-cell");
+      const tooltip = target.querySelector<HTMLElement>(".sk-tooltip");
+      expect(cell).toBeTruthy();
+      expect(tooltip?.id).not.toBe("");
+
+      cell?.dispatchEvent(new Event("focus"));
+      expect(tooltip?.classList.contains("visible")).toBe(true);
+      expect(cell?.getAttribute("aria-describedby")).toBe(tooltip?.id);
+
+      cell?.dispatchEvent(new Event("blur"));
+      expect(cell?.hasAttribute("aria-describedby")).toBe(false);
+      expect(tooltip?.classList.contains("visible")).toBe(false);
     });
   });
 
@@ -2170,6 +2282,95 @@ describe("createStreakr", () => {
       expect(document.activeElement).toBe(jan2);
       expect(jan2.getAttribute("tabindex")).toBe("0");
       expect(jan3.getAttribute("tabindex")).toBe("-1");
+    });
+
+    it("roves tabindex and focus across heatmap cells with the keyboard", () => {
+      instance = createStreakr({
+        target,
+        years: [2026],
+        year: 2026,
+        today: dateKey(new Date(2026, 0, 10)),
+        days: () => [{ date: dateKey(new Date(2026, 0, 5)), count: 3, sources: { github: 3 } }],
+      });
+
+      const cells = Array.from(target.querySelectorAll<SVGRectElement>(".sk-heatmap-cell"));
+      expect(cells.length).toBeGreaterThan(20);
+      const press = (cell: SVGRectElement, key: string) => {
+        cell.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
+      };
+
+      const initial = cells.find((cell) => cell.getAttribute("tabindex") === "0");
+      expect(initial?.dataset.date).toBe(dateKey(new Date(2026, 0, 10)));
+      if (!initial) return;
+      const initialIndex = cells.indexOf(initial);
+
+      initial.focus();
+      press(initial, "ArrowDown");
+      const down = cells[initialIndex + 1]!;
+      expect(document.activeElement).toBe(down);
+      expect(down.getAttribute("tabindex")).toBe("0");
+      expect(initial.getAttribute("tabindex")).toBe("-1");
+
+      press(down, "ArrowRight");
+      const right = cells[initialIndex + 1 + 7]!;
+      expect(document.activeElement).toBe(right);
+      expect(right.getAttribute("tabindex")).toBe("0");
+      expect(down.getAttribute("tabindex")).toBe("-1");
+
+      press(right, "ArrowLeft");
+      expect(document.activeElement).toBe(down);
+
+      press(down, "ArrowUp");
+      expect(document.activeElement).toBe(initial);
+
+      press(initial, "Home");
+      const first = cells[0]!;
+      expect(document.activeElement).toBe(first);
+      expect(first.getAttribute("tabindex")).toBe("0");
+      expect(initial.getAttribute("tabindex")).toBe("-1");
+
+      press(first, "End");
+      const last = cells[cells.length - 1]!;
+      expect(document.activeElement).toBe(last);
+      expect(last.getAttribute("tabindex")).toBe("0");
+      expect(first.getAttribute("tabindex")).toBe("-1");
+
+      // Boundaries clamp: moving past the last cell keeps focus in place.
+      press(last, "ArrowDown");
+      expect(document.activeElement).toBe(last);
+
+      // Enter and Space do not move the roving tab stop.
+      press(last, "Enter");
+      expect(document.activeElement).toBe(last);
+      expect(last.getAttribute("tabindex")).toBe("0");
+    });
+
+    it("updates the theme when the system preference changes", () => {
+      const originalMatchMedia = window.matchMedia;
+      const holder: { listener?: (e: MediaQueryListEvent) => void } = {};
+      window.matchMedia = vi.fn().mockImplementation((query) => ({
+        matches: true,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn((event: string, listener: (e: MediaQueryListEvent) => void) => {
+          if (event === "change") holder.listener = listener;
+        }),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }));
+
+      try {
+        instance = createStreakr({ target, theme: "system", years, days });
+        const root = target.querySelector<HTMLElement>(".sk-root");
+        expect(root?.dataset.theme).toBe("dark");
+
+        holder.listener?.({ matches: false } as MediaQueryListEvent);
+        expect(root?.dataset.theme).toBe("light");
+      } finally {
+        window.matchMedia = originalMatchMedia;
+      }
     });
   });
 });

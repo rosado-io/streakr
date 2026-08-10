@@ -15,9 +15,17 @@ export interface Tooltip {
   bindCellEvents: (rect: SVGElement, day: RenderableDay) => void;
 }
 
+const TOOLTIP_OFFSET = 14;
+const TOOLTIP_VIEWPORT_MARGIN = 8;
+
+// Unique per instance so heatmap cells can reference their own tooltip with
+// aria-describedby when several streakr instances share a document.
+let tooltipIdSeq = 0;
+
 export const createTooltip = (ctx: ComponentCtx): Tooltip => {
   const el = h("div", {
     class: "sk-tooltip",
+    id: `sk-tooltip-${++tooltipIdSeq}`,
     role: "tooltip",
     "aria-live": "polite",
   }) as HTMLElement;
@@ -44,8 +52,13 @@ export const createTooltip = (ctx: ComponentCtx): Tooltip => {
   };
 
   const place = (x: number, y: number): void => {
-    el.style.left = `${x + 14}px`;
-    el.style.top = `${y + 14}px`;
+    // Clamp to the viewport so cells near the right/bottom edges do not push
+    // the tooltip off-screen. The tooltip is position: fixed and stays in the
+    // a11y tree (opacity only), so offsetWidth/Height are always measurable.
+    const maxX = window.innerWidth - el.offsetWidth - TOOLTIP_VIEWPORT_MARGIN;
+    const maxY = window.innerHeight - el.offsetHeight - TOOLTIP_VIEWPORT_MARGIN;
+    el.style.left = `${Math.max(TOOLTIP_VIEWPORT_MARGIN, Math.min(x + TOOLTIP_OFFSET, maxX))}px`;
+    el.style.top = `${Math.max(TOOLTIP_VIEWPORT_MARGIN, Math.min(y + TOOLTIP_OFFSET, maxY))}px`;
   };
 
   const show = (event: MouseEvent, day: RenderableDay): void => {
@@ -84,9 +97,13 @@ export const createTooltip = (ctx: ComponentCtx): Tooltip => {
       const bounds = rect.getBoundingClientRect();
       renderDay(day);
       place(bounds.left + bounds.width / 2, bounds.top + bounds.height / 2);
+      rect.setAttribute("aria-describedby", el.id);
       el.classList.add("visible");
     });
-    rect.addEventListener("blur", hide);
+    rect.addEventListener("blur", () => {
+      rect.removeAttribute("aria-describedby");
+      hide();
+    });
   };
 
   return { el, show, showSourceLabel, move, hide, bindCellEvents };

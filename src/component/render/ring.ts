@@ -6,6 +6,7 @@ import {
   localDateKey,
   MONTH_LABELS_SHORT,
   padDaysToYear,
+  parseLocalDate,
   polarToCartesian,
 } from "../calendar";
 import type { ComponentCtx } from "../config";
@@ -52,18 +53,17 @@ export const updateRingCenter = (centerEl: HTMLElement, day: RenderableDay): voi
   if (dateEl) dateEl.textContent = fmtDateShort(day.date);
 };
 
-export const findDayByDate = (days: LeveledDay[], date: Date): LeveledDay => {
-  const found = days.find((d) => localDateKey(d.date) === localDateKey(date));
+export const findDayByDateKey = (days: LeveledDay[], dateKey: string): LeveledDay => {
+  const found = days.find((d) => d.dateKey === dateKey);
   return (
-    found ??
-    days[0] ?? {
-      date,
-      dateKey: localDateKey(date),
-      total: 0,
-      level: 0,
-      sources: {},
-    }
+    found ?? days[0] ?? { date: parseLocalDate(dateKey), dateKey, total: 0, level: 0, sources: {} }
   );
+};
+
+const findDayByDate = (days: LeveledDay[], date: Date): LeveledDay => {
+  const dateKey = localDateKey(date);
+  const found = days.find((d) => d.dateKey === dateKey);
+  return found ?? days[0] ?? { date, dateKey, total: 0, level: 0, sources: {} };
 };
 
 type RingDayLineAttrs = {
@@ -84,9 +84,11 @@ export interface RingRenderer {
   renderSkeletonRingCenter: () => HTMLElement;
 }
 
-export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): RingRenderer => {
-  let ringClipIdSeq = 0;
+// Module-level on purpose: several streakr instances can share a document, so
+// clip-path ids must be unique across renderers, not just within one.
+let ringClipIdSeq = 0;
 
+export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): RingRenderer => {
   const isFutureRingDay = (day: Date): boolean =>
     isCurrentYear(ctx) && dayStartMs(day) > dayStartMs(ctx.cfg.today);
 
@@ -211,7 +213,7 @@ export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): R
         return {
           class: "sk-ring-line" + (future ? " sk-ring-line--future" : ""),
           stroke: future ? "transparent" : ringLineColor(day.level),
-          "data-date": day.date.toISOString(),
+          "data-date": day.dateKey,
           "data-future": future ? "true" : undefined,
           tabindex: future ? undefined : interactiveTabIndex,
           role: future ? undefined : "button",

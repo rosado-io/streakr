@@ -3,12 +3,6 @@ import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
 import eslintConfigPrettier from "eslint-config-prettier";
 
-const NODE_ONLY_FILES = [
-  "src/providers/local-cli.ts",
-  "src/providers/local-git-coauthor.ts",
-  "src/snapshot/write.ts",
-];
-
 export default defineConfig(
   eslint.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
@@ -17,7 +11,7 @@ export default defineConfig(
     languageOptions: {
       parserOptions: {
         projectService: {
-          allowDefaultProject: ["*.config.js", "*.config.ts", "demo/*.ts"],
+          allowDefaultProject: ["*.config.js", "*.config.ts", "demo/*.ts", "scripts/*.mjs"],
         },
         tsconfigRootDir: import.meta.dirname,
       },
@@ -39,7 +33,7 @@ export default defineConfig(
   },
   {
     files: ["src/**/*.ts"],
-    ignores: ["src/__tests__/**", ...NODE_ONLY_FILES],
+    ignores: ["src/__tests__/**"],
     rules: {
       "no-restricted-imports": [
         "error",
@@ -48,7 +42,7 @@ export default defineConfig(
             {
               group: ["node:*", "child_process", "fs", "fs/*", "path", "os", "util", "crypto"],
               message:
-                "Node built-ins are only allowed in the node-only provider and snapshot files.",
+                "streakr is a browser-only presentation layer; Node built-ins are not allowed.",
             },
           ],
         },

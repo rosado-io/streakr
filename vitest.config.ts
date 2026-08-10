@@ -9,7 +9,7 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "lcov"],
       include: ["src/**/*.ts"],
-      exclude: ["src/index.ts", "src/agents.ts", "src/types/**", "src/vite-env.d.ts"],
+      exclude: ["src/index.ts", "src/types/**", "src/vite-env.d.ts"],
       thresholds: {
         statements: 90,
         branches: 85,
