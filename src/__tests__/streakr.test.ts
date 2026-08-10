@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createStreakr as createComponent } from "../component/streakr";
+import { sourceIconHtml } from "../component/sources";
 import type { StreakrDay, StreakrInstance, StreakrOptions, StreakrSource } from "../types";
 import streakrCss from "../component/streakr.css?raw";
 
@@ -493,6 +494,59 @@ describe("createStreakr", () => {
       expect(target.querySelector(".sk-empty")).toBeNull();
       // bitbucket has 0 contributions, so it is not rendered even after enabling all (issue #185)
       expect(target.querySelectorAll(".sk-source.active")).toHaveLength(2);
+    });
+
+    it("gives built-in icons with internal defs unique ids across instances", () => {
+      const secondTarget = document.createElement("div");
+      document.body.appendChild(secondTarget);
+      const chipSources = [
+        { key: "github", name: "GitHub", color: "#39d353" },
+        { key: "antigravity", name: "Antigravity", color: "#3487ff" },
+      ];
+      const chipDays = [
+        { date: dateKey(new Date(2026, 0, 5)), count: 4, sources: { github: 2, antigravity: 2 } },
+      ];
+
+      instance = createStreakr({
+        target,
+        years: [2026],
+        days: chipDays,
+        sources: chipSources,
+      });
+      const other = createComponent({
+        target: secondTarget,
+        years: [2026],
+        days: chipDays,
+        sources: chipSources,
+      });
+
+      try {
+        const firstIds = Array.from(target.querySelectorAll(".sk-source-icon [id]")).map(
+          (el) => el.id,
+        );
+        const secondIds = Array.from(secondTarget.querySelectorAll(".sk-source-icon [id]")).map(
+          (el) => el.id,
+        );
+        expect(firstIds.length).toBeGreaterThan(0);
+        expect(secondIds.length).toBeGreaterThan(0);
+        expect(firstIds.some((id) => secondIds.includes(id))).toBe(false);
+
+        // url(#...) references must resolve within the same render
+        const iconWithIds = Array.from(target.querySelectorAll(".sk-source-icon")).find((el) =>
+          el.querySelector("[id]"),
+        );
+        const markup = iconWithIds?.innerHTML ?? "";
+        for (const id of firstIds) {
+          expect(markup).toContain(`url(#${id})`);
+        }
+      } finally {
+        other.destroy();
+        secondTarget.remove();
+      }
+    });
+
+    it("returns no built-in icon html for unknown source keys", () => {
+      expect(sourceIconHtml({ key: "custom", name: "Custom", color: "#ffffff" })).toBeNull();
     });
   });
 
