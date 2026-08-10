@@ -189,6 +189,12 @@ the radial ring. Both views are keyboard accessible:
 - Loading, empty, and error states have accessible announcements.
 - Motion respects `prefers-reduced-motion`.
 
+### Future days
+
+In the current year, days after `today` are future days. The ring draws them
+transparent and non-interactive; the heatmap keeps them visible and focusable
+with a "No contributions" label so keyboard navigation covers a uniform grid.
+
 ## Styling
 
 Import `@rosado-io/streakr/styles.css`. Override `--sk-*` custom properties on

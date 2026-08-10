@@ -45,7 +45,7 @@ describe("levelize", () => {
       sday("2025-06-21", 100),
     ];
     const leveled = levelize(days);
-    expect(leveled.map((d) => d.date.toISOString().slice(0, 10))).toEqual([
+    expect(leveled.map((d) => d.dateKey)).toEqual([
       "2025-06-16",
       "2025-06-17",
       "2025-06-18",

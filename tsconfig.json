@@ -4,6 +4,7 @@
         "module": "ESNext",
         "lib": [
             "ES2020",
+            "ES2022.Array",
             "ES2022.Error",
             "DOM",
             "DOM.Iterable"
@@ -14,10 +15,6 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "declaration": true,
-        "declarationMap": true,
-        "sourceMap": true,
-        "outDir": "./dist",
         "rootDir": "./src",
         "resolveJsonModule": true,
         "isolatedModules": true,

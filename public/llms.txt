@@ -1,13 +1,14 @@
 # streakr
 
-> A drop-in, framework-agnostic Git contribution calendar for the web. It normalizes
-> activity from GitHub and GitLab into one daily series, includes Bitbucket as a
-> visual provider chip, and splits out the commits co-authored by AI agents
-> (Claude, Codex, opencode, Copilot) as their own sources.
+> A framework-agnostic presentation layer for contribution and activity calendars.
+> You own data acquisition, credentials, caching, and persistence. Streakr receives
+> one serializable contract (`StreakrDay[]`) and renders a responsive heatmap,
+> mobile ring, source filters, year navigation, lifecycle states, and statistics.
 
 streakr is an MIT-licensed vanilla JavaScript library published on npm as
 `@rosado-io/streakr`. It ships ESM plus a single stylesheet and has zero runtime
-dependencies. It is not a React component and requires no build step.
+dependencies. The package contains no network clients, token handling, or
+filesystem access: your application produces the data, Streakr renders it.
 
 ## What it renders
 
@@ -18,23 +19,27 @@ One component with two layouts, chosen by **container width, not user agent**:
   to scrub around the year, and tap the center to reset to today. The ring is also
   keyboard operable.
 
-It also computes four figures from the normalized series: Total Contributions, Best
-Streak, Current Streak (swapped for Active Rate on past years), and Active Days.
+It also computes four figures from the series: Total Contributions, Best Streak,
+Current Streak (swapped for Active Rate on past years), and Active Days.
 
-## Data sources
+Both views are keyboard accessible (roving tabindex, arrow keys, Home, End,
+Enter, Space), expose accessible loading/empty/error announcements, and respect
+`prefers-reduced-motion`.
 
-| Source | Kind | Notes |
-| --- | --- | --- |
-| GitHub | GraphQL | Requires a Personal Access Token; adds private counts with `repo` scope. |
-| GitLab | REST | Requires a Personal Access Token; gitlab.com or self-hosted via a custom base URL. |
-| Bitbucket | visual chip only | No built-in fetcher; display-only provider for custom data. |
-| Claude, Codex, opencode, Copilot | `Co-authored-by:` trailers | Matched from commit messages, each counted as its own source. |
+## Data contract
 
-Local clones can be scanned with `localGitCoAuthorProvider` from the Node-only
-`@rosado-io/streakr/agents` subpath. It uses published default branches by default
-and can opt into all remote or local refs; no token leaves the machine. Providers
-can also be skipped entirely by passing your own array of dates and counts to
-`getDays`.
+```ts
+interface StreakrDay {
+  readonly date: string; // YYYY-MM-DD, local calendar day
+  readonly count: number; // non-negative safe integer
+  readonly sources?: Readonly<Record<string, number>>; // must add up to count
+}
+```
+
+Streakr validates its inputs before rendering: dates must be real calendar dates
+in `YYYY-MM-DD` form, dates and source keys must be unique, every source key in
+a day must be declared in `sources`, and `year` must appear in `years`. String
+dates prevent UTC parsing from shifting a contribution into an adjacent local day.
 
 ## Install
 
@@ -43,16 +48,69 @@ npm install @rosado-io/streakr
 ```
 
 ```js
-import { createStreakr } from '@rosado-io/streakr'
-import '@rosado-io/streakr/styles.css'
+import { createStreakr } from "@rosado-io/streakr";
+import "@rosado-io/streakr/styles.css";
 
-createStreakr({
-  target: document.querySelector('#streakr'),
-  theme: 'dark',
-  years: [2024, 2025, 2026],
-  getDays: (year) => fetchActivity(year),
-})
+const streakr = createStreakr({
+  target: document.querySelector("#streakr"),
+  years: [2025, 2026],
+  year: 2026,
+  days: [{ date: "2026-07-28", count: 7, sources: { work: 5, personal: 2 } }],
+  sources: [
+    { key: "work", name: "Work", color: "#39d353" },
+    { key: "personal", name: "Personal", color: "#4f8cff" },
+  ],
+  onYearChange(year) {
+    streakr.update({ year, status: "loading" });
+    // fetch that year's data, then: streakr.update({ days, status: "ready" });
+  },
+});
 ```
+
+## API
+
+### `createStreakr(options)`
+
+| Option | Type | Default | Purpose |
+| --- | --- | --- | --- |
+| `target` | `HTMLElement` | required | Element that receives the component. |
+| `days` | `readonly StreakrDay[]` | required | Serializable activity data to present. |
+| `years` | `readonly number[]` | required | Available year tabs. |
+| `year` | `number` | last year | Selected year. |
+| `today` | `string` | current date | `YYYY-MM-DD` reference for year-to-date. |
+| `status` | `loading \| empty \| ready \| error` | `ready` | Presentation lifecycle state. |
+| `errorMessage` | `string` | built-in copy | Message rendered by the error state. |
+| `sources` | `readonly StreakrSource[]` | host presets | Labels, colors, icons, and filter keys. |
+| `theme` | `dark \| light \| system` | `dark` | Visual theme. |
+| `accent` | six-digit hex color | `#39d353` | Accent and optional heatmap tint. |
+| `tintHeatmap` | `boolean` | `true` | Derive heat levels from the accent. |
+| `showSources` | `boolean` | `true` | Show source filter chips when useful. |
+| `showStats` | `boolean` | `true` | Show computed records. |
+| `onYearChange` | `(year) => void` | — | Observe a user-selected year. |
+| `onSourceToggle` | `(key, enabled, sourceState) => void` | — | Observe source filter changes. |
+
+The instance exposes `update(patch)` (everything except `target`),
+`setYear(year)`, `setSources(state)`, and `destroy()`.
+
+### Visual sources
+
+`DEFAULT_SOURCES` contains GitHub, GitLab, and Bitbucket presentation presets.
+`AGENT_SOURCES` contains Claude, Codex, opencode, Copilot, Kimi, and Antigravity
+presets. They are labels, colors, and icons only — they do not fetch or classify
+data. A custom source icon is a factory returning an SVG node, so Streakr never
+inserts consumer-provided HTML.
+
+### Exported types
+
+`StreakrDay`, `StreakrOptions`, `StreakrInstance`, `StreakrUpdate`,
+`StreakrSource`, `StreakrSourceState`, `StreakrStatus`, `StreakrTheme`,
+`StreakrThemeMode`.
+
+## Styling
+
+Import `@rosado-io/streakr/styles.css`. Override `--sk-*` custom properties on
+`.sk-root` for deeper customization. The package has no external CSS
+dependencies.
 
 ## Links
 
@@ -60,5 +118,5 @@ createStreakr({
 - Source: https://github.com/rosado-io/streakr
 - Package: https://www.npmjs.com/package/@rosado-io/streakr
 - Docs: https://github.com/rosado-io/streakr#readme
-- Providers: https://github.com/rosado-io/streakr/blob/main/docs/providers.md
+- Recipes: https://github.com/rosado-io/streakr/blob/main/docs/recipes/README.md
 - License: MIT

@@ -1,7 +1,7 @@
 {
   "name": "streakr — The universal Git contribution calendar",
   "short_name": "streakr",
-  "description": "A framework-agnostic contribution calendar that unifies GitHub, GitLab and Bitbucket activity and splits out commits co-authored by AI agents.",
+  "description": "A framework-agnostic presentation layer for contribution calendars. You bring the data; streakr renders the heatmap, mobile ring, filters and streak stats.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",

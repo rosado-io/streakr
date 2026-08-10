@@ -21,13 +21,16 @@
     "build:demo": "vite build --config vite.demo.config.ts",
     "test": "vitest",
     "test:ci": "vitest run --coverage",
+    "test:tz": "TZ=America/New_York vitest run",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "audit:dead-code": "knip",
     "check:package": "publint && attw --pack . --profile esm-only --entrypoints . --ignore-rules cjs-resolves-to-esm",
+    "check:size": "node scripts/check-size.mjs",
     "format": "prettier --write 'src/**/*.ts' 'demo/**/*.ts' '*.config.ts' 'eslint.config.js'",
     "format:check": "prettier --check 'src/**/*.ts' 'demo/**/*.ts' '*.config.ts' 'eslint.config.js'",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "typecheck:demo": "tsc --noEmit -p tsconfig.demo.json"
   },
   "keywords": [
     "contribution",
@@ -48,11 +51,14 @@
     "**/*.css"
   ],
   "packageManager": "pnpm@10.12.2",
+  "engines": {
+    "node": ">=22"
+  },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
     "@eslint/js": "^10.0.1",
     "@microsoft/api-extractor": "^7.58.12",
-    "@types/node": "^26.1.1",
+    "@types/node": "^22.0.0",
     "@vitest/coverage-v8": "^4.1.10",
     "esbuild": "^0.28.1",
     "eslint": "^10.7.0",

@@ -92,7 +92,7 @@ YEARS_LIST.forEach((y, i) => {
 });
 
 const TODAY = "2026-04-26";
-YEARS[2026] = YEARS[2026].filter((day) => day.date <= TODAY);
+YEARS[2026] = (YEARS[2026] ?? []).filter((day) => day.date <= TODAY);
 
 export const StreakrSampleData = {
   availableYears: YEARS_LIST,
