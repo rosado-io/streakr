@@ -84,7 +84,7 @@ export const gridFromDays = <T extends RenderableDay>(days: T[]): (T | null)[][]
   return padGridColumns(
     days.reduce<(T | null)[][]>(
       (cols, day) => {
-        const lastCol = cols[cols.length - 1];
+        const lastCol = cols.at(-1);
         return !lastCol || lastCol.length === 7
           ? [...cols, [day]]
           : [...cols.slice(0, -1), [...lastCol, day]];
@@ -99,7 +99,7 @@ export const monthHeaders = (cols: (RenderableDay | null)[][]): { col: number; l
     (state, col, index) => {
       const firstDay = col.find((day): day is RenderableDay => Boolean(day));
       const month = firstDay?.date.getMonth();
-      const lastHeader = state.headers[state.headers.length - 1];
+      const lastHeader = state.headers.at(-1);
       const hasRoom = !lastHeader || index - lastHeader.col >= 3;
 
       const nextHeaders =
