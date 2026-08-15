@@ -98,7 +98,7 @@ a:hover {
   fill: var(--lv2-accent, #39d353);
 }
 .lv2-logo-off {
-  fill: #0e4429;
+  fill: color-mix(in oklab, var(--lv2-accent, #39d353) 30%, #0b0b0b);
 }
 
 /* ── Nav ─────────────────────────────────────────────────── */
@@ -329,7 +329,7 @@ a:hover {
   inset: 0;
   background: radial-gradient(
     ellipse 900px 420px at 12% -10%,
-    rgba(57, 211, 83, 0.1) 0%,
+    color-mix(in oklab, var(--lv2-accent) 10%, transparent) 0%,
     transparent 62%
   );
   pointer-events: none;
@@ -764,7 +764,7 @@ a:hover {
   color: #c084fc;
 }
 .c-s {
-  color: #86efac;
+  color: color-mix(in oklab, var(--lv2-accent, #39d353) 62%, #ffffff);
 }
 .c-fn {
   color: #93c5fd;
@@ -974,7 +974,7 @@ a:hover {
   inset: 0;
   background: radial-gradient(
     ellipse 700px 300px at 50% 100%,
-    rgba(57, 211, 83, 0.09) 0%,
+    color-mix(in oklab, var(--lv2-accent) 9%, transparent) 0%,
     transparent 65%
   );
   pointer-events: none;
