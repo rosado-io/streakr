@@ -255,6 +255,34 @@ export function logoSvg(size = 22): string {
   `;
 }
 
+const FAVICON_ON: [number, number][] = [
+  [4, 4],
+  [13, 4],
+  [22, 4],
+  [4, 13],
+  [13, 13],
+  [4, 22],
+  [22, 22],
+];
+const FAVICON_OFF: [number, number][] = [
+  [22, 13],
+  [13, 22],
+];
+
+export function faviconSvg(on: string, off: string): string {
+  const group = (cells: [number, number][], fill: string): string =>
+    `<g fill="${fill}">` +
+    cells.map(([x, y]) => `<rect x="${x}" y="${y}" width="6" height="6" rx="1.6"/>`).join("") +
+    `</g>`;
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">` +
+    `<rect width="32" height="32" rx="7" fill="#0a0a0a"/>` +
+    group(FAVICON_ON, on) +
+    group(FAVICON_OFF, off) +
+    `</svg>`
+  );
+}
+
 function eyebrow(text: string): string {
   return `<div class="lv2-eyebrow"><span class="lv2-eyebrow-dot"></span><span>${text}</span></div>`;
 }

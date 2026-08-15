@@ -15,6 +15,7 @@ import {
   INSTALL_CMD,
   INSTALL_SNIPPETS,
   RECIPE_SNIPPETS,
+  faviconSvg,
   highlight,
   logoSvg,
   shellHtml,
@@ -140,6 +141,31 @@ function updateAll(): void {
   syncThemedContainers();
 }
 
+function dimAccent(accent: string): string {
+  const value = Number.parseInt(accent.slice(1), 16);
+  if (!Number.isFinite(value)) return "#0e4429";
+  const channels = [(value >> 16) & 255, (value >> 8) & 255, value & 255];
+  return `#${channels
+    .map((c) =>
+      Math.round(c * 0.3 + 0x0b * 0.7)
+        .toString(16)
+        .padStart(2, "0"),
+    )
+    .join("")}`;
+}
+
+function syncFavicon(): void {
+  const svg = faviconSvg(state.accent, dimAccent(state.accent));
+  document.querySelectorAll('link[rel="icon"]').forEach((el) => {
+    el.remove();
+  });
+  const link = document.createElement("link");
+  link.rel = "icon";
+  link.type = "image/svg+xml";
+  link.href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+  document.head.appendChild(link);
+}
+
 function syncThemedContainers(): void {
   document.querySelectorAll<HTMLElement>("#slot-desktop, .lv2-phone-screen").forEach((el) => {
     el.dataset.theme = state.theme;
@@ -148,6 +174,7 @@ function syncThemedContainers(): void {
   if (shell) shell.style.setProperty("--lv2-accent", state.accent);
   const badge = document.querySelector<HTMLElement>("[data-device-badge]");
   if (badge) badge.textContent = `${state.year} · ring`;
+  syncFavicon();
 }
 
 function controlGroup(label: string, body: HTMLElement): HTMLElement {
