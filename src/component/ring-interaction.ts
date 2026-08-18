@@ -98,14 +98,19 @@ export const bindRingEvents = (
     return radius >= RING_INNER_R && radius <= RING_OUTER_R;
   };
 
-  const dayAtPoint = (point: RingPoint): LeveledDay | null => {
-    if (!isPointInRing(point) || days.length === 0) return null;
+  const dayAtAngle = (point: RingPoint): LeveledDay | null => {
+    if (days.length === 0) return null;
     const angle = Math.atan2(point.y - RING_CY, point.x - RING_CX);
     const turnFromTop = (((angle + Math.PI / 2) % FULL_TURN) + FULL_TURN) % FULL_TURN;
     const dayIndex = Math.round(turnFromTop / (FULL_TURN / days.length)) % days.length;
     const line = svgEl.querySelectorAll<SVGLineElement>(".sk-ring-line")[dayIndex];
     if (!line || line.classList.contains("sk-ring-line--future")) return null;
     return days[dayIndex] ?? null;
+  };
+
+  const dayAtPoint = (point: RingPoint): LeveledDay | null => {
+    if (!isPointInRing(point)) return null;
+    return dayAtAngle(point);
   };
 
   const releaseActivePointer = (pointerId: number): void => {
@@ -144,11 +149,11 @@ export const bindRingEvents = (
     if (e.pointerId !== activePointerId) return;
     activePointerMoved ||= hasMovedBeyondClickTolerance(e);
     const point = clientToRingPoint(e);
-    if (!point || !isPointInRing(point)) {
-      finishGesture(e);
-      return;
-    }
-    const selected = dayAtPoint(point);
+    if (!point) return;
+    // Once the gesture starts, resolve the day by angle only: the pointer
+    // capture keeps delivering moves even when the finger drifts off the
+    // thin annulus, so the drag should not die there.
+    const selected = dayAtAngle(point);
     if (selected) {
       activePointerMoved ||= localDateKey(selected.date) !== localDateKey(ctx.state.selectedDay);
       selectDay(selected);
@@ -158,8 +163,8 @@ export const bindRingEvents = (
   const handlePointerUp = (e: PointerEvent): void => {
     if (e.pointerId !== activePointerId) return;
     const point = clientToRingPoint(e);
-    if (point && isPointInRing(point)) {
-      const selected = dayAtPoint(point);
+    if (point) {
+      const selected = dayAtAngle(point);
       if (selected) {
         activePointerMoved ||= localDateKey(selected.date) !== localDateKey(ctx.state.selectedDay);
         selectDay(selected);
