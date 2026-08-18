@@ -1,3 +1,6 @@
+## [1.4.1](https://github.com/rosado-io/streakr/compare/v1.4.0...v1.4.1) (2026-08-18)
+* fix(ring): keep tracking the drag by angle outside the annulus (#195) ([`59523db`](https://github.com/rosado-io/streakr/commit/59523db66e2ac495fb60fcf01b14f842dee047b4)) by **Eduardo Rosado**
+
 ## [1.4.0](https://github.com/rosado-io/streakr/compare/v1.3.0...v1.4.0) (2026-08-02)
 * feat(sources): hide source badges with 0 contributions in active view period (#186) ([`82448ba`](https://github.com/rosado-io/streakr/commit/82448ba54ede4d0ed0ec920805c1caad61cea08d)) by **Eduardo Rosado**
 
