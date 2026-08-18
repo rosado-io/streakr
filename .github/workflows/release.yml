@@ -56,6 +56,6 @@ jobs:
           GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
         with:
           extra_plugins: |
-            @semantic-release/changelog
-            @semantic-release/git
-            conventional-changelog-conventionalcommits
+            @semantic-release/changelog@7.0.0
+            @semantic-release/git@11.0.1
+            conventional-changelog-conventionalcommits@10.3.0
