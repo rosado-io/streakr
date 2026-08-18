@@ -1935,7 +1935,7 @@ describe("createStreakr", () => {
       expect(svgEl.releasePointerCapture).toHaveBeenCalledWith(1);
     });
 
-    it("ends the gesture when the pointer leaves the ring annulus", () => {
+    it("keeps tracking by angle when the pointer leaves the ring annulus", () => {
       setContainerWidth(375);
       instance = createStreakr({
         target,
@@ -1954,13 +1954,22 @@ describe("createStreakr", () => {
       const lines = Array.from(target.querySelectorAll<SVGLineElement>(".sk-ring-line"));
       const jan1 = pointOnLine(lines.find((line) => line.dataset.date?.startsWith("2025-01-01"))!);
       const apr2 = pointOnLine(lines.find((line) => line.dataset.date?.startsWith("2025-04-02"))!);
-      const jul2 = pointOnLine(lines.find((line) => line.dataset.date?.startsWith("2025-07-02"))!);
+      const jul2Line = lines.find((line) => line.dataset.date?.startsWith("2025-07-02"))!;
+      const jul2Outside = pointOnLine(jul2Line, 200);
 
       svgEl.dispatchEvent(pointerAt("pointerdown", jan1.clientX, jan1.clientY));
       svgEl.dispatchEvent(pointerAt("pointermove", apr2.clientX, apr2.clientY));
-      svgEl.dispatchEvent(pointerAt("pointermove", 180, 180));
-      svgEl.dispatchEvent(pointerAt("pointermove", jul2.clientX, jul2.clientY));
-      svgEl.dispatchEvent(pointerAt("pointerup", jul2.clientX, jul2.clientY));
+      svgEl.dispatchEvent(pointerAt("pointermove", jul2Outside.clientX, jul2Outside.clientY));
+
+      expect(target.querySelector(".sk-ring-count")?.textContent).toBe("22");
+      expect(target.querySelector(".sk-ring-date")?.textContent).toBe("Jul 2");
+
+      svgEl.dispatchEvent(pointerAt("pointermove", apr2.clientX, apr2.clientY));
+
+      expect(target.querySelector(".sk-ring-count")?.textContent).toBe("11");
+      expect(target.querySelector(".sk-ring-date")?.textContent).toBe("Apr 2");
+
+      svgEl.dispatchEvent(pointerAt("pointerup", apr2.clientX, apr2.clientY));
 
       expect(target.querySelector(".sk-ring-count")?.textContent).toBe("11");
       expect(target.querySelector(".sk-ring-date")?.textContent).toBe("Apr 2");
