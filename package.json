@@ -63,7 +63,7 @@
     "esbuild": "^0.28.1",
     "eslint": "^10.7.0",
     "eslint-config-prettier": "^10.1.8",
-    "happy-dom": "^20.11.0",
+    "happy-dom": "^21.0.4",
     "knip": "^6.27.0",
     "prettier": "^3.9.6",
     "publint": "^0.3.22",
