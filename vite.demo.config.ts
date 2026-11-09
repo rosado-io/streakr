@@ -36,7 +36,7 @@ export default defineConfig({
   build: {
     outDir: "dist-demo",
     emptyOutDir: true,
-    rollupOptions: {
+    rolldownOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
       },
