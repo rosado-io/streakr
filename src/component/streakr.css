@@ -193,7 +193,11 @@
   border-radius: 6px;
   cursor: pointer;
   font-family: inherit;
-  transition: all 150ms ease;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease;
 }
 .sk-year-tab:hover {
   color: var(--sk-text);
@@ -215,7 +219,10 @@
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  transition: all 150ms ease;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
 }
 .sk-year-more:hover {
   color: var(--sk-text);
@@ -251,7 +258,11 @@
   border-radius: 999px;
   padding: 5px 11px 5px 9px;
   cursor: pointer;
-  transition: all 180ms ease;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    opacity 180ms ease;
   color: var(--sk-text-muted);
   font-family: inherit;
   font-size: 11.5px;
@@ -470,7 +481,10 @@
   cursor: pointer;
   color: inherit;
   font-family: inherit;
-  transition: all 180ms ease;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
   box-shadow:
     0 0 24px -6px var(--sk-accent-glow),
     inset 0 0 16px -6px color-mix(in oklab, var(--sk-accent) 12%, transparent);
@@ -666,7 +680,9 @@
   cursor: pointer;
   display: grid;
   place-items: center;
-  transition: all 150ms ease;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
 }
 .sk-modal-close:hover {
   background: var(--sk-hover-bg);
@@ -686,7 +702,10 @@
   text-align: center;
   font-family: inherit;
   color: inherit;
-  transition: all 150ms ease;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    transform 150ms ease;
 }
 .sk-modal-year:hover {
   background: var(--sk-hover-bg);

@@ -266,7 +266,10 @@ a:hover {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 140ms;
+  transition:
+    background-color 140ms,
+    border-color 140ms,
+    color 140ms;
 }
 .lv2-btn-primary {
   background: #fff;
@@ -306,7 +309,9 @@ a:hover {
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 11px;
   cursor: pointer;
-  transition: all 140ms;
+  transition:
+    border-color 140ms,
+    color 140ms;
 }
 .lv2-copy:hover {
   border-color: rgba(255, 255, 255, 0.3);
@@ -555,6 +560,8 @@ a:hover {
   overflow: hidden;
 }
 .lv2-controls {
+  position: relative;
+  isolation: isolate;
   flex: 1 1 320px;
   min-width: 0;
   padding: clamp(16px, 2vw, 22px);
@@ -607,7 +614,10 @@ a:hover {
   font-family: inherit;
   font-size: 12.5px;
   cursor: pointer;
-  transition: all 150ms ease;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
 }
 .lv2-seg-btn.mono {
   font-family: "JetBrains Mono", ui-monospace, monospace;
@@ -635,7 +645,10 @@ a:hover {
   border: 2px solid transparent;
   padding: 0;
   cursor: pointer;
-  transition: all 150ms ease;
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
 }
 .lv2-swatch:hover {
   transform: scale(1.08);
@@ -689,7 +702,9 @@ a:hover {
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.07);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  transition: all 160ms ease;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
 }
 .lv2-switch span {
   position: absolute;
@@ -699,7 +714,9 @@ a:hover {
   height: 13px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.55);
-  transition: all 160ms ease;
+  transition:
+    left 160ms ease,
+    background-color 160ms ease;
 }
 .lv2-switch.on {
   background: var(--lv2-accent);
@@ -731,7 +748,9 @@ a:hover {
   font-size: 12.5px;
   cursor: pointer;
   margin-bottom: -1px;
-  transition: all 150ms ease;
+  transition:
+    color 150ms ease,
+    border-bottom-color 150ms ease;
 }
 .lv2-tab:hover {
   color: #fff;
@@ -1065,6 +1084,13 @@ a:hover {
   .lv2-swatch:hover {
     transform: none;
   }
+  .lv2-skip,
+  .lv2 *,
+  .lv2 *::before,
+  .lv2 *::after {
+    transition: none;
+    animation: none;
+  }
 }
 
 /* A quiet editorial readout shared by the two live calendar examples. */
@@ -1127,10 +1153,6 @@ a:hover {
   border-radius: 22px;
   background: rgba(123, 168, 232, 0.07);
   transform: rotate(-20deg);
-}
-.lv2-controls {
-  position: relative;
-  isolation: isolate;
 }
 .lv2-controls::after {
   right: 16px;

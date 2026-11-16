@@ -1,17 +1,20 @@
 // Restore semantic focus after replacing nodes, including responsive view changes.
 export const captureFocus = (root: HTMLElement): (() => void) => {
   const active = document.activeElement;
-  const key = active?.getAttribute("data-sk-focus");
-  const date = active?.getAttribute("data-date");
-  if (!active || !root.contains(active) || (!key && !date)) return () => {};
+  if (!(active instanceof HTMLElement || active instanceof SVGElement) || !root.contains(active)) {
+    return () => {};
+  }
+  const key = active.dataset.skFocus;
+  const date = active.dataset.date;
+  if (!key && !date) return () => {};
   return () => {
     const candidates = root.querySelectorAll<HTMLElement | SVGElement>(
       "[data-sk-focus], [data-date]",
     );
     const next = Array.from(candidates).find((el) =>
-      key ? el.getAttribute("data-sk-focus") === key : el.getAttribute("data-date") === date,
+      key ? el.dataset.skFocus === key : el.dataset.date === date,
     );
-    if (!next || next.getAttribute("data-future") === "true") return;
+    if (!next || next.dataset.future === "true") return;
     if (date) {
       root
         .querySelectorAll('[data-date][tabindex="0"]')

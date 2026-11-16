@@ -126,7 +126,7 @@ function mountAll(): void {
   syncThemedContainers();
 }
 
-function updateAll(patch: StreakrUpdate = { sources: activeSources(), days: activeDays() }): void {
+function updateAll(patch: StreakrUpdate): void {
   if (patch.days !== undefined || patch.sources !== undefined || patch.status !== undefined) {
     renderDayDetail(null, activeSources());
   }
@@ -300,7 +300,7 @@ function renderControls(): void {
   options.appendChild(
     switchRow("AI agent sources", state.showAgents, () => {
       state.showAgents = !state.showAgents;
-      updateAll();
+      updateAll({ sources: activeSources(), days: activeDays() });
       renderControls();
       renderLiveCode();
     }),
