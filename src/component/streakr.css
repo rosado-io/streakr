@@ -1017,6 +1017,16 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .sk-ring-center,
+  .sk-modal-year,
+  .sk-tooltip {
+    transition: none;
+  }
+  .sk-ring-center:hover,
+  .sk-modal-year:hover,
+  .sk-tooltip {
+    transform: none;
+  }
   .sk-heatmap-skeleton-cell,
   .sk-heatmap-cell--reveal,
   .sk-skeleton::after,
