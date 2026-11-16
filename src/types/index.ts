@@ -39,6 +39,8 @@ export interface StreakrOptions {
   readonly showSources?: boolean;
   readonly showStats?: boolean;
   readonly sources?: readonly StreakrSource[];
+  /** User-selected day with counts from enabled sources. No event on update or mount. */
+  readonly onDaySelect?: ((day: StreakrDay) => void) | null;
   readonly onYearChange?: (year: number) => void;
   readonly onSourceToggle?: (key: string, enabled: boolean, sources: StreakrSourceState) => void;
 }

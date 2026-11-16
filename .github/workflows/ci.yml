@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Audit dependencies
+        run: pnpm audit:security
+
       - name: Lint
         run: pnpm lint
 
@@ -49,6 +52,9 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Build demo
+        run: pnpm build:demo
 
       - name: Check bundle size
         run: pnpm check:size

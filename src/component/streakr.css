@@ -9,7 +9,7 @@
 .sk-root,
 .sk-root[data-theme="dark"] {
   /* Surface */
-  --sk-surface-1: linear-gradient(180deg, rgba(22, 27, 34, 0.9) 0%, rgba(13, 17, 23, 0.95) 100%);
+  --sk-surface-1: #10151a;
   --sk-surface-2: rgba(0, 0, 0, 0.25);
   --sk-surface-3: rgba(255, 255, 255, 0.015);
   --sk-surface-overlay: rgba(8, 10, 14, 0.78);
@@ -43,7 +43,7 @@
   --sk-heat-4: #39d353;
 
   /* Shadows */
-  --sk-shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 24px 60px -20px rgba(0, 0, 0, 0.5);
+  --sk-shadow-card: none;
   --sk-shadow-modal: 0 30px 80px -20px rgba(0, 0, 0, 0.7);
 
   /* Misc */
@@ -59,7 +59,7 @@
    TOKENS — Light
    ───────────────────────────────────────── */
 .sk-root[data-theme="light"] {
-  --sk-surface-1: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+  --sk-surface-1: #ffffff;
   --sk-surface-2: #f6f8fa;
   --sk-surface-3: rgba(0, 0, 0, 0.015);
   --sk-surface-overlay: rgba(255, 255, 255, 0.85);
@@ -88,8 +88,7 @@
   --sk-heat-3: #30a14e;
   --sk-heat-4: #216e39;
 
-  --sk-shadow-card:
-    0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 12px 32px -12px rgba(31, 35, 40, 0.12);
+  --sk-shadow-card: none;
   --sk-shadow-modal: 0 20px 50px -10px rgba(31, 35, 40, 0.25);
 
   --sk-hover-bg: rgba(0, 0, 0, 0.04);
@@ -119,7 +118,7 @@
   position: relative;
   background: var(--sk-surface-1);
   border: 1px solid var(--sk-border);
-  border-radius: 16px;
+  border-radius: 24px;
   padding: 28px;
   box-shadow: var(--sk-shadow-card);
   /* Query container for the responsive block at the end of this file. */
@@ -528,23 +527,43 @@
   align-content: stretch;
 }
 .sk-stat {
+  --sk-stat-accent: var(--sk-accent);
   position: relative;
-  background: var(--sk-surface-3);
-  border: 1px solid var(--sk-border-strong);
-  border-radius: 12px;
+  isolation: isolate;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--sk-stat-accent) 7%, var(--sk-surface-1));
+  border: 1px solid transparent;
+  border-radius: 18px;
   padding: 14px 16px;
-  transition:
-    border-color 220ms ease,
-    box-shadow 220ms ease,
-    background 220ms ease;
+  transition: background-color 220ms ease;
+}
+.sk-stat:nth-child(2) { --sk-stat-accent: #7ba8e8; }
+.sk-stat:nth-child(3) { --sk-stat-accent: #e5aa76; }
+.sk-stat:nth-child(4) { --sk-stat-accent: #a89bdb; }
+.sk-stat::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  right: 8px;
+  bottom: 8px;
+  width: 38px;
+  height: 38px;
+  opacity: 0.28;
+  background: radial-gradient(circle, var(--sk-stat-accent) 1.2px, transparent 1.5px) 0 0 / 9px 9px;
+}
+.sk-stat:nth-child(even)::after {
+  width: 23px;
+  height: 23px;
+  right: 16px;
+  bottom: 16px;
+  border: 1px solid var(--sk-stat-accent);
+  border-radius: 5px;
+  background: none;
+  transform: rotate(-12deg);
 }
 .sk-stat:hover {
-  border-color: var(--sk-accent-mid);
-  background: var(--sk-accent-soft);
-  box-shadow:
-    0 0 0 1px color-mix(in oklab, var(--sk-accent) 15%, transparent),
-    0 0 24px -4px var(--sk-accent-glow),
-    inset 0 0 12px -4px color-mix(in oklab, var(--sk-accent) 15%, transparent);
+  background: color-mix(in oklab, var(--sk-stat-accent) 12%, var(--sk-surface-1));
 }
 .sk-stat-label {
   font-size: 11px;
@@ -989,3 +1008,11 @@
     animation: none;
   }
 }
+
+/* Selection remains visible after the pointer or keyboard focus moves away. */
+.sk-heatmap-cell[aria-pressed="true"] {
+  stroke: var(--sk-text);
+  stroke-width: 1.5px;
+  paint-order: stroke fill;
+}
+.sk-heatmap-cell[aria-disabled="true"] { cursor: default; }

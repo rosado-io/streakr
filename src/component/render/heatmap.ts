@@ -243,6 +243,7 @@ const bindHeatmapKeyboard = (svgEl: SVGElement, selectedDate: Date): void => {
     else if (event.key === "End") nextIndex = cells.length - 1;
     else if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
+      event.target.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       return;
     } else {
       return;
@@ -254,6 +255,7 @@ const bindHeatmapKeyboard = (svgEl: SVGElement, selectedDate: Date): void => {
     event.target.setAttribute("tabindex", "-1");
     next.setAttribute("tabindex", "0");
     next.focus();
+    next.dispatchEvent(new MouseEvent("click", { bubbles: true }));
   });
 };
 

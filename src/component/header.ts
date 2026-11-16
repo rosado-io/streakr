@@ -30,6 +30,7 @@ const buildYearTab = (
 ): HTMLElement =>
   h("button", {
     class: "sk-year-tab" + (ctx.state.year === year ? " active" : ""),
+    "data-sk-focus": `year-${year}`,
     onclick: () => actions.setYear(year),
     disabled: isLoading || undefined,
     "aria-current": ctx.state.year === year ? "true" : undefined,
@@ -49,6 +50,7 @@ const renderYearsList = (
     list.appendChild(
       h("button", {
         class: "sk-year-tab active",
+        "data-sk-focus": `year-${ctx.state.year}`,
         "aria-current": "true",
         onclick: () => actions.openYearModal(),
         text: String(ctx.state.year),
@@ -61,6 +63,7 @@ const renderYearsList = (
         "button",
         {
           class: "sk-year-more",
+          "data-sk-focus": "year-more",
           "aria-label": "More years",
           onclick: () => actions.openYearModal(),
         },

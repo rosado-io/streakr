@@ -9,7 +9,9 @@ import {
   type StreakrSource,
   type StreakrStatus,
   type StreakrTheme,
+  type StreakrUpdate,
 } from "../src/index";
+import { renderDayDetail } from "./day-detail";
 import { StreakrSampleData } from "./sample-data";
 import {
   INSTALL_CMD,
@@ -108,35 +110,32 @@ function mountAll(): void {
       year: state.year,
       today: StreakrSampleData.today,
       days: activeDays(),
+      onDaySelect: (day) => renderDayDetail(day, activeSources()),
+      onSourceToggle: () => renderDayDetail(null, activeSources()),
       onYearChange: (year) => {
+        renderDayDetail(null, activeSources());
         state.year = year;
         syncThemedContainers();
         renderLiveCode();
         slots
           .filter((other) => other.el !== slot.el)
-          .forEach((other) => other.instance?.setYear(year));
+          .forEach((other) => other.instance?.update({ year }));
       },
     });
   });
   syncThemedContainers();
 }
 
-function updateAll(): void {
+function updateAll(patch: StreakrUpdate = { sources: activeSources(), days: activeDays() }): void {
+  if (patch.days !== undefined || patch.sources !== undefined || patch.status !== undefined) {
+    renderDayDetail(null, activeSources());
+  }
   if (slots.some((slot) => !slot.instance)) {
     mountAll();
     return;
   }
   slots.forEach((slot) => {
-    slot.instance?.update({
-      theme: state.theme,
-      accent: state.accent,
-      tintHeatmap: true,
-      showSources: state.showSources,
-      showStats: state.showStats,
-      status: state.componentStatus,
-      sources: activeSources(),
-      days: activeDays(),
-    });
+    slot.instance?.update(patch);
   });
   syncThemedContainers();
 }
@@ -240,7 +239,7 @@ function renderControls(): void {
         state.theme,
         (value) => {
           state.theme = value;
-          updateAll();
+          updateAll({ theme: state.theme });
           renderControls();
           renderLiveCode();
         },
@@ -259,7 +258,7 @@ function renderControls(): void {
     btn.setAttribute("aria-label", `Accent: ${preset.label}`);
     btn.addEventListener("click", () => {
       state.accent = preset.value;
-      updateAll();
+      updateAll({ accent: state.accent });
       renderControls();
       renderLiveCode();
     });
@@ -273,7 +272,7 @@ function renderControls(): void {
   input.value = state.accent;
   input.addEventListener("input", (event) => {
     state.accent = (event.target as HTMLInputElement).value;
-    updateAll();
+    updateAll({ accent: state.accent });
     renderLiveCode();
   });
   custom.appendChild(input);
@@ -285,7 +284,7 @@ function renderControls(): void {
   options.appendChild(
     switchRow("Source chips", state.showSources, () => {
       state.showSources = !state.showSources;
-      updateAll();
+      updateAll({ showSources: state.showSources });
       renderControls();
       renderLiveCode();
     }),
@@ -293,7 +292,7 @@ function renderControls(): void {
   options.appendChild(
     switchRow("Records panel", state.showStats, () => {
       state.showStats = !state.showStats;
-      updateAll();
+      updateAll({ showStats: state.showStats });
       renderControls();
       renderLiveCode();
     }),
@@ -319,7 +318,7 @@ function renderControls(): void {
         state.componentStatus,
         (value) => {
           state.componentStatus = value;
-          updateAll();
+          updateAll({ status: state.componentStatus });
           renderControls();
           renderLiveCode();
         },
@@ -352,6 +351,10 @@ function liveSource(): string {
     `  years: [${StreakrSampleData.availableYears.join(", ")}],`,
     `  year: ${String(state.year)},`,
     "  days: activity,",
+    "  onDaySelect(day) {",
+    "    // Use day.date to load your own activity details.",
+    "    console.log(day.date, day.count, day.sources)",
+    "  },",
     "})",
   ].join("\n");
 }
@@ -432,6 +435,7 @@ function loadStars(): void {
 }
 
 mountAll();
+renderDayDetail(null, activeSources());
 renderControls();
 renderLiveCode();
 renderCodeTabs("install", INSTALL_SNIPPETS);

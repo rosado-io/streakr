@@ -818,7 +818,7 @@ describe("createStreakr", () => {
     it("does not replay the reveal sweep on a later render once already ready", () => {
       instance = createStreakr({ target, years, status: "loading", days });
       instance.update({ status: "ready" });
-      instance.update({ theme: "light" });
+      instance.update({ showStats: false });
 
       const cells = target.querySelectorAll<SVGRectElement>("rect.sk-heatmap-cell");
       expect(cells.length).toBeGreaterThan(0);

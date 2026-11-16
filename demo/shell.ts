@@ -429,6 +429,11 @@ export function shellHtml(): string {
         </div>
       </div>
 
+      <section class="lv2-day-detail" id="day-detail" aria-labelledby="day-detail-title" aria-live="polite" aria-atomic="true">
+        <h3 id="day-detail-title">Every day has a story.</h3>
+        <p>Select a day in either calendar to explore its activity.</p>
+      </section>
+
       <div class="lv2-pg">
         <div class="lv2-panel lv2-controls">
           <div class="lv2-panel-title">Controls</div>

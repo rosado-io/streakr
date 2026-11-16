@@ -1,4 +1,5 @@
 import { dayToHandRotation, localDateKey } from "./calendar";
+import { markSelectedDay, notifyDaySelection } from "./selection";
 import type { ComponentCtx } from "./config";
 import {
   findDayByDateKey,
@@ -39,12 +40,12 @@ export const bindRingEvents = (
     );
   };
 
-  const selectDay = (day: LeveledDay, syncHand = true): void => {
+  const selectDay = (day: LeveledDay, notify = true): void => {
     ctx.state.selectedDay = day.date;
     updateRingCenter(centerEl, day);
-    if (syncHand) {
-      setHandRotation(dayToHandRotation(day.date, days.length));
-    }
+    setHandRotation(dayToHandRotation(day.date, days.length));
+    markSelectedDay(svgEl, day.dateKey);
+    if (notify) notifyDaySelection(ctx, day);
   };
 
   const lineToDay = (target: EventTarget | null): LeveledDay | null => {
@@ -142,7 +143,7 @@ export const bindRingEvents = (
     pointerDownPoint = { x: e.clientX, y: e.clientY };
     activePointerMoved = false;
     svgEl.setPointerCapture(e.pointerId);
-    selectDay(selected);
+    selectDay(selected, false);
   };
 
   const handlePointerMove = (e: PointerEvent): void => {
@@ -156,7 +157,7 @@ export const bindRingEvents = (
     const selected = dayAtAngle(point);
     if (selected) {
       activePointerMoved ||= localDateKey(selected.date) !== localDateKey(ctx.state.selectedDay);
-      selectDay(selected);
+      selectDay(selected, false);
     }
   };
 
@@ -167,10 +168,14 @@ export const bindRingEvents = (
       const selected = dayAtAngle(point);
       if (selected) {
         activePointerMoved ||= localDateKey(selected.date) !== localDateKey(ctx.state.selectedDay);
-        selectDay(selected);
+        selectDay(selected, false);
       }
     }
+    const committed = findDayByDateKey(days, localDateKey(ctx.state.selectedDay));
     finishGesture(e);
+    suppressNextClick = true;
+    resetSuppressedClickAfterDrag();
+    notifyDaySelection(ctx, committed);
   };
 
   const selectLineTarget = (target: EventTarget | null): void => {

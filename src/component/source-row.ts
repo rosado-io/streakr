@@ -49,6 +49,7 @@ export const renderSourceRow = (
       "button",
       {
         class: "sk-source" + (active ? " active" : ""),
+        "data-sk-focus": `source-${source.key}`,
         "aria-label": ariaLabel,
         "aria-pressed": String(active),
         onclick: () => onToggle(source.key),

@@ -75,6 +75,7 @@ type RingDayLineAttrs = {
   tabindex?: string | undefined;
   role?: string | undefined;
   "aria-label"?: string | undefined;
+  "aria-pressed"?: string | undefined;
   style?: Partial<CSSStyleDeclaration> | undefined;
 };
 
@@ -104,7 +105,7 @@ export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): R
       width: RING_SIZE,
       height: RING_SIZE,
       viewBox: `0 0 ${RING_SIZE} ${RING_SIZE}`,
-      role: "img",
+      role: svgClass === "sk-ring-svg" ? "group" : "img",
       "aria-label": ariaLabel,
     });
 
@@ -218,6 +219,7 @@ export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): R
           tabindex: future ? undefined : interactiveTabIndex,
           role: future ? undefined : "button",
           "aria-label": future ? undefined : ringDayAriaLabel(day),
+          "aria-pressed": future ? undefined : String(isSelected),
         };
       },
     );
@@ -236,6 +238,7 @@ export const createRingRenderer = (ctx: ComponentCtx, onResetDay: () => void): R
       "button",
       {
         class: "sk-ring-center",
+        "data-sk-focus": "ring-reset",
         "aria-label": ringCenterLabel(day),
         onclick: () => onResetDay(),
       },

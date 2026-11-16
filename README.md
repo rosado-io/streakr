@@ -58,12 +58,19 @@ const streakr = createStreakr({
   },
 });
 
+let requestId = 0;
+
 async function loadYear(year: number) {
+  const currentRequest = ++requestId;
   streakr.update({ year, status: "loading" });
   try {
-    const days = await fetch(`/api/activity?year=${year}`).then((response) => response.json());
+    const response = await fetch(`/api/activity?year=${year}`);
+    if (!response.ok) throw new Error(`Request failed (${response.status})`);
+    const days = await response.json();
+    if (currentRequest !== requestId) return;
     streakr.update({ days, status: "ready" });
   } catch {
+    if (currentRequest !== requestId) return;
     streakr.update({
       status: "error",
       errorMessage: "Activity could not be loaded.",
@@ -116,6 +123,7 @@ local day.
 | `tintHeatmap`    | `boolean`                             | `true`        | Derive heat levels from the accent.      |
 | `showSources`    | `boolean`                             | `true`        | Show source filter chips when useful.    |
 | `showStats`      | `boolean`                             | `true`        | Show computed records.                   |
+| `onDaySelect`    | `(day: StreakrDay) => void`           | —             | Observe a user-selected day with filtered counts. |
 | `onYearChange`   | `(year) => void`                      | —             | Observe a user-selected year.            |
 | `onSourceToggle` | `(key, enabled, sourceState) => void` | —             | Observe source filter changes.           |
 
@@ -130,6 +138,39 @@ streakr.destroy();
 
 `target` is intentionally absent from `update()`. Destroy and recreate an
 instance to move it.
+
+### Explore a day
+
+```ts
+createStreakr({
+  target,
+  years,
+  days,
+  onDaySelect(day) {
+    // Your application owns the detail panel and any data fetching.
+    detail.textContent = `${day.date}: ${day.count} contributions`;
+    // Use day.date to look up commits, sessions, or other activities.
+  },
+});
+```
+
+Click a heatmap cell or ring day, use Enter/Space or arrow keys, or drag the ring
+and release. The selected day stays highlighted across updates and responsive
+view changes. Changing year selects today in the current year, or January 1 in
+other years. Future days in the current year cannot be selected.
+
+`onDaySelect` receives a fresh `StreakrDay`: `count` and `sources` include only
+enabled sources. Total-only input days still omit `sources`; missing days have
+zero counts. Mutating the payload does not modify the component's data.
+Mounting, resizing, changing filters, and calling `update()` do not emit the
+event. A ring drag previews days locally and emits once on release; cancellation
+does not emit. Clear or refresh application-owned details when filters or the
+year change. Replace the handler with `update({ onDaySelect })`, or remove it
+with `update({ onDaySelect: null })`.
+
+The live demo includes an application-owned day panel. See the
+[day-detail recipe](docs/recipes/day-detail.md) for asynchronous details with
+stale-response protection.
 
 ### Visual sources
 
@@ -193,7 +234,7 @@ the radial ring. Both views are keyboard accessible:
 
 In the current year, days after `today` are future days. The ring draws them
 transparent and non-interactive; the heatmap keeps them visible and focusable
-with a "No contributions" label so keyboard navigation covers a uniform grid.
+with a "No contributions" label and `aria-disabled="true"` so keyboard navigation covers a uniform grid. They do not emit selection events.
 
 ## Styling
 

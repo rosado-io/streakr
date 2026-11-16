@@ -43,6 +43,7 @@ export interface ResolvedConfig {
   inputDays: StreakrDay[];
   days: RenderableDay[];
   sources: StreakrSource[];
+  onDaySelect: ((day: StreakrDay) => void) | null;
   onYearChange: ((year: number) => void) | null;
   onSourceToggle: ((key: string, enabled: boolean, sources: StreakrSourceState) => void) | null;
 }
@@ -91,6 +92,7 @@ export const resolveConfig = (options: StreakrOptions): ResolvedConfig => {
     inputDays,
     days: normalizeDays(inputDays, sources),
     sources,
+    onDaySelect: opts.onDaySelect ?? null,
     onYearChange: opts.onYearChange ?? null,
     onSourceToggle: opts.onSourceToggle ?? null,
   };

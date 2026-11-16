@@ -15,6 +15,7 @@ export interface ThemeController {
 }
 
 export const createThemeController = (cfg: ResolvedConfig, root: HTMLElement): ThemeController => {
+  let mediaQuery: MediaQueryList | null = null;
   let mediaQueryListener: ((e: MediaQueryListEvent) => void) | null = null;
 
   const getActiveTheme = (): "dark" | "light" => {
@@ -24,19 +25,19 @@ export const createThemeController = (cfg: ResolvedConfig, root: HTMLElement): T
   };
 
   const cleanup = (): void => {
-    const matchMedia = getMatchMedia();
-    if (mediaQueryListener && matchMedia) {
-      matchMedia("(prefers-color-scheme: dark)").removeEventListener("change", mediaQueryListener);
+    if (mediaQueryListener) {
+      mediaQuery?.removeEventListener("change", mediaQueryListener);
     }
+    mediaQuery = null;
     mediaQueryListener = null;
   };
 
   const setup = (): void => {
     const matchMedia = getMatchMedia();
-    if (!matchMedia) return;
     cleanup();
+    if (!matchMedia) return;
     if (cfg.theme === "system") {
-      const mediaQuery = matchMedia("(prefers-color-scheme: dark)");
+      mediaQuery = matchMedia("(prefers-color-scheme: dark)");
       mediaQueryListener = (e: MediaQueryListEvent) => {
         root.dataset.theme = e.matches ? "dark" : "light";
       };

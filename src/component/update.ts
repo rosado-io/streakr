@@ -47,7 +47,10 @@ export const applyUpdate = (
   const nextShowStats = resolvePatchValue(patch.showStats, cfg.showStats, (showStats) =>
     validateBoolean(showStats, "showStats"),
   );
-  const nextDays = normalizeDays(nextInputDays, nextSources);
+  const nextDays =
+    patch.days !== undefined || patch.sources !== undefined
+      ? normalizeDays(nextInputDays, nextSources)
+      : cfg.days;
 
   cfg.sources = nextSources;
   cfg.inputDays = nextInputDays;
@@ -67,6 +70,7 @@ export const applyUpdate = (
     hooks.onThemeChange();
   }
   if (patch.errorMessage !== undefined) cfg.errorMessage = patch.errorMessage;
+  if (patch.onDaySelect !== undefined) cfg.onDaySelect = patch.onDaySelect;
   if (patch.onYearChange !== undefined) cfg.onYearChange = patch.onYearChange;
   if (patch.onSourceToggle !== undefined) cfg.onSourceToggle = patch.onSourceToggle;
 };
