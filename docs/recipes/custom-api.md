@@ -35,14 +35,19 @@ const streakr = createStreakr({
   },
 });
 
+let requestId = 0;
+
 async function load(year: number): Promise<void> {
+  const currentRequest = ++requestId;
   streakr.update({ year, status: "loading" });
   try {
     const response = await fetch(`/api/activity?year=${year}`);
     if (!response.ok) throw new Error(`Request failed (${response.status})`);
     const days = (await response.json()) as StreakrDay[];
+    if (currentRequest !== requestId) return;
     streakr.update({ days, status: "ready" });
   } catch {
+    if (currentRequest !== requestId) return;
     streakr.update({
       status: "error",
       errorMessage: `Activity for ${selectedYear} could not be loaded.`,

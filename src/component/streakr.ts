@@ -12,6 +12,9 @@ import { applyAccentVars, createThemeController } from "./theme";
 import { createTooltip } from "./tooltip";
 import { applyUpdate } from "./update";
 import { renderYearModal } from "./year-modal";
+import { markSelectedDay, notifyDaySelection } from "./selection";
+import type { RenderableDay } from "./types";
+import { captureFocus } from "./focus";
 
 export function createStreakr(options: StreakrOptions): StreakrInstance {
   const cfg = resolveConfig(options);
@@ -41,7 +44,9 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
       const width = observedWrap.getBoundingClientRect().width;
       if (Math.abs(width - lastDrawWidth) < 1) return;
       lastDrawWidth = width;
+      const restoreFocus = captureFocus(root);
       currentDraw?.();
+      restoreFocus();
     });
   });
 
@@ -51,6 +56,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   const body = createBodyRenderer(ctx, {
     tooltip,
     ring,
+    onSelectDay: (day) => selectDay(day),
     onEnableAll: () => enableAllSources(),
     setCurrentDraw: (draw) => {
       currentDraw = draw;
@@ -63,9 +69,19 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     toggleSource: (key) => toggleSource(key),
   };
 
+  const selectDay = (day: RenderableDay): void => {
+    state.selectedDay = day.date;
+    markSelectedDay(root, day.dateKey);
+    notifyDaySelection(ctx, day);
+  };
+
   const resetSelectedDay = (): void => {
-    state.selectedDay = cfg.today;
+    const days = computeRenderFlags(ctx).leveled;
+    const day = days.find((day) => day.date.getTime() === cfg.today.getTime()) ?? days[0];
+    if (!day) return;
+    state.selectedDay = day.date;
     render();
+    notifyDaySelection(ctx, day);
   };
 
   const appendBody = (card: Element, flags: RenderFlags, isRevealing: boolean): void => {
@@ -89,6 +105,7 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   };
 
   const render = (): void => {
+    const restoreFocus = captureFocus(root);
     syncSources();
     tooltip.hide();
     resizeObs.disconnect();
@@ -100,6 +117,13 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
     observedWrap = null;
 
     const wasOpen = state.yearModalOpen;
+    if (state.year !== null && state.selectedDay.getFullYear() !== state.year) {
+      state.selectedDay =
+        state.year === cfg.today.getFullYear() ? cfg.today : new Date(state.year, 0, 1);
+    }
+    if (state.year === cfg.today.getFullYear() && state.selectedDay > cfg.today) {
+      state.selectedDay = cfg.today;
+    }
     const flags = computeRenderFlags(ctx);
     const isRevealing = wasLoading && cfg.status === "ready";
     wasLoading = flags.isLoading;
@@ -124,10 +148,13 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
         onClose: () => closeYearModal(),
       });
     }
+    restoreFocus();
   };
 
   const setYear = (y: number): void => {
-    state.year = validateSelectedYear(y, cfg.years);
+    const nextYear = validateSelectedYear(y, cfg.years);
+    if (nextYear === state.year) return;
+    state.year = nextYear;
     cfg.year = state.year;
     cfg.onYearChange?.(y);
     render();
@@ -169,7 +196,22 @@ export function createStreakr(options: StreakrOptions): StreakrInstance {
   return {
     update(patch: StreakrUpdate): void {
       applyUpdate(cfg, state, patch, { onThemeChange: () => theme.setup() });
-      render();
+      const visualOnly = Object.keys(patch).every((key) =>
+        [
+          "theme",
+          "accent",
+          "tintHeatmap",
+          "onYearChange",
+          "onSourceToggle",
+          "onDaySelect",
+        ].includes(key),
+      );
+      if (visualOnly) {
+        root.dataset.theme = theme.getActiveTheme();
+        applyAccentVars(root, cfg.accent, cfg.tintHeatmap);
+      } else {
+        render();
+      }
     },
     setYear,
     setSources(next: StreakrSourceState): void {

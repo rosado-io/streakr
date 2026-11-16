@@ -3,7 +3,7 @@ import { h, trustedHtml } from "../dom";
 import type { StreakrStats } from "../metrics";
 import { isCurrentYear } from "../selectors";
 import type { Tooltip } from "../tooltip";
-import type { LeveledDay } from "../types";
+import type { LeveledDay, RenderableDay } from "../types";
 import { isMobileHeatmap, renderHeatmap, renderSkeletonHeatmap } from "./heatmap";
 import type { RingRenderer } from "./ring";
 import { formatActiveRate, loadingStatCard, statCard } from "./stats";
@@ -28,6 +28,7 @@ export interface BodyRenderer {
 export interface BodyRendererDeps {
   tooltip: Tooltip;
   ring: RingRenderer;
+  onSelectDay: (day: RenderableDay) => void;
   onEnableAll: () => void;
   setCurrentDraw: (draw: () => void) => void;
 }
@@ -176,7 +177,19 @@ export const createBodyRenderer = (ctx: ComponentCtx, deps: BodyRendererDeps): B
             leveled,
             Math.max(200, w),
             ariaLabel,
-            tooltip.bindCellEvents,
+            (cell, day) => {
+              tooltip.bindCellEvents(cell, day);
+              const future = isCurrentYear(ctx) && day.date > ctx.cfg.today;
+              cell.setAttribute("role", "button");
+              cell.setAttribute(
+                "aria-pressed",
+                String(!future && day.date.getTime() === ctx.state.selectedDay.getTime()),
+              );
+              if (future) cell.setAttribute("aria-disabled", "true");
+              cell.addEventListener("click", () => {
+                if (!future) deps.onSelectDay(day);
+              });
+            },
             ctx.state.selectedDay,
             pendingReveal ? ctx.cfg.today : undefined,
           );

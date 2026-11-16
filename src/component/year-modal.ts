@@ -22,6 +22,7 @@ export const renderYearModal = (card: Element, options: YearModalOptions): void 
       h("div", { class: "sk-modal-title", text: "Select year" }),
       h("button", {
         class: "sk-modal-close",
+        "data-sk-focus": "modal-close",
         "aria-label": "Close",
         onclick: () => onClose(),
         html: trustedHtml(
@@ -40,6 +41,7 @@ export const renderYearModal = (card: Element, options: YearModalOptions): void 
           "button",
           {
             class: "sk-modal-year" + (currentYear === y ? " active" : ""),
+            "data-sk-focus": `modal-year-${y}`,
             "aria-current": currentYear === y ? "true" : undefined,
             onclick: () => {
               onSelect(y);

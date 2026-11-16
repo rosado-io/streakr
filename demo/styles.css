@@ -266,7 +266,10 @@ a:hover {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 140ms;
+  transition:
+    background-color 140ms,
+    border-color 140ms,
+    color 140ms;
 }
 .lv2-btn-primary {
   background: #fff;
@@ -306,7 +309,9 @@ a:hover {
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 11px;
   cursor: pointer;
-  transition: all 140ms;
+  transition:
+    border-color 140ms,
+    color 140ms;
 }
 .lv2-copy:hover {
   border-color: rgba(255, 255, 255, 0.3);
@@ -444,12 +449,12 @@ a:hover {
   color: var(--lv2-faint);
 }
 .lv2-slot-frame {
-  border-radius: 18px;
+  border-radius: 28px;
   padding: 1px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
+  background: #111817;
 }
 .lv2-slot-frame > .lv2-slot {
-  border-radius: 17px;
+  border-radius: 27px;
   padding: clamp(6px, 1vw, 12px);
 }
 .lv2-slot {
@@ -549,12 +554,14 @@ a:hover {
   align-items: stretch;
 }
 .lv2-panel {
-  background: var(--lv2-panel);
-  border: 1px solid var(--lv2-hair);
-  border-radius: 14px;
+  background: #0c1113;
+  border: 1px solid transparent;
+  border-radius: 24px;
   overflow: hidden;
 }
 .lv2-controls {
+  position: relative;
+  isolation: isolate;
   flex: 1 1 320px;
   min-width: 0;
   padding: clamp(16px, 2vw, 22px);
@@ -607,7 +614,10 @@ a:hover {
   font-family: inherit;
   font-size: 12.5px;
   cursor: pointer;
-  transition: all 150ms ease;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
 }
 .lv2-seg-btn.mono {
   font-family: "JetBrains Mono", ui-monospace, monospace;
@@ -635,7 +645,10 @@ a:hover {
   border: 2px solid transparent;
   padding: 0;
   cursor: pointer;
-  transition: all 150ms ease;
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
 }
 .lv2-swatch:hover {
   transform: scale(1.08);
@@ -689,7 +702,9 @@ a:hover {
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.07);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  transition: all 160ms ease;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
 }
 .lv2-switch span {
   position: absolute;
@@ -699,7 +714,9 @@ a:hover {
   height: 13px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.55);
-  transition: all 160ms ease;
+  transition:
+    left 160ms ease,
+    background-color 160ms ease;
 }
 .lv2-switch.on {
   background: var(--lv2-accent);
@@ -731,7 +748,9 @@ a:hover {
   font-size: 12.5px;
   cursor: pointer;
   margin-bottom: -1px;
-  transition: all 150ms ease;
+  transition:
+    color 150ms ease,
+    border-bottom-color 150ms ease;
 }
 .lv2-tab:hover {
   color: #fff;
@@ -1065,4 +1084,81 @@ a:hover {
   .lv2-swatch:hover {
     transform: none;
   }
+  .lv2-skip,
+  .lv2 *,
+  .lv2 *::before,
+  .lv2 *::after {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* A quiet editorial readout shared by the two live calendar examples. */
+.lv2-day-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 32px;
+  margin-top: 24px;
+  padding: 28px 32px;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: 28px;
+  background: color-mix(in oklab, var(--lv2-accent) 8%, #0c1011);
+}
+.lv2-detail-eyebrow {
+  margin: 0 0 14px;
+  font: 10px/1.5 "JetBrains Mono", monospace;
+  letter-spacing: 0.1em;
+  color: var(--lv2-accent);
+}
+.lv2-detail-summary h3 { margin: 0; font-size: clamp(20px, 3vw, 28px); letter-spacing: -0.04em; }
+.lv2-detail-hint { margin: 12px 0 0; font-size: 13px; line-height: 1.7; color: var(--lv2-muted); max-width: 42ch; }
+.lv2-detail-total { margin: 0 0 16px; font-size: 12px; color: var(--lv2-muted); }
+.lv2-detail-total strong { font: 36px/1 "JetBrains Mono", monospace; color: #fff; letter-spacing: -0.06em; }
+.lv2-detail-sources { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; }
+.lv2-detail-sources li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid rgba(255, 255, 255, 0.08); font-size: 12px; }
+.lv2-detail-sources li span:last-child { font-family: "JetBrains Mono", monospace; color: var(--lv2-accent); }
+.lv2-detail-placeholder { margin: 0; color: var(--lv2-muted); font: 14px/1.6 "JetBrains Mono", monospace; }
+.lv2-detail-content { align-self: center; }
+@media (max-width: 600px) {
+  .lv2-day-detail { grid-template-columns: 1fr; gap: 24px; padding: 24px; }
+}
+
+/* Printed geometric accents, without bevels or elevation. */
+.lv2-day-detail::before,
+.lv2-day-detail::after,
+.lv2-controls::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+}
+.lv2-day-detail::before {
+  right: 18px;
+  top: 18px;
+  width: 104px;
+  height: 64px;
+  opacity: 0.32;
+  background: radial-gradient(circle, var(--lv2-accent) 1.5px, transparent 1.8px) 0 0 / 12px 12px;
+  mask-image: linear-gradient(110deg, transparent, #000);
+}
+.lv2-day-detail::after {
+  right: -20px;
+  bottom: -46px;
+  width: 136px;
+  height: 136px;
+  border: 1px solid rgba(123, 168, 232, 0.26);
+  border-radius: 22px;
+  background: rgba(123, 168, 232, 0.07);
+  transform: rotate(-20deg);
+}
+.lv2-controls::after {
+  right: 16px;
+  top: 16px;
+  width: 54px;
+  height: 30px;
+  background: radial-gradient(circle, #7ba8e8 1px, transparent 1.4px) 0 0 / 9px 9px;
+  opacity: 0.35;
 }

@@ -1,7 +1,7 @@
 # Data recipes
 
 Streakr only presents data. Every recipe in this directory is optional,
-application-owned acquisition code whose output is `StreakrDay[]`.
+application-owned code for preparing `StreakrDay[]` or responding to selections.
 
 | Recipe                                       | Runs in                | Use it when                                  |
 | -------------------------------------------- | ---------------------- | -------------------------------------------- |
@@ -9,12 +9,13 @@ application-owned acquisition code whose output is `StreakrDay[]`.
 | [Custom API](custom-api.md)                  | Browser                | Your backend owns auth, caching, and schema. |
 | [Local Git snapshot](local-git.md)           | Node or CI             | Data should be generated from local clones.  |
 | [Merge several sources](multiple-sources.md) | Any JavaScript runtime | Several collectors feed one visualization.   |
+| [Day detail panel](day-detail.md) | Browser | Selecting a day should load activity details. |
 
 Recipes are deliberately copied into the consuming project. This keeps API
 tokens, infrastructure assumptions, retry policy, and third-party API changes
 outside Streakr's presentation contract.
 
-Every recipe should finish with data shaped like:
+Acquisition recipes should finish with data shaped like:
 
 ```ts
 import type { StreakrDay } from "@rosado-io/streakr";
